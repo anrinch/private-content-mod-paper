@@ -1,0 +1,427 @@
+\section{Preliminaries}
+\label{sec:def}
+%
+
+
+\myparagraph{Notation}
+%
+We use $\assign$ to denote assignment of the value on its right to
+the variable on its left, and $\sample$ to sample uniformly from the
+set on its right and assign the sampled value to the variable on its
+left.  Let $\genericFnFamily: \genericFnKeyspace \times
+\genericFnDomain \rightarrow \genericFnRange$ denote a function family
+with \textit{keyspace} \genericFnKeyspace, \textit{domain}
+\genericFnDomain, and \textit{range} \genericFnRange.  For
+$\genericFnKey \in \genericFnKeyspace$, we denote by
+$\genericFnFamily[\genericFnKey]: \genericFnDomain \rightarrow
+\genericFnRange$ the function with
+$\genericFnFamily[\genericFnKey](\genericFnDomainElmt) =
+\genericFnFamily(\genericFnKey, \genericFnDomainElmt)$ for each
+$\genericFnDomainElmt \in \genericFnDomain$. We use $\secParam$ to 
+denote a security parameter. 
+
+
+
+\begin{definition}[Strong QR-RSA problem]
+	Assume that $\rsaMod = \safePrime[1] \safePrime[2]$ where
+        $\safePrime[1]$ and $\safePrime[2]$ are random, safe prime
+        numbers, and \qrGroup is the quadratic residue subgroup of
+        \integersModNInv. Then, for $\genericFnOutput \getsr
+        \qrGroup$,
+	
+	\begin{align*}
+	  & \Advantage{\rsaLabel}{\rsaMod}(\rsaAdversary) = \\
+          & \cprob{\bigg}{\begin{array}{@{}r@{}}
+              \genericFnInput \in \qrGroup \land
+              \rsaExponent \ge 2~\land \\
+              \genericFnInput^{\rsaExponent} \equiv \genericFnOutput 
+	      \bmod \rsaMod
+          \end{array}}{\begin{array}[m]{@{}l@{}}
+              (\genericFnInput, \rsaExponent)
+              \gets \rsaAdversary(\rsaMod, \genericFnOutput)
+          \end{array}} \\
+	  & \rsaAdv = \max_{\rsaAdversary} 
+	 \Advantage{\rsaLabel}{\rsaMod}(\rsaAdversary) 
+	\end{align*}
+	\noindent
+	where the probability is over the choice of $\rsaMod$ and
+        $\genericFnOutput$ and random choices by \rsaAdversary, and
+        the maximum is taken over all adversary algorithms
+        $\rsaAdversary$ that run in total time $\timeBound$.
+	\end{definition}
+
+
+\NewDocumentCommand{\cciOracle}{g}{%
+	\ensuremath{\algNotation{O}_{\IfNoValueTF{#1}{\$}{#1}}}\xspace}
+\NewDocumentCommand{\cciLabel}{o}{%
+	\textsf{cci\IfNoValueF{#1}{-{#1}}}\xspace}
+\NewDocumentCommand{\indcpaRandLabel}{o}{%
+	\textsf{ind-cpa\$\IfNoValueF{#1}{-{#1}}}\xspace}
+
+
+%
+
+
+We will make black-box use of the following primitives 
+
+
+\smallskip\noindent\textbf{Symmetric key encryption scheme} defined by the triple of algorithms $\encryptionSchemeDefn$ with key space \encryptKeySpace. For security, the encryption scheme must satisfy \emph{weak} random key robustness~\cite{bhowmick2021apple}. 
+ This property implies that a ciphertext encrypted under a randomly chosen key, cannot be decrypted under a different, randomly chosen key.  We formally define the property in \appref{app:secdef}. 
+
+%An encryption scheme that satisfies IND-CPA\$ security and ciphertext integrity has weak random key robustness.
+
+\smallskip\noindent\textbf{Additively homomorphic encryption scheme} defined by the triple $\ahencryptionSchemeDefn$.  The plaintext space is a group \group of prime order. We require that the encryption scheme is
+homomorphic under the group operation. That is, there is an efficient
+algorithm to compute a ciphertext $\pkencrypt[\encryptPubKey](\plaintext[1] \groupOp \plaintext[2])$
+from $\pubKey$, $\ciphertext[1] = \pkencrypt[\encryptPubKey](\plaintext[1])$, and $\ciphertext[2] = \pkencrypt[\encryptPubKey](\plaintext[2])$; we denote this operation by
+$\ciphertext[1]\homomorphicAdd{\pubKey} \ciphertext[2]$. The security
+assumption for encryption to which we reduce is IND-CPA
+security~\cite{bellare1998relations}, formally defined in \appref{app:secdef:random_key}
+
+\smallskip\noindent\textbf{Digital signature scheme} defined by the triple of algorithms \sigSchemeDefn
+that satisfies unforgeability under chosen message attack, formally defined in \figref{fig:experiments} in the Appendix. 
+
+
+\iffalse 
+\smallskip\noindent\textbf{Detectable Secret Sharing}
+%
+We will use a primitive called \emph{detectable secret sharing} which combines a secret-sharing scheme with a detectable hash function~\cite{bhowmick2021apple}. Similar to standard $(\genericVecLen, \threshold)$ secret-sharing, a detectable secret sharing scheme has two algorithm $\dssProtocol = \langle \SSShare, \SSCombine\rangle$. 
+
+\itemListStart
+\item $\{ \secretShare{1},\dots, \secretShare{\genericVecLen} \} \gets \dssProtocol.\SSShare(\genericSymmKey)$ takes as input a secret $\genericSymmKey$ and it produces a set of secret-shares $\{ \secretShare{1},\dots, \secretShare{\genericVecLen} \}$
+\item $\genericSymmKey/\bot \gets \dssProtocol.\SSCombine(\{\genericSetElmt[1], \dots, \genericSetElmt[\genericVecLen] \})$ Given a set of $\genericVecLen$ elements, if at least \threshold of them are valid secret shares of the same secret, and the rest are random elements, output the secret $\genericSymmKey$. Otherwise, output $\bot$. 
+\itemListEnd
+
+For security \dssProtocol ensures that when there are less that \threshold number of shares in $\{\genericSetElmt[1], \dots, \genericSetElmt[\genericVecLen] \}$ then nothing is revealed to an adversary that has the set \emph{including which of the shares are correct}. We will directly use the protocol of \citet{bhowmick2021apple}. 
+\fi 
+
+%describe a protocol in \appref{} inspired by the work of \citet{bhowmick2021apple} that leverages a detectable hash function to achieve this guarantee. 
+
+
+
+%In our scheme, a client plays the role of the dealer and a server receives a certain number of shares of a key based on some related computation. Assume that the server receives a set $\genericSetVar$ where some of the values can be a secret shares. If there at least $t$ shares in $\genericSetVar$, the server can reconstruct the key. However, we also have the following additional requirements:
+%i) if there are less than $t$ correct shares in $\genericSetVar$, then we want to hide which of the values in $\genericSetVar$ are valid shares, and the total number of such valid shares, 
+%and ii) if there are at least $t$ correct shares, we want to reveal the values in $\genericSetVar$ that are the shares so that the server can reconstruct without incurring an exponential cost. This functionality is achieved by using a detectable secret sharing. 
+
+
+
+%\subsubsection{Encryption with Random Key Robustness}
+%%
+%We will use a symmetric key encryption scheme defined by the triple of algorithms $\encryptionSchemeDefn$. $\encryptKeyGen(1^\secParam)$ is a randomized key generation algorithm that on input a security parameter outputs a key \genericSymmKey from the key space \encryptKeySpace; \encrypt is a randomized encryption algorithm that on input a key \genericSymmKey and a message \plaintext outputs a ciphertext $\ciphertext \assign \encrypt[\genericSymmKey](\plaintext)$; \decrypt is a deterministic algorithm that on input a key \genericSymmKey and ciphertext \ciphertext outputs the plaintext \plaintext. Correctness of the encryption scheme implies $\decrypt[\genericSymmKey](\encrypt[\genericSymmKey](\plaintext)) = \plaintext$.
+
+
+ 
+
+
+
+%\subsubsection{Additively homomorphic encryption}
+%%
+%We will use an additively homomorphic encryption scheme with
+%key-generation algorithm $\pkKeyGen$, encryption algorithm
+%$\pkencrypt$, and decryption algorithm $\pkdecrypt$.  The plaintext of
+%this algorithm is a group \group of prime order with group
+%operation ``\groupOp'' and identity element ``\groupIdentity''.
+%\pkKeyGen is a randomized algorithm that outputs a public/private key
+%pair $\langle \encryptPubKey, \encryptPrivKey \rangle$.
+%$\pkencrypt[\encryptPubKey](\cdot)$ is a randomized algorithm that
+%takes as input a plaintext in \group and outputs a ciphertext
+%$\ciphertext \gets \pkencrypt[\encryptPubKey](\genericFnInput)$.  We
+%denote the set of possible ciphertexts for \genericFnInput under key
+%\encryptPubKey to be
+%$\ciphertextSpace[\encryptPubKey](\genericFnInput)$.
+%$\pkdecrypt[\encryptPrivKey](\cdot)$ is a deterministic algorithm
+%that, on input a ciphertext $\genericFnOutput
+%\in \ciphertextSpace[\encryptPubKey](\genericFnInput)$, returns
+%\genericFnInput.  We require that the encryption scheme is
+%homomorphic under the group operation. That is, there is an efficient
+%algorithm to compute a ciphertext $\ciphertext
+%\in \ciphertextSpace[\pubKey](\plaintext[1] \groupOp \plaintext[2])$
+%from $\pubKey$, $\ciphertext[1] \in
+%\ciphertextSpace[\pubKey](\plaintext[1])$, and $\ciphertext[2] \in
+%\ciphertextSpace[\pubKey](\plaintext[2])$; we denote this operation by
+%$\ciphertext[1]\homomorphicAdd{\pubKey} \ciphertext[2]$.  The security
+%assumption for encryption to which we reduce is IND-CPA
+%security~\cite{bellare1998relations}.
+
+
+
+\iffalse 
+\subsubsection{Building Block: Authenticated OPRF}
+%
+\input{authOPRF.tex}
+
+We will use a pseudorandom function (obliviously computed) and we recall the security definition of a PRF in \appref{sec:defn:prf}. We extend the definition to a three party functionality \authOPRFFunc (\figref{fig:authOPRF}), called \emph{authenticated OPRF}, where a group of $\numAuditors$ auditors jointly sign a list of inputs to a pseudorandom function. \authOPRFFunc receives the key for the PRF from the client, who acts as the sender. The receiver of the PRF evaluations is the server, who does not input anything into \authOPRFFunc. 
+
+We realize \authOPRFFunc by leveraging the the 2HashDH PRF construction~\cite{jarecki2014round} in a group where the OM gap-DH problem is hard; $\prf{\prfKeyClient}(\genericFnInput) = \oprfRO[2](\genericFnInput, \oprfRO[1](\genericFnInput)^{\prfKeyClient})$, where $\oprfRO[1], \oprfRO[2]$ are modeled as random oracles. 
+In the protocol \protocolAuthOPRF (\figref{fig:authOPRF}), the auditors ``blind'' the blocklist elements $\{ \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and the server is provided $\genericRand[1]', \dots, \genericRand[\blocklistSize]'$ (\stepsref{authOPRF:auditor:share_random_vals}{authOPRF:auditor:sign_blinding}). The auditors publish $\blocklist'$ and sign (a hash of) $\blocklist'$ under their private keys. The client obtains $\blocklist'$ and the auditors' signatures. After verifying the signatures, the client exponentiates the blinded elements $\{ \left(\oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\right)^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and sends them to the server (\stepsref{authOPRF:client:verify_sigs}{authOPRF:client:prf}). Finally, the server removes the blinding and computes $\{ \oprfRO[2](\genericBlocklistElmt[\setIdx], \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ (\stepref{authOPRF:serverdeblind}). 
+\fi 
+
+\iffalse
+With abuse of notation, we will denote $\pkencryptVec(\cdot)$ as a randomized algorithm that encrypts a 
+bit-vector $\genericVec \in \bin^{\genericVecLen}$ bit wise: $\pkencryptVec[\encryptPubKey](\genericVec) \assign \langle 
+\pkencrypt[\encryptPubKey](\grpGen[1]^{\genericVec[1]}), \dots, \pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{\genericVec[\genericVecLen]})\rangle$, 
+where $\grpGen[1], \dots, \grpGen[\genericVecLen]$ are random generators in \group. $\pkdecryptVec(\cdot)$ 
+is a deterministic algorithm such that $\pkdecryptVec[\encryptPrivKey](\pkencryptVec[\encryptPubKey](\genericVec)) = \genericVec$. We also 
+define an operator $\homomorphicXORVec{\encryptPubKey}$ in shorthand that computes the bit-wise XOR between the bit-wise encryptions of two 
+vectors. In particular $\pkencryptVec[\encryptPubKey](\genericVec) ~\homomorphicXORVec{\encryptPubKey} \clientVec = \langle \pkencrypt[\encryptPubKey](\grpGen[1]^{\genericVec[1]}) \homomorphicMul{\encryptPubKey} \pkencrypt[\encryptPubKey](\grpGen[1]^{\clientVec[1]}) \homomorphicMul{\encryptPubKey} 
+\pkencrypt[\encryptPubKey](\grpGen[1]^{-2\genericVec[1] \clientVec[1]}), \dots, \pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{\genericVec[\genericVecLen]}) \homomorphicMul{\encryptPubKey} \pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{\clientVec[\genericVecLen]}) \homomorphicMul{\encryptPubKey} 
+\pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{-2\genericVec[\genericVecLen] \clientVec[\genericVecLen]}) \rangle = \pkencryptVec[\encryptPubKey](\genericVec \oplus \clientVec)$ . 
+
+We define operator $\homomorphicMulVec{\encryptPubKey}$ to perform component-wise multiplication between two encrypted vectors such that 
+$\pkencryptVec[\encryptPubKey](\genericVec) 
+\homomorphicMulVec{\encryptPubKey} \pkencryptVec[\encryptPubKey](\clientVec) = \langle \pkencrypt[\encryptPubKey](\genericVec[1]) \homomorphicMul{\encryptPubKey}
+\pkencrypt[\encryptPubKey](\clientVec[1]), \dots,  \pkencrypt[\encryptPubKey](\genericVec[\genericVecLen]) \homomorphicMul{\encryptPubKey}
+\pkencryptVec[\encryptPubKey](\clientVec[\genericVecLen])\rangle$. 
+
+
+
+\myparagraph{Blinded Hamming Distance}
+%
+We define a procedure $\blindedHD(\pkencryptVec[\encryptPubKey](\genericVec), \clientVec, \genericRand[1], \dots, \genericRand[\genericVecLen])$ for 
+$\clientVec, \genericVec \in \bin^{\genericVecLen}$. The procedure first computes $\langle \ciphertext_1, \dots, \ciphertext_{\genericVecLen} \rangle$ $\assign$  $\pkencryptVec[\encryptPubKey](\genericVec) \homomorphicXORVec{\encryptPubKey} \clientVec$. Then, it returns the vector $\langle \pkencrypt[\encryptPubKey](\genericRand[1]) \homomorphicMul{\encryptPubKey} \ciphertext_1^{\genericRandAlt[1]}, \dots, \pkencrypt[\encryptPubKey](\genericRand[\genericVecLen]) \homomorphicMul{\encryptPubKey} \ciphertext_{\genericVecLen}^{\genericRandAlt[\genericVecLen]} \rangle$, where $\genericRandAlt[1], \dots, \genericRandAlt[\genericVecLen] \sample \integersModArg{\groupOrder}$. Note that $\ciphertext_\vecIdx \in \ciphertextSpace[\encryptPubKey](\grpGen_{\vecIdx}^{\clientVec[\vecIdx] \oplus \genericVec[\vecIdx]})$ for all $\vecIdx \in \nats[\genericVecLen]$. 
+If for some $\vecIdx \in \nats[\genericVecLen]$, $\genericVec[\vecIdx] \oplus \clientVec[\vecIdx] = 0$, then $\pkencrypt[\encryptPubKey](\genericRand[\vecIdx]) \homomorphicMul{\encryptPubKey} \ciphertext_{\vecIdx}^{\genericRandAlt[\vecIdx]} = \pkencrypt[\encryptPubKey](\genericRand[\vecIdx] \times \groupIdentity) = \pkencrypt[\encryptPubKey](\genericRand[\vecIdx])$. 
+\fi 
+
+%\subsubsection{Oblivious PRF}
+%\label{sec:oprf}
+%%
+%We will use a pseudorandom function (obliviously computed) and we recall the security definition of a PRF in \appref{sec:defn:prf}.
+%We will use an oblivious PRF (OPRF) functionality \oprfFunc. The two-party functionality takes as input the key \prfKey for a PRF \prf from a sender, 
+%and an input \genericFnInput from the receiver. The functionality outputs to the receiver $\prf{\prfKey}(\genericFnInput)$ and nothing to the sender. 
+%We refer to the large amount of work on OPRFs for more formal definitions~\cite{naor2004number}. We will particularly use the 2HashDH~\cite{jarecki2014round} protocol as a black box in our construction. 
+
+%Specifically, this construction is secure in a group where the OM gap-DH problem is hard and $\prf{\prfKey}(\genericFnInput) = \hashFn'(\genericFnInput, \hashFn(\genericFnInput)^{\prfKey})$, where $\hashFn, \hashFn'$ are modeled as random oracles. The OPRF computation proceeds with the receiver sending the blinded input $\hashFn(\genericFnInput)^{\genericRand}$ to the sender who computes $(\hashFn(\genericFnInput)^{\genericRand})^{\prfKey}$. The receiver removes the blinding to obtain $\hashFn(\genericFnInput)^{\prfKey}$ and computes the outer hash. 
+
+\iffalse 
+\myparagraph{Collision-resistant vector hash function}
+%
+We will use a collision-resistant hash function over vectors with components in $\integersModArg{\groupOrder}$. Such a hash function 
+$\universalHashFn: \integersModArg{\groupOrder}^{\genericVecLen} \rightarrow \group$ is provided by a construction due to \citet{damgaard1987collision} in a group \group with order \groupOrder under the discrete log assumption. Specifically, the hash function uses \genericVecLen random generators $\qrGen_1, \dots, \qrGen_{\genericVecLen}$. Then
+ given $\genericVec \in \integersModArg{\groupOrder}^{\genericVecLen}$, $\universalHashFn(\genericVec) = \prod\limits_{\vecIdx \in \nats[\genericVecLen]} \qrGen_{\vecIdx}^{\genericVec[\vecIdx]}$. Finding a collision in this hash function implies finding the discrete log of one of the generators with respect to a known value in \group. 
+\fi 
+%\myparagraph{Strong QR-RSA assumption}
+%We will make use of the strong QR-RSA assumption in our proofs, that is formally stated below.
+
+
+
+
+
+
+
+
+\iffalse 
+A detectable secret sharing has two
+
+Both of these requirements are fulfilled by using a $(t-1, n - t + 1)$ detectable hash function along with the secret sharing scheme. More specifically, when secret sharing $\genericSymmKey$, the client samples $n$ random seeds for a pseudorandom generator $\prg: \prgKeySpace \rightarrow \bin^{\log \dhfRange}$,  
+ $\genericSymmKey_1, \dots, \genericSymmKey_n$, and computes the set $\ssSet \assign \{\langle \genericSymmKey_1, \secretShare{1}, \rangle, \dots, \langle \genericSymmKey_n, \secretShare{n} \rangle \}$. The client also computes the set $\dhfSet \assign \{\dhf[\dhfKey](\genericRand[1])) \oplus \prg(\genericSymmKey_1), \dots, \dhf[\dhfKey](\genericRand[n]))\oplus \prg(\genericSymmKey_n)\}$ where $\genericRand[1], \dots, \genericRand[n] \sample \dhfDomain$. If we can correctly retrieve $\secretShare{i}$, then we also retrieve $\dhf[\dhfKey](\genericRand[i])$. After receiving $t$ such DHF evaluations, the detection algorithm will succeed and reveal the shares in \ssSet. At this point, we defer the discussion of the computation on $\ssSet$ that may render some of the shares incorrect, but we remark that the computation ensures that when a share is incorrectly computed, then the share and the seed is replaced by a random string of equal length.
+
+\myparagraph{Detectable Hash Function}
+%
+We will make use of a primitive introduced by \citet{bhowmick2021apple} called a detectable hash 
+function. Formally, a $(\dhfParamMatchThreshold, \dhfParamRandThreshold)$-detectable 
+hash function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$ is weakly \textit{\dhfParamMatchThreshold-wise
+  independent}, that is the distribution of
+  $\langle\dhf[\dhfKey](\genericFnInput[1]), \dots,
+  \dhf[\dhfKey](\genericFnInput[\dhfParamMatchThreshold])\rangle$
+  given $\dhfKey \getsr \dhfKeySpace$ and $\genericFnInput[1], \dots,
+  \genericFnInput[\dhfParamMatchThreshold] \getsr \dhfDomain$ is
+  identical to the uniform distribution over
+  $\dhfDomain^{\dhfParamMatchThreshold}$. In addition, the function is \textit{\dhfParamRandThreshold-detectable}. 
+  Given a vector $\genericVec = \tupleDefn{\genericVec[1], \dots, 
+    \genericVec[\genericVecLen]} \in \dhfDomain^{\genericVecLen}$, where for $\matchedIndexSet 
+  \subseteq \nats[\genericVecLen]$, $\genericVec[\projIdx] \gets 
+  \dhf[\dhfKey](\genericFnInput[\projIdx])$ when $\projIdx \in \matchedIndexSet$, 
+  and $\genericVec[\projIdx] \getsr \dhfDomain$ when $\projIdx \notin \matchedIndexSet$, 
+  there is an algorithm $\dhfDetect$ such that 
+
+	\itemListStart
+  \item $\dhf[\dhfKey].\dhfDetect(\genericVec) =
+    \matchedIndexSet$ with non-negligible probability,
+    when $\setSize{\matchedIndexSet} \ge
+    \max(\dhfParamMatchThreshold+1, \genericVecLen -
+    \dhfParamRandThreshold)$.
+  \item $\dhf[\dhfKey].\dhfDetect(\genericVec) =
+    \dhfFail$ when $\setSize{\matchedIndexSet} \le
+    \dhfParamMatchThreshold$.
+\itemListEnd
+\fi 
+
+%\enumListStart
+%\item The function is weakly \textit{\dhfParamMatchThreshold-wise
+%  independent}, that is the distribution of
+%  $\langle\dhf[\dhfKey](\genericFnInput[1]), \dots,
+%  \dhf[\dhfKey](\genericFnInput[\dhfParamMatchThreshold])\rangle$
+%  given $\dhfKey \getsr \dhfKeySpace$ and $\genericFnInput[1], \dots,
+%  \genericFnInput[\dhfParamMatchThreshold] \getsr \dhfDomain$ is
+%  identical to the uniform distribution over
+%  $\dhfDomain^{\dhfParamMatchThreshold}$.
+%	
+%\item The function is \textit{\dhfParamRandThreshold-detectable}. 
+%  Given a vector $\genericVec = \tupleDefn{\genericVec[1], \dots, 
+%    \genericVec[\genericVecLen]} \in \dhfDomain^{\genericVecLen}$, where for $\matchedIndexSet 
+%  \subseteq \nats[\genericVecLen]$, $\genericVec[\projIdx] \gets 
+%  \dhf[\dhfKey](\genericFnInput[\projIdx])$ when $\projIdx \in \matchedIndexSet$, 
+%  and $\genericVec[\projIdx] \getsr \dhfDomain$ when $\projIdx \notin \matchedIndexSet$, 
+%  there is an algorithm $\dhfDetect$ such that 
+%  
+%
+%\enumListEnd
+%  
+\iffalse 
+  Intuitively, given a vector $\genericVec \in
+  \dhfDomain^{\genericVecLen}$, where at least
+  $\max(\dhfParamMatchThreshold+1, \genericVecLen - \dhfParamRandThreshold)$ 
+  components are outputs of $\dhf$,
+  the detection algorithm identifies these components. However,
+  if less than $\dhfParamMatchThreshold+1$ entries are generated
+  by $\dhf$, then the detection algorithm does not reveal any
+  information about $\matchedIndexSet$.		
+\fi 
+
+\iffalse 
+\myparagraph{Detectable Secret Sharing}
+\label{sec:detectable_ss}
+%
+A $t$-out-of-$n$ secret-sharing scheme allows a dealer to share a secret with $n$ parties in such a way that at least $t$ of the parties 
+must contribute their shares to reconstruct the secret. If less than $t$ parties contribute their shares, no information is revealed to any of the parties.
+We will use Shamir's secret sharing in our constructions, which is information-theoretically secure. The scheme $\secretSharingScheme$ has two functions:
+ $\secretSharingScheme.\SSShare(\genericSymmKey)$ takes as input a value \genericSymmKey and produces $n$ secret-shares of the value $\secretShare{1}, \dots, \secretShare{n}$; $\secretSharingScheme.\SSCombine(\secretShare{1}, \dots, \secretShare{n})$ takes as input $n$ values and outputs the reconstructed value $\genericSymmKey$ if there are at least $t$ shares, and otherwise outputs some random element. 
+\fi 
+
+
+
+%\subsection{Decision Diffie Hellman Assumption}
+%%
+% Consider an operation $\generateGroup(\secParam)$ that generates a cyclic group 
+% of order $\bigO(\secParam)$-bits and returns the order of the group, and a generator of the 
+% group.  Consider the following experiments, 
+% 
+%
+%% 	\label{dfn:prp}
+%% 	Let $\genericFnFamily: \genericFnKeyspace \times \genericFnDomain
+%% 	\rightarrow \genericFnDomain$ be a function family,
+%% 	$\allFuncs{\genericFnDomain}$ be the set of all functions with domain
+%% 	and range \genericFnDomain, and \prfAdversary be an algorithm that
+%% 	takes an oracle of type $\genericFnDomain \rightarrow
+%% 	\genericFnDomain$ and returns a bit.  Let
+% 	
+% 	\smallskip
+% 	\begin{minipage}[t]{0.4\columnwidth}
+% 		\begin{tabbing}
+% 			***\=***\=\kill
+% 			Experiment $\Experiment{\ddhLabel[0]}{\generateGroup}(\ddhAdversary)$ \\
+%			\> $\genericFnInput[0], \genericFnInput[1] \getsr \integersModOrder $ \\
+%			\> $\langle \qrGen\rangle \getsr \genGrp$ \\
+%			\> $\advBit \gets \ddhAdversary(\qrGen^{\genericFnInput[0]}, \qrGen^{\genericFnInput[1]}, 
+%			\qrGen^{\genericFnInput[0] \cdot \genericFnInput[1]})$ \\
+%			\> If $\advBit = 0$ \\
+%			\> \> then return 1 \\
+%			\> Else \\
+%			\> \> return 0
+% 		\end{tabbing}
+% 	\end{minipage}
+% 	\hfill
+% 	\begin{minipage}[t]{0.4\columnwidth}
+% 		\begin{tabbing}
+% 		***\=***\=\kill
+% 		Experiment $\Experiment{\ddhLabel[1]}{\generateGroup}(\ddhAdversary)$ \\
+% 		\> $\genericFnInput[0], \genericFnInput[1] \getsr \integersModOrder $ \\
+% 		\> $\langle \qrGen\rangle \getsr \genGrp$ \\
+% 		\> $\genericFnInputAlt \getsr \genGrp$ \\
+% 		\> $\advBit \gets \ddhAdversary(
+% 		\qrGen^{\genericFnInput[0]}, 
+% 		\qrGen^{\genericFnInput[1]}, 
+% 		\genericFnInputAlt)$ \\
+% 		\> If $\advBit = 1$ \\
+% 		\> \> then return 1 \\
+% 		\> Else \\
+% 		\> \> return 0
+% 	\end{tabbing}
+% 	\end{minipage}
+%
+%We define
+%
+%\begin{eqnarray*}
+%	& \Advantage{\ddhLabel}{\generateGroup}(\ddhAdversary) = \\
+%	&  \left|	\prob{\Experiment{\ddhLabel[0]}{\generateGroup}(\ddhAdversary) = 1} - 
+%	\prob{\Experiment{\ddhLabel[1]}{\generateGroup}(\ddhAdversary) = 1} \right| \\
+%	& \ddhAdv = \max_{\ddhAdversary} 
+%	 \Advantage{\ddhLabel}{\generateGroup}(\ddhAdversary)
+%\end{eqnarray*}
+%
+%\noindent
+%where the maximum is taken over all adversary algorithms
+%$\ddhAdversary$ that runs in total time $\timeBound$.
+
+
+
+\iffalse
+\subsection{Delegated Fuzzy Private Set Intersection with Associated Data}
+%
+In this section, we will describe a new primitive called a \dPSIPrimitive (\dPSI). The primitive 
+has three parties: a set of auditors \auditor, a server \server and a client \client. Intuitively, 
+the auditors publish a set of items $\blocklist$ and want to compute a set intersection between 
+$\blocklist$ and a set of items $\cInputSet$ that the client holds. Each item $\genericCInputElmt 
+\in \cInputSet$ is a key-value tuple $\tupleDefn{\genericCInputElmt.\keyLabel, 
+\genericCInputElmt.\valueLabel}$, where the value is some associated data corresponding to the 
+key. The items in set \blocklist do not have any associated data. 
+Consider that $\keySetLabel$ is the set of keys and 
+$\valSetLabel$ is the set of associated data in $\cInputSet$. 
+
+
+The intersection is performed on the keys $\keySetLabel \cap \blocklist$ 
+and the auditor learns the corresponding associated data from $\valSetLabel$
+for each key that is in the intersection. However, the 
+auditors are not going to directly run the protocol, and instead delegate the computation to the 
+server. The server is provided $\blocklist$ for this purpose. Before describing the requirements, we 
+will define the 
+threat model. 
+
+\myparagraph{Threat model}
+
+\begin{itemize}
+	\item Except for one, all other auditors are untrusted.
+	\item The client is honest-but-curious and follows protocols.
+	\item The server is untrusted and may collude with the untrusted auditors. 
+\end{itemize}
+
+
+\myparagraph{Functionality requirements}
+%
+We require the following from the \dPSI functionality. Assume that all
+keys in \blocklist and \cInputSet are drawn from a metric space
+$(\metricSpace, \distance)$ where $\distance$ is the distance in the
+metric space. That is, $\blocklist \subseteq \metricSpace$ and
+$\cInputKeySet \subseteq \metricSpace$.  The values
+$\genericCInputElmt.\valueLabel$ need not be drawn from
+$\metricSpace$.
+
+\begin{itemize}
+	\item If the server is honest, then the client learns nothing
+          about \blocklist.
+	\item The server can execute the protocol successfully with
+          the client only using the set \blocklist.  That is, the
+          server cannot undetectably tamper with \blocklist
+          \textit{even when it colludes with the untrusted auditors}.
+	\item Honest auditors are not involved in the computation once
+          they provide \blocklist to the server.
+	\item \textbf{Fuzzy matching:} For a public value $\threshold
+          \in \nonnegativeReals$, the primitive returns to an honest
+          server a set $\genericSetVar \subseteq \cInputSet$
+          satisfying the following for each $\genericCInputElmt\in
+          \cInputSet$.
+	  \begin{itemize}
+	  \item If
+            $\distanceNotation[\distance][\genericCInputElmt.\keyLabel][\genericBlocklistElmt]
+            \leq \threshold$, then $\genericCInputElmt \in
+            \genericSetVar$ with probability $\ge \tpr$ where $\tpr
+            \in (0,1)$ is the true positive rate.
+	  \item If
+            $\distanceNotation[\distance][\genericCInputElmt.\keyLabel][\genericBlocklistElmt]
+            > \threshold$, then $\genericCInputElmt \notin
+            \genericSetVar$ with probability $\ge \tnr$ where $\tnr
+            \in (0,1)$ is the true negative rate.
+	  \end{itemize}
+\end{itemize}
+\fi
+

@@ -1,0 +1,240 @@
+
+\section{Security Definitions }
+\label{app:secdef}
+%\subsection{Unforgeability of \blklistToken}
+%\vspace{-5pt}
+%\label{app:defn:unforge}
+
+
+\subsection{Weak Random Key Robustness}
+\label{app:secdef:random_key}
+We will use a symmetric key encryption scheme defined by the triple of algorithms $\encryptionSchemeDefn$. $\encryptKeyGen(1^\secParam)$ is a randomized key generation algorithm that on input a security parameter outputs a key \genericSymmKey from the key space \encryptKeySpace; \encrypt is a randomized encryption algorithm that on input a key \genericSymmKey and a message \plaintext outputs a ciphertext $\ciphertext \assign \encrypt[\genericSymmKey](\plaintext)$; \decrypt is a deterministic algorithm that on input a key \genericSymmKey and ciphertext \ciphertext outputs the plaintext \plaintext. Correctness of the encryption scheme implies $\decrypt[\genericSymmKey](\encrypt[\genericSymmKey](\plaintext)) = \plaintext$. 
+
+The security property we will need is random key robustness which implies that a ciphertext encrypted under a randomly chosen key, cannot be decrypted under a different, randomly chosen key. It is known that an encryption scheme that satisfies IND-CPA\$ security and ciphertext integrity has weak random key robustness.
+
+
+\subsubsection{IND-CPA\$ security}
+\label{sec:defn:ind_cpa}
+%
+This property implies that a PPT. adversary cannot distinguish between a ciphertext produced by an encryption scheme \encryptionSchemeDefn and a 
+random string of equal length. This is defined using the following experiment 
+
+
+
+	\smallskip
+	\begin{minipage}[t]{0.5\columnwidth}
+			\begin{tabbing}
+			*** \= \kill
+			$\Experiment{\indcpaRandLabel[0]}{\encryptionSchemeDefn}(\indcpaAdversary)$ \\
+			\> $\genericSymmKey \gets \encryptKeyGen()$ \\
+			\> $\indcpaGuess \gets 
+			\indcpaAdversary^{\cciOracle{\genericSymmKey}}()$ \\
+			\> return \indcpaGuess
+		\end{tabbing}
+	\end{minipage}
+	\hspace{50pt}
+	\begin{minipage}[t]{0.5\columnwidth}
+			\begin{tabbing}
+			*** \= \kill
+			$\Experiment{\indcpaRandLabel[1]}{\encryptionSchemeDefn}(\indcpaAdversary)$ \\
+			\> $\genericSymmKey \gets \encryptKeyGen()$ \\
+			\> $\indcpaGuess \gets 
+			\indcpaAdversary^{\cciOracle(\cdot)}()$ \\
+			\> return \indcpaGuess
+		\end{tabbing}
+	\end{minipage}
+	
+
+
+	
+	\noindent
+	where the maximum is taken over all adversaries \indcpaAdversary that run in
+    \oracleQueries queries
+	to \cciOracle{}.
+    
+
+
+Here, \cciOracle{\genericSymmKey} is an oracle to which the
+key \genericSymmKey is a fixed input.  In each invocation to it, the
+adversary \indcpaAdversary provides an input plaintext \plaintext and 
+the oracle returns $\encrypt[\genericSymmKey](\plaintext)$. The oracle $\cciOracle$ 
+returns random strings of length equal to a ciphertext.  
+
+
+
+
+The adversary's
+advantage is defined as
+
+	\begin{eqnarray*}
+		& \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\indcpaAdversary) = \\
+		& \left|\prob{\Experiment{\indcpaRandLabel[1]}{\encryptionSchemeDefn}(\indcpaAdversary) = 1} - 
+		\prob{\Experiment{\indcpaRandLabel[0]}{\encryptionSchemeDefn}(\indcpaAdversary) = 1} \right| \\
+		& \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries) = 
+		\max_{\indcpaAdversary} \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\indcpaAdversary)
+	\end{eqnarray*}
+
+\noindent
+where the maximum is taken over all adversaries \indcpaAdversary running
+in time at most \timeBound and making at most \oracleQueries queries. 
+
+\subsubsection{Ciphertext integrity}
+\label{sec:defn:cipher_integrity}
+%
+This property implies that a PPT. adversary cannot produce a new ciphertext after observing encryptions of polynomially-many ciphertexts under a randomly-chosen key. This is defined using the following experiment 
+
+\begin{center}
+	\begin{minipage}{0.5\columnwidth}
+		\begin{tabbing}
+			*** \= *** \= \kill
+			$\Experiment{\cciLabel}{\encryptionSchemeDefn}(\indcpaAdversary)$ \\
+			\> $\genericSymmKey \gets \encryptKeyGen()$ \\
+			\> $\ciphertext' \gets 
+			\indcpaAdversary^{\cciOracle{\genericSymmKey}}$ \\
+            \> Let $\genericSetVar$ be the set of all ciphertexts returned by the oracle \cciOracle{\genericSymmKey} \\
+            \> If $\ciphertext' \neq \mathsf{reject} ~\land \ciphertext' \notin \genericSetVar$\\
+			\> \> then return 1\\
+            \> \> else return 0
+		\end{tabbing}
+	\end{minipage}
+\end{center}
+
+Here, \cciOracle{\genericSymmKey} is an oracle to which the
+key \genericSymmKey is a fixed input.  In each invocation to it, the
+adversary \indcpaAdversary provides an input plaintext \plaintext and 
+the oracle returns $\encrypt[\genericSymmKey](\plaintext)$. The adversary produces $\ciphertext'$
+and wins the experiment if $\ciphertext'$ is a valid ciphertext and it has not been produced by \cciOracle{\genericSymmKey} 
+in any previous query. 
+
+The adversary's
+advantage is defined as
+
+\begin{align*}
+	\Advantage{\cciLabel}{\encryptionSchemeDefn}(\indcpaAdversary)
+	& = \prob{\Experiment{\cciLabel}{\encryptionSchemeDefn}(\indcpaAdversary) = 1} \\
+	\Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries) 
+	&
+	= \max_{\indcpaAdversary} \Advantage{\cciLabel}{\encryptionSchemeDefn}(\indcpaAdversary)
+\end{align*}
+where the maximum is taken over all adversaries \indcpaAdversary running
+in time at most \timeBound and making at most \oracleQueries queries.
+
+\subsection{Pseudorandom function}
+\label{sec:defn:prf}
+%
+
+
+
+\newcommand{\allPerms}[1]{\ensuremath{\setNotation{P}({#1})}\xspace}
+\newcommand{\allFuncs}[1]{\ensuremath{\setNotation{F}({#1})}\xspace}
+\newcommand{\prfGuess}{\ensuremath{\valNotation{\hat{b}}}\xspace}
+\newcommand{\prfAdversary}{\ensuremath{\algNotation{A}_{\mathsf{prf}}}\xspace}
+\newcommand{\forwardOracleQueries}{\ensuremath{q}\xspace}
+\NewDocumentCommand{\PRFExp}{o}{\ensuremath{\Experiment{\prfLabel\IfValueT{#1}{-#1}}{\dyPRF}(\prfAdversary)}\xspace}
+\newcommand{\PRFAdv}{\ensuremath{\Advantage{\prfLabel}{\dyPRF}(\timeBound, \oracleQueries)}\xspace}
+\NewDocumentCommand{\prfLabel}{o}{%
+	{\scriptsize\textsf{prf\IfNoValueF{#1}{-{#1}}}}\xspace}
+
+
+\begin{definition}[Pseudorandom function]
+	\label{dfn:prp}
+	Let $\genericFnFamily: \genericFnKeyspace \times \genericFnDomain
+	\rightarrow \genericFnDomain$ be a function family,
+	$\allFuncs{\genericFnDomain}$ be the set of all functions with domain
+	and range \genericFnDomain, and \prfAdversary be an algorithm that
+	takes an oracle of type $\genericFnDomain \rightarrow
+	\genericFnDomain$ and returns a bit.  Let
+	
+	\smallskip
+	\begin{minipage}[t]{0.4\columnwidth}
+		\begin{tabbing}
+			***\=***\=\kill
+			$\Experiment{\prfLabel[0]}{\genericFnFamily}(\prfAdversary)$ \\
+			\> $\genericFn \sample \allFuncs{\genericFnDomain}$ \\
+			\> $\prfGuess \leftarrow \prfAdversary^{\genericFn(\cdot)}()$ \\
+			\> return $\prfGuess$
+		\end{tabbing}
+	\end{minipage}
+	\hspace{50pt}
+	\begin{minipage}[t]{0.4\columnwidth}
+		\begin{tabbing}
+			***\=***\=\kill
+			$\Experiment{\prfLabel[1]}{\genericFnFamily}(\prfAdversary)$ \\
+			\> $\genericFnKey \sample \genericFnKeyspace$, $\genericFn \gets 
+			\genericFnFamily[\genericFnKey]$ \\
+			\> $\prfGuess \leftarrow \prfAdversary^{\genericFn(\cdot)}()$ \\
+			\> return $\prfGuess$
+		\end{tabbing}
+	\end{minipage}
+	
+	\smallskip
+	\noindent Then,
+	
+	\begin{eqnarray*}
+		& \Advantage{\prfLabel}{\genericFnFamily}(\prfAdversary) = \\
+		& \left|\prob{\Experiment{\prfLabel[1]}{\genericFnFamily}(\prfAdversary) = 1} - 
+		\prob{\Experiment{\prfLabel[0]}{\genericFnFamily}(\prfAdversary) = 1} \right| \\
+		& \Advantage{\prfLabel}{\genericFnFamily}(\timeBound, \oracleQueries)
+		= \max_{\prfAdversary} \Advantage{\prfLabel}{\genericFnFamily}(\prfAdversary)
+	\end{eqnarray*}
+	
+	\noindent
+	where the maximum is taken over all adversaries \prfAdversary that run in
+	time at most \timeBound and make at most \forwardOracleQueries queries
+	to \genericFn.
+\end{definition}
+
+\iffalse 
+\newcommand{\prgAdversary}{\ensuremath{\algNotation{A}_{\mathsf{prg}}}\xspace}
+\NewDocumentCommand{\prgLabel}{o}{%
+	{\scriptsize\textsf{prg\IfNoValueF{#1}{-{#1}}}}\xspace}
+\subsection{Pseudorandom Generator}
+
+
+\begin{definition}[Pseudorandom Generator]
+	\label{dfn:prp}
+	Let $\genericFnFamily: \genericFnKeyspace 
+	\rightarrow \genericFnDomain$ be a function family,
+	$\allFuncs{\genericFnDomain}$ be the set of all functions with domain
+	\genericFnKeyspace, and \prgAdversary be an algorithm that
+	takes an oracle of type $\genericFnDomain \rightarrow
+	\genericFnDomain$ and returns a bit.  Let
+	
+	\smallskip
+	\begin{minipage}[t]{0.4\columnwidth}
+		\begin{tabbing}
+			***\=***\=\kill
+			$\Experiment{\prgLabel[0]}{\genericFnFamily}(\prgAdversary)$ \\
+			\> $\genericFn \sample \allFuncs{\genericFnDomain}$ \\
+			\> $\genericRand \sample \prgKeySpace$ \\
+			\> $\prfGuess \leftarrow \prgAdversary(\genericFn(\genericRand))$ \\
+			\> return $\prfGuess$
+		\end{tabbing}
+	\end{minipage}
+	\hspace{50pt}
+	\begin{minipage}[t]{0.4\columnwidth}
+		\begin{tabbing}
+			***\=***\=\kill
+			$\Experiment{\prgLabel[1]}{\genericFnFamily}(\prgAdversary)$ \\\
+			\> $\genericRand \sample \genericFnRange$\\
+			\> $\prfGuess \leftarrow \prgAdversary(\genericRand)$ \\
+			\> return $\prfGuess$
+		\end{tabbing}
+	\end{minipage}
+	
+	\smallskip
+	\noindent Then,
+	
+	\begin{eqnarray*}
+		& \Advantage{\prgLabel}{\genericFnFamily}(\prgAdversary) = \\
+		& \left|\prob{\Experiment{\prgLabel[1]}{\genericFnFamily}(\prgAdversary) = 1} - 
+		\prob{\Experiment{\prgLabel[0]}{\genericFnFamily}(\prgAdversary) = 1} \right| \\
+		& \Advantage{\prgLabel}{\genericFnFamily}(\timeBound)
+		= \max_{\prgAdversary} \Advantage{\prgLabel}{\genericFnFamily}(\prfAdversary)
+	\end{eqnarray*}
+	
+	\noindent
+	where the maximum is taken over all adversaries \prgAdversary that run in
+	time at most \timeBound 
+\end{definition}
+\fi 

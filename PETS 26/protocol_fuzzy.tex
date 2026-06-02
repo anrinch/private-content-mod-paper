@@ -1,0 +1,857 @@
+\section{Protocol for Detecting Fuzzy Matches}
+%
+We will describe a protocol the fuzzy matching variant of our content moderation scheme. 
+We will assume that the set of blocklist items are embeddings in a metric space $\metricSpace $, and our protocol will detect 
+matches of the form $\tupleDefn{\genericBlocklistElmt, \genericCInputElmt}$ such that 
+$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$. 
+A straightforward idea to extend our base protocol for this scenario is to simply generate a token by 
+signing \textit{all} the elements within threshold $\threshold$ of each item in the blocklist. 
+However, the number of such items can be 
+exponential in $\threshold$. For instance, consider the Hamming space, the number of vectors that 
+are within threshold $\threshold$ of some element $\genericBlocklistElmt \in \blocklist$ is 
+$\bigO(2^{\threshold})$. For larger values of $\threshold$, we will need exponentially large 
+parameters for the signature, e.g., the group order will be super-exponential in 
+$\threshold$. 
+
+
+One possible solution is to use projections of the blocklist items into a low dimensional space for 
+comparisons. With careful selection of the projection function, it is possible to 
+ensure that matching projections indicate that the corresponding items are close in the metric space 
+with some probability better than guessing. On the other hand, since 
+projections will introduce false positives, it is possible that two (or more) blocklist elements will 
+have the same projection even if they are dissimilar. Now, either we need to find a different 
+projection function which produces distinct projections for dissimilar blocklist elements, or 
+additional  information needs to be embedded in the blocklist token that will allow us to distinguish 
+two colliding blocklist items. For the first approach, we may need several projection functions (linear 
+in the blocklist size in the worst case) to distinguish the data, 
+while  in the second approach, the information needed can
+degenerate to producing a token linear in the size of the blocklist depending on the data 
+distribution. 
+
+
+
+%We will also allow non-zero false positive and false negatives, i.e.,  if the protocol returns 
+%%$\genericSetVar$, then $\genericCInputElmt \in \genericSetVar$ implies
+%$\distanceNotation[\distance][\genericCInputElmt.\keyLabel][\genericBlocklistElmt] \le \threshold$ 
+%for some $\genericBlocklistElmt \in \blocklist$ with probability at least $\tpr$, \textit{and} 
+%$\genericCInputElmt' \notin \genericSetVar$ implies 
+%$\distanceNotation[\distance][\genericCInputElmt'.\keyLabel][\genericBlocklistElmt] > 
+%\threshold$ for all $\genericBlocklistElmt \in \blocklist$ with probability at least $\tnr$. 
+
+To solve these problems, our protocol will utilize a general primitive called a 
+\projectionPrimitiveIt, which is implied by a construction due to 
+\citet{chongchitmate2024approximate}. We formalize the primitive below 
+
+\begin{definition}
+	A \projectionPrimitive of a set $\blocklist \subseteq \metricSpace$ 
+	comprises the projections of each constituent item under uniformly sampled functions $\projFn[1], 
+	\dots, \projFn[\numProjections]: \metricSpace \rightarrow \projectedSpace$ 
+	
+	\begin{enumerate}
+		\item Given any two items 
+		$\genericMetricSpacElmt,\genericMetricSpacElmtAlt \in \metricSpace$
+		
+		
+		\begin{align}
+			\distanceNotation[\distance][\genericMetricSpacElmt][\genericMetricSpacElmtAlt] \le 
+			\threshold,  \prob{\forall \projIdx \in \nats[1][\numProjections]: 
+				\projFn[\projIdx](\genericMetricSpacElmt) = \projFn[\projIdx](\genericMetricSpacElmtAlt)} 
+				\ge 
+			1 - \epsilon \label{eq:no_false_neg} \\
+			\distanceNotation[\distance][\genericMetricSpacElmt][\genericMetricSpacElmtAlt] > 
+			\threshold, \prob{\forall \projIdx \in 
+				\nats[1][\numProjections]: \projFn[\projIdx](\genericMetricSpacElmt) \neq
+				\projFn[\projIdx](\genericMetricSpacElmtAlt)} \ge 1 - \epsilon \label{eq:no_false_pos}
+		\end{align}
+		
+		%Here, \tpr and \tnr are tunable true positive rate and true negative rate. 
+		
+		\item For every element 
+		$\genericBlocklistElmt \in \blocklist$, there is at least one function $\projFn[\projIdx]$ where 
+		$\projFn[\projIdx](\genericBlocklistElmt) \notin 
+		\setDefn{\projFn[\projIdx](\genericBlocklistElmt[1]'), 
+			\dots, \projFn[\projIdx](\genericBlocklistElmt[\blocklistSize]')}$ for all 
+		$\genericBlocklistElmt[1]', 
+		\dots, \genericBlocklistElmt[\blocklistSize]' \in \blocklist\setminus\genericBlocklistElmt$ (with 
+		overwhelming probability).
+		
+	\end{enumerate}
+\end{definition}
+
+Intuitively, the first condition ensures that items close in the metric space have the same projections 
+with high probability. Conversely, the items that are far apart do not agree 
+on any of the projections with high probability. Note that $\epsilon$ may not be negligible, and 
+rather it is useful to think of it as a non-zero false positive and/or false negative rate. 
+The second condition implies that the 
+projections partition the items in \blocklist such that there is at least one unique projection for each 
+constituent item. In particular, consider the following algorithm that partitions the set $\blocklist$
+into $\numProjections$ buckets $\projBuckets[1], 
+\dots, \projBuckets[\numProjections]$. The non-colliding projections of items in \blocklist are added 
+to the buckets sequentially, i.e., the projections of all items that do not collide under $\projFn[1]$ are 
+added to $\projBuckets[1]$. Then, the projections of all items that do not collide under $\projFn[2]$ 
+are added to $\projBuckets[2]$. This process 
+is repeated for all \numProjections functions. It is guaranteed that every item in $\blocklist$ has 
+at least one projection in 
+$\bigcup\limits_{\projIdx \in \nats[\numProjections]} \projBuckets[\projIdx]$ with high 
+probability\footnote{If we we assume that the blocklist only contains pairwise-dissimilar items, then 
+the first condition may imply the second condition for small security 
+parameters~\cite{chongchitmate2024approximate}}. 
+
+\myparagraph{Construction sketch}
+%
+A \projectionPrimitive of the auditors set $\blocklist$ gives a straightforward mechanism to extend 
+our base protocol to detect fuzzy matches. The auditors partition $\blocklist$ into sets 
+$\projBuckets[1], \dots, \projBuckets[\numProjections]$ as described above. Then, they  
+individually sign $\projBuckets[1], \dots, \projBuckets[\numProjections]$ using a randomizable 
+set homomorphic signature and publish $\genericSig[\projBuckets[1]], \dots, 
+\genericSig[\projBuckets[\numProjections]]$. The client projects its inputs 
+$\genericCInputElmt$ (the content embedding)
+using $\projFn[1], \dots, \projFn[\numProjections]$ and then computes 
+$\genericSig[\projBuckets[1]] \sigMinus[\pubKey]\projFn[1](\genericCInputElmt)$, $\dots$, 
+$\genericSig[\projBuckets[\numProjections]] 
+\sigMinus[\pubKey]\projFn[\numProjections](\genericCInputElmt)$
+(see \stepsref{nf:client:sigminus}{nf:client:randomize} of the non fuzzy protocol). 
+The client encrypts the content under the key $\genericSymmKey$ and then encrypts 
+\genericSymmKey under $\numProjections$ different keys 
+producing $\numProjections$ ciphertexts: the $\projIdx$-th key is derived from the output of 
+$\randomize[\pubKey](\genericSig[\projBuckets[\projIdx]] 
+\sigMinus[\pubKey]\projFn[\projIdx](\genericCInputElmt))$
+(\stepref{nf:client:encrypt}). Upon receiving the ciphertexts and the signatures, the server tries to 
+decrypt the ciphertexts (\stepsref{nf:server:check}{nf:server:decrypt}).  The decryption is 
+successful if the server is able to correctly compute one of the keys, which happens when there is 
+some $\genericBlocklistElmt \in \blocklist$ that has the same projection as $\genericCInputElmt$ 
+under at least one out of $\projFn[1], \dots, \projFn[\numProjections]$. 
+
+
+The correctness of the 
+protocol follows from the fact for all $\genericBlocklistElmt \in \blocklist$, there is at least one 
+projection $\projFn[\projIdx]$ such that $\projFn[\projIdx](\genericBlocklistElmt) \in 
+\projBuckets[\projIdx]$ and if 
+$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$, 
+then $\projFn[\projIdx](\genericBlocklistElmt) = \projFn[\projIdx](\genericCInputElmt)$ with 
+probability at least $1 - \epsilon$. Thus, from 
+$\genericSig[\projBuckets[\projIdx]]\sigMinus[\pubKey]\projFn[\projIdx](\genericCInputElmt)$,
+the server will be able to derive the $\projIdx$-th key to decrypt $\genericCInputElmt.\valueLabel$. 
+The security of  the framework is implied by the signature scheme: if 
+$\projFn[\projIdx](\genericCInputElmt) \notin \projBuckets[\projIdx]$ for all $\projIdx \in 
+\nats[\numProjections]$, then 
+$\genericSig[\projBuckets[\projIdx]]\sigMinus[\pubKey] 
+\projFn[\projIdx](\genericCInputElmt)$ provides no information about 
+$\projFn[\projIdx](\genericCInputElmt)$ and any of the keys 
+encrypting the content to the server due to the IND-SR property. Also, 
+$\projFn[\projIdx](\genericCInputElmt) \neq \projFn[\projIdx](\genericBlocklistElmt)$ for all 
+$\projIdx \in \nats[\numProjections]$ with probability at least $1 - \epsilon$ when  
+$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] > \threshold$. 
+Finally, observe that the client needs to compute and communicate $\bigO(\numProjections)$ 
+elements in the protocol and the server's compute cost is $\bigO(\numProjections \blocklistSize 
+\log\blocklistSize)$. 
+
+
+\myparagraph{Candidate \projectionPrimitive schemes}
+%
+Before describing a concrete instantiation of the sketch, it 
+is worth discussing the candidates we can use for a \projectionPrimitive.
+The obvious candidate is a locality sensitive hash function $\localitySensitiveHash: \metricSpace 
+\rightarrow \projectedSpace$ which (informally stated) guarantees that for any two elements 
+$\genericMetricSpacElmt, \genericMetricSpacElmtAlt \in 
+\metricSpace$, if 
+$\distanceNotation[\distance][\genericMetricSpacElmt][\genericMetricSpacElmtAlt] \le \threshold$ 
+then $\prob{\localitySensitiveHash(\genericMetricSpacElmt) = 
+	\localitySensitiveHash(\genericMetricSpacElmtAlt)} \ge \tpr$, where \tpr is the true positive rate. 
+Conversely, if 
+$\distanceNotation[\distance][\genericMetricSpacElmt][\genericMetricSpacElmtAlt] > 
+\thresholdUpper$, then $\prob{\localitySensitiveHash(\genericMetricSpacElmt) \neq
+	\localitySensitiveHash(\genericMetricSpacElmtAlt)} \ge \tnr$. If $\thresholdUpper \ge 
+\lshConst \threshold$ for some integer constant $\lshConst > 1$, then by concatenating the 
+outputs of \numProjections different uniformly sampled hash functions (which are essentially 
+projections), false positives and false 
+negatives can be eliminated with overwhelming probability~\cite{}.
+It is not immediately obvious that locality-sensitive hash functions will ensure condition (2), 
+and indeed without making additional assumptions about the data distribution, it
+seems unlikely that they will. However, under certain distribution assumptions (about the items in 
+the blocklist), we can achieve this guarantee~\cite{chongchitmate2024approximate}. The 
+assumption roughly translates to: if there are two dissimilar items in the blocklist, then they are 
+sufficiently far apart so that a sublinear (in the input set size) number of random projections are 
+enough to distinguish them; this guarantee is formalized in \secref{}. Crucially, we do not need to 
+make any assumptions about the client's input, and their relation to the blocklist items\footnote{An 
+	alternative solution may also be constructed from spatial hashing techniques introduced 
+	by~\citet{} 
+	but we defer this discussion to future works}.
+
+While making an assumption about the blocklist might appear limiting, there are several 
+reasons why they are justified for content moderation. First, many embedding 
+functions implicitly guarantee that dissimilar items will be embedded far apart in the metric space. A 
+noteworthy example are perceptual hash functions that map images to Hamming vectors, and are 
+used in state of the art CSAM detection systems~\cite{}. Perceptual hash functions ensure that for 
+two dissimilar images, the normalized Hamming distance is roughly 0.5, which is expected the 
+Hamming distance between any two random images (see \cite{} for a comparison of different 
+perceptual hash techniques). Second, the auditors can decide the items to include in the 
+blocklist, and the type of embedding function. If an embedding results in a large number of 
+collisions, it can be tuned/replaced by a different function. Finally, if such a partitioning is not 
+possible for all items, it is possible to simply revert to a mechanism that does not require such a 
+partitioning, e.g., a fully homomorphic encryption based 
+scheme~\cite{}, for a small subset of the blocklist. 
+
+
+
+
+
+\subsection{Instantiation of a Delegated Fuzzy PSI}
+%
+In this section, we will describe a protocol that works with blocklist containing content embeddings 
+in the Hamming space. More specifically, assume that there is a content embedding 
+function $\universe \rightarrow \setDefn{0,1}^{\genericVecLen}$ and a similarity metric 
+$\similarityMetric: \universe \times \universe \rightarrow \setDefn{0,1}$, which given 
+$\genericUniverseElmt, \genericUniverseElmtAlt \in \universe$, returns 1 if the content is considered 
+similar to each other, and returns 0 otherwise. The embedding function ensures for $\threshold \in 
+\nonnegativeIntegers$
+
+\itemListStart
+\item 
+$\cprob{\big}{\hammingDist{\contentHash(\genericUniverseElmt)}{\contentHash(\genericUniverseElmtAlt)}
+	\le 
+	\threshold}{\similarityMetric(\genericUniverseElmt, \genericUniverseElmtAlt) = 1} \ge \tpr$
+\item 
+$\cprob{\big}{\hammingDist{\contentHash(\genericUniverseElmt)}{\contentHash(\genericUniverseElmtAlt)}
+	> 
+	\threshold}{\similarityMetric(\genericUniverseElmt, \genericUniverseElmtAlt) = 0} \ge \tnr$
+\itemListEnd
+
+, where $\hammingDist{\cdot}$ is the Hamming distance between two vectors, \tpr is the true 
+positive rate and \tnr is the true negative rate of the embedding function. These parameters can be 
+tuned for embedding functions by e.g., adjusting the output vector lengths, etc. Many common 
+metric distances, e.g., $L_p$, Edit distance, etc. can be embedded into Hamming 
+distance using known techniques~\cite{}. 
+
+The auditors first maps the blocklisted content to bit-vectors using $\embed$ and creates the 
+embedded set $\blocklistEmbedded$. This set is then partitioned using a 
+\projectionPrimitive scheme over Hamming vectors to create the projected sets $\projBuckets[1], 
+\dots, \projBuckets[\numProjections]$. We will leverage a construction by 
+\citet{chongchitmate2024approximate} as a building block 
+
+\myparagraph{\ProjectionPrimitive of Hamming 
+	vectors~\cite{chongchitmate2024approximate}}
+%
+The construction uses a set of uniformly sampled functions $\projFn[1], \dots, 
+\projFn[\numProjections]$ where $\projFn[\projIdx]: \setDefn{0,1}^{\genericVecLen} \rightarrow 
+\setDefn{0,1}^{\secParam}$. Each such function selects a random subset of bits from the input 
+vector, and injectively maps it to a $\secParam$-bit string. Consider a set of bit-vectors 
+$\blocklistEmbedded \subseteq \setDefn{0,1}^{\genericVecLen}$. For each function 
+$\projFn[\projIdx]$ and each element $\genericVec \in \blocklistEmbedded$, we evaluate 
+$\projFn[\projIdx](\genericVec)$; the function evaluation is essentially a projection 
+of $\genericVec$. Denote the set of non-colliding projections under $\projFn[\projIdx]$ as
+$\projBuckets[\projIdx]$, then $\projBuckets[1], \dots, \projBuckets[\numProjections]$ is a 
+\projectionPrimitive of \blocklistEmbedded for an appropriate value of $\numProjections$. 
+Specifically, if all the vectors in $\blocklistEmbedded$ are at least $\thresholdUpper = \lshConst 
+\threshold$ Hamming distance apart, then $\numProjections = \bigO((\genericSetSize 
+\lshConst)^{\frac{1}{\lshConst - 1}} \secParam)$ functions partition the items in 
+$\blocklistEmbedded$ with overwhelming probability (failing negligibly in 
+$\secParam$). Observe that if $\lshConst > 2$, the number of functions required is sublinear in 
+$\setSize{\blocklistEmbedded} = \genericSetSize$. Most embedding functions ensure that similar 
+items are mapped to items close in the embedded space, while dissimilar items are mapped to items 
+that are sufficiently far apart~\cite{}. Therefore if $\blocklist$ contains dissimilar items (which is 
+likely since similar items can be clustered together), $\numProjections$ is sublinear in 
+$\setSize{\blocklist}$. 
+
+
+
+%Consequently, if the embedding 
+%function introduces false negatives, i.e., cases where 
+%$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$ 
+%but $\hammingDist{\embed(\genericBlocklistElmt)}{\embed(\genericCInputElmt.\keyLabel)} >
+%\scalingFn(\threshold)$ with false negative rate $1 - \tpr$,  then combining it with the 
+%\projectionPrimitive described above ensures an overall construction with identical false 
+%negative rate. Since \tpr of the embedding function is tunable, e.g., by varying the 
+%length of the vectors, the false negative rate of the overall scheme is also tunable using 
+%the same parameters. 
+
+\myparagraph{Towards a protocol design}
+%
+There is one technical challenge that we need to address before using the partitioning mechanism 
+in our construction sketch. First, while the schemes ensures that false negatives 
+are negligible (\eqnref{eq:no_false_neg}), it does not guarantee the same for false positives.
+That is, even when $\hammingDist{\genericBlocklistElmt}{\genericCInputElmt} >
+\threshold$, it is possible that   
+$\projFn[\projIdx](\genericBlocklistElmt) 
+= \projFn[\projIdx](\genericCInputElmt)$ for some $\projIdx \in \nats[\numProjections]$. These false 
+positives will
+compound the false positives from the embedding function, thereby reducing the accuracy of 
+detection. One solution is to additionally check every matched pair and eliminate false 
+positives. When implemented privately in a two-party setting (e.g., 
+\cite{chongchitmate2024approximate}), eliminating false positive requires an additional 
+protocol that computes the Hamming distance between pairs with matching 
+projections. 
+
+
+However, a similar fine-grained check is not immediately compatible with our signature scheme.  
+Specifically, to perform this check, the auditors will need to sign the individual components of each 
+vector in the embedded blocklist. Therefore, the signature will be over a multi-set. 
+For example, consider the embedded blocklist with two vectors 
+$110$ and $100$. The multi-set includes $\{(1,1), (1,1), (1,2), (0,2), (0,3), (0,3)\}$, assuming that 
+each bit value is also tagged with its corresponding component. Now, since we accumulate the set 
+before signing, additional information must be included in the signature that will allow us to 
+distinguish conflicting elements, e.g., a token indicating whether the element $(1,1)$ is part of the 
+first or second vector. Moreover, if a client's input vector is say $111$, it would also need to generate 
+metadata allowing the server to  check $(1,1)$ against both the token values. As a result the 
+metadata size no longer remains sublinear in the blocklist size. 
+
+
+
+
+\myparagraph{Protocol intuition:}
+%
+We present a solution that subsumes the 
+need for an additional protocol. Intuitively, the idea is that we 
+will tie the projections of a given vector with its bit-values e.g., using a collision-resistant hash 
+function, and accumulate over the outputs. According to this scheme, two vectors will agree on a 
+particular component if: i) they have the same bit value at that component, and ii) they have the 
+same projection under at least one of the projection functions. Using this criteria, we will compare 
+the vectors component-wise. Following the previous example, the set that the auditors will need to 
+sign is $\{\hashFn(\projIdx, 1, 1, \projFn[\projIdx](110)), \hashFn(\projIdx, 1, 2, 
+\projFn[\projIdx](110)), \\ \hashFn(\projIdx, 0, 3, 
+\projFn[\projIdx](110)), \hashFn(\projIdx, 1, 1, \projFn[\projIdx](100)),$ $\hashFn(\projIdx, 0, 2, 
+\projFn[\projIdx](100)), 
+\hashFn(\projIdx, 0, 3, \projFn[\projIdx](100))\}$. Note that this is \textit{not} a multi-set assuming 
+that the hash function is collision resistant and $\projFn[\projIdx](110) \neq \projFn[\projIdx](100)$ 
+due to condition (2) of a \projectionPrimitive. Also note that we are including the projection number 
+in the hash because we want to avoid collisions across different projection functions. 
+
+More generally, the set of embedded bit-vectors $\blocklistEmbedded$ are first partitioned into the 
+buckets $\projBuckets[1], \dots, \projBuckets[\numProjections]$ as described before 
+(\stepref{auditor:partition} of the protocol for detecting fuzzy matches). The 
+bucket $\projBuckets[\projIdx]$ contains the projection $\projFn[\projIdx](\genericVec)$
+for each bit-vector $\genericVec = \tupleDefn{\genericVec[1], \dots, \genericVec[\genericVecLen]} 
+\in \blocklistEmbedded$.  Then, we create an augmented set 
+$\projBucketsAugmented[\projIdx]$ where corresponding to each entry 
+$\projFn[\projIdx](\genericVec)$
+in $\projBuckets[\projIdx]$, we include the items $\hashFn(\projIdx, \genericVec[1], 1
+\projFn[\projIdx](\genericVec)), \dots, \hashFn(\projIdx, \genericVec[\genericVecLen], 
+\genericVecLen, \projFn[\projIdx](\genericVec))$ (\stepref{auditor:augment}) where $\hashFn$ is a 
+collision resistant hash function. The auditors sign $\projBucketsAugmented[1], \dots, 
+\projBucketsAugmented[\numProjections]$
+using a randomizable set-homomorphic signature scheme and publish the signatures 
+(\stepref{auditor:sign})\footnote{Our protocol uses the set homomorphic signature construction 
+described 
+in \secref{sec:sig_scheme} and thus subsumes the need for a separate collision 
+resistant hash function because items are mapped to primes using a random oracle before being 
+signed; nonetheless we describe the idea more generally}.
+
+During an upload, let the client's input after 
+embedding into a bit-vector be $\clientVec = \tupleDefn{\clientVec[1], \dots, 
+	\clientVec[\genericVecLen]}$. Then the 
+client computes the set of elements 
+$\setDefn{\randomize[\pubKey](\genericSig[\projBucketsAugmented[\projIdx]]) 
+	\sigMinus[\pubKey]\hashFn(\projIdx, \clientVec[\vecIdx],
+	\vecIdx, \projFn[\projIdx](\clientVec[\vecIdx]))}_{\vecIdx \in \nats[\genericVecLen]}$ for $\projIdx 
+\in \nats[1][\numProjections]$ (\stepref{client:randomize}). Note that  if 
+$\hashFn(\projIdx, \clientVec[\vecIdx],
+\vecIdx, \projFn[\projIdx](\clientVec[\vecIdx])) \in \projBucketsAugmented[\projIdx]$, then there is 
+some vector $\genericVec 	= \tupleDefn{\genericVec[1], \dots, \genericVec[\genericVecLen]} \in 
+\blocklistEmbedded$ such that $\clientVec$ and $\genericVec$ have the same projection under 
+$\projFn[\projIdx]$ \textit{and} $\clientVec[\vecIdx] = \genericVec[\vecIdx]$ with overwhelming 
+probability. Also, observe that if $\hashFn(\projIdx, \clientVec[\vecIdx],
+\vecIdx, \projFn[\projIdx](\clientVec[\vecIdx])) \in \projBucketsAugmented[\projIdx]$ for at least 
+$\genericVecLen - \threshold$ different values of $\vecIdx$, then 
+$\hammingDist{\clientVec}{\genericVec} \le \threshold$. 
+This follows from the fact that $\projFn[\projIdx](\genericVec)$ is not equal to the projection of any 
+other vector in $\blocklistEmbedded$ under $\projFn[\projIdx]$, thus the set of values 
+$\setDefn{\hashFn(\projIdx, \genericVec[1], 
+	1, \projFn[\projIdx](\genericVec)), \dots, \hashFn(\projIdx, \genericVec[\genericVecLen], 
+	\genericVecLen, 
+	\projFn[\projIdx](\genericVec))}$ is unique to $\genericVec$ assuming that $\hashFn$ is collision 
+resistant. 
+
+\myparagraph{Detecting threshold matches}
+%
+Similar to the non-fuzzy protocol, the client will use 
+$\setDefn{\randomize[\pubKey](\genericSig[\projBucketsAugmented[\projIdx]]\sigMinus[\pubKey] 
+	\hashFn(\projIdx, \clientVec[\vecIdx],
+	\vecIdx, \projFn[\projIdx](\clientVec[\vecIdx]))) = \sigPair[\projIdx, \vecIdx]}$ to encrypt
+$\clientData$. More specifically, we want to ensure that the server is able to 
+decrypt the content \textit{only} when it can compute $\sigPair[\projIdx, \vecIdx][2]$ for at least 
+$\genericVecLen - \threshold$ values of $\vecIdx \in \nats[\genericVecLen]$.
+For this, the client secret shares the key using a $(\genericVecLen - 
+\threshold)$-out-of-$\genericVecLen$ secret sharing scheme, and encrypts the shares 
+using $\sigPair[\projIdx,\vecIdx][2]$ as a one-time pad for $\vecIdx \in \nats[\genericVecLen]$  
+(\stepsref{client:share}{client:dhf}); when using the set-homomorphic scheme described 
+in \secref{sec:sig_scheme}, this is trivial since $\sigPair[\projIdx,\vecIdx][2]$ is the output of a 
+random oracle. Upon receiving the signatures  $\sigPair[\projIdx,\vecIdx][1]$ for 
+all $\vecIdx \in \nats[\genericVecLen]$ and the encrypted secret shares, the server tries to compute 
+$\sigPair[\projIdx,\vecIdx][2]$ for at least $\genericVecLen - \threshold$ values, 
+which gives it access to the required number of shares to compute $\genericSymmKey$ and decrypt 
+$\encrypt[\genericSymmKey](\clientData)$ (\stepref{server:verify}). 
+
+The remaining challenge is that the server needs to know which out of the $\genericVecLen$ shares 
+have been correctly computed. The caveat here is that if less than  $\genericVecLen - 
+\threshold$ shares have been correctly computed -- which implies that with overwhelming 
+probability $\forall \genericVec \in \blocklistEmbedded, \hammingDist{\genericVec}{\clientVec} > 
+\threshold$ -- then we do not want to reveal the \textit{locations} of the correctly computed shares. 
+Note that the shares the server obtains correctly indicates the components where the 
+vectors $\clientVec$ and $\genericVec \in \blocklistEmbedded$ have the same value. 
+Since the embedding function maps close items 
+in $\universe$ to vectors with low pairwise Hamming distance, revealing these components will 
+enable the server to learn more information about the client's data, even when it is not able to 
+decrypt the content.  
+
+
+We solve this problem using a detectable hash function. Specifically, along with the secret share, 
+we also encrypt (using the one-time pad) the output of the DHF on a random value. If the server 
+correctly computes the random pad, then it not only obtains the secret-share of the key, but also a 
+DHF output (\stepref{client:dhf} and \stepsref{server:dhf}{server:decrypt}). Consequently, with at 
+least $\genericVecLen - \threshold$ DHF outputs, the 
+server learns which $\threshold$ out of the $\genericVecLen$ shares have been correctly 
+decrypted. Otherwise, the DHF 
+outputs and the decrypted shares look random to the server. 
+
+
+
+\setcounter{auditorLineNmbr}{0}
+\setcounter{clientLineNmbr}{0}
+\setcounter{serverLineNmbr}{0}
+
+\begin{mdframed}[frametitle={Protocol for Detecting Fuzzy Blocklist Matches}, 
+frametitlealignment=\centering, 
+font=\small]
+
+	\smallskip\noindent\textbf{Parameters:} A randomizable set homomorphic signature 
+	scheme 
+$\sigScheme \assign \genericSigSchemeDefn$ with signature space $\sigOutputSpace$; an 
+IND-CPA secure encryption scheme $\encryptionSchemeDefn$ with key space 
+$\encryptKeySpace$; set of uniformly sampled functions $\projFn[1], \dots, 
+\projFn[\numProjections]: \setDefn{0,1}^{\genericVecLen} \rightarrow \projRange$ for a 
+locality-preserving partition over Hamming vectors; an embedding function 
+$\contentHash: \universe \rightarrow \setDefn{0,1}^{\genericVecLen}$; 
+random oracles $\primeRO: 
+\setDefn{0,1} \times \nats[\genericVecLen] \times \projRange \rightarrow \primes$;  
+a $(\threshold, \genericVecLen - \threshold)$ detectable hash 
+function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$;
+a secret-sharing scheme $\secretSharingScheme: \encryptKeySpace \rightarrow 
+\secretShareOutputSpace^{\genericVecLen}$; random oracle $\ro: 
+\sigOutputSpace \rightarrow \setDefn{0,1}^{\setSize{\dhfRange} + 
+	\setSize{\secretShareOutputSpace}}$;
+
+\smallskip\noindent\textbf{Inputs:}
+
+
+\begin{itemize}[leftmargin=0.5em]
+\item The auditor \auditor has a blocklist $\blocklistEmbedded$ with \blocklistSize content 
+embeddings derived using \contentHash, 
+and the public-private key pair for the signature scheme $\pubKey, \privKey$. Let $\pubKey 
+\assign \tupleDefn{\rsaMod, \qrGen}$ where $\rsaMod = 
+\safePrime[1]  \safePrime[2]$ and $\privKey \assign \safePrime[1], \safePrime[2]$ (see 
+\secref{sec:sig_scheme})
+
+\item The client \client has the public key $\pubKey$ and data $\clientData \in 
+\setDefn{0,1}^{\ast}$ that it wants to upload to the server. 
+
+\item The server \server has the public key $\pubKey$ and the embedded blocklists 
+\end{itemize}	
+
+\smallskip\noindent\textbf{Auditor} ($\createBlocklist(\privKey, \blocklistEmbedded)$)
+%
+
+
+\begin{enumerate}[leftmargin=1.5em]
+
+	\item[\auditorLabel{auditor:selectPrime}] $\blindingFactor_1, \dots, 
+	\blindingFactor_{\numProjections} \getsr \primes$ 
+
+\item[\auditorNoLabel] $\forall \projIdx \in \nats[\numProjections], 
+\projBuckets[\projIdx] \assign \emptyset$
+\item[\auditorLabel{auditor:partition}] $\forall \projIdx \in \nats[\numProjections], \forall 
+\genericVec \in \blocklistEmbedded, 
+\projBuckets[\projIdx] =  \projBuckets[\projIdx] \cup \projFn[\projIdx](\genericVec) 
+~\mbox{if}~ 
+\projFn[\projIdx](\genericVec) \notin \projBuckets[\projIdx]$ 
+\item[\auditorLabel{auditor:augment}] $\forall \projIdx \in \nats[\numProjections],
+\projBucketsAugmented[\projIdx] \assign \setDefn{\primeRO(\projIdx, \genericVec[\vecIdx], \vecIdx, 
+	\projFn[\projIdx](\genericVec))}_{\genericVec \in \blocklistEmbedded, \vecIdx \in 
+	\nats[\genericVecLen]}$ 
+\item[\auditorLabel{auditor:sign}] $\forall \projIdx \in \nats[\numProjections], 
+\genericSig[\projBucketsAugmented[\projIdx]] \assign 
+\signingAlg[\pubKey](\projBucketsAugmented[\projIdx]) = 
+\qrGen^{\left(\frac{1}{\blindingFactor_{\projIdx} \prod\limits_{\genericSetElmt \in 
+\projBucketsAugmented[\projIdx]} 
+		\genericSetElmt}\right)} \bmod \rsaMod$
+
+
+\end{enumerate}
+
+\smallskip\noindent\textbf{Client} ($\uploadFile(\clientData, \clientVec = 
+\tupleDefn{\clientVec[1], 
+\dots, 
+	\clientVec[\genericVecLen]} \assign
+\contentHash(\clientData), \setDefn{\genericSig[\projBucketsAugmented[\projIdx]]}_{\projIdx 
+\in 
+\nats[\numProjections]}, \pubKey)$)
+
+
+\begin{enumerate}[leftmargin = 1.5em]
+\item[\clientLabel{client:partition}] $\forall \projIdx \in \nats[\numProjections], 
+\cInputSetAugmented[\projIdx] 
+\assign \setDefn{\primeRO(\projIdx, \clientVec[\vecIdx], \vecIdx, 
+\projFn[\projIdx](\clientVec))}_{\vecIdx 
+	\in \nats[\genericVecLen]}$ 	 	
+\item[\clientLabel{client:sign}] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+\nats[\genericVecLen], 
+\genericSig[\projBucketsAugmented[\projIdx]] \sigMinus[\pubKey] \clientVec[\vecIdx] = 
+\genericSig[\projBucketsAugmented[\projIdx]]^{\left(\clientVec[\vecIdx] \right)}  
+\bmod \rsaMod$
+\item[\clientLabel{client:randomize}] $\forall \projIdx \in \nats[\numProjections], \forall 
+\vecIdx \in 
+\nats[\genericVecLen], \sigPair[\projIdx, \vecIdx] \assign 
+\randomize[\pubKey](\genericSig[\projBucketsAugmented[\projIdx]] \sigMinus[\pubKey] 
+\clientVec[\vecIdx]) = 
+\tupleDefn{\qrGen^{\left(\frac{\genericRand[\projIdx,\vecIdx] \cdot 
+			\primeRO(\projIdx, \clientVec[\vecIdx], \vecIdx, 
+			\projFn[\projIdx](\clientVec))}{\blindedBlocklistAccSetFuzzy{\projIdx}}\right)} 
+	\bmod \rsaMod ;\ro(\qrGen^{\genericRand[\projIdx,\vecIdx]})}$
+\item[\clientLabel{}] $\genericSymmKey \getsr \encryptKeySpace$
+\item[\clientLabel{}] $\cOutputFile \assign \encrypt[\genericSymmKey](\clientData)$
+\item[\clientLabel{client:share}] $\forall \projIdx \in \nats[\numProjections]$, 
+$\secretShare{\projIdx, 1}, 
+\dots, \secretShare{\projIdx, \genericVecLen} 
+\assign 
+\secretSharingScheme(\genericSymmKey)$
+\item[\clientNoLabel] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+\nats[\genericVecLen], \cOutputSig[\projIdx][\vecIdx] \assign
+\sigPair[\projIdx, \vecIdx][1]$
+\item[\clientLabel{client:dhf}] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+\nats[\genericVecLen], \cOutputEnc[\projIdx][\vecIdx] \assign 
+(\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]), \secretShare{\projIdx, \vecIdx}) 
+\oplus \sigPair[\projIdx,\vecIdx][2]$ where $\genericRandAlt[\projIdx, \vecIdx] \getsr 
+\dhfDomain$
+\item[\clientNoLabel] $\cOutputMeta \assign 
+\setDefn{\cOutputSig[\projIdx][\vecIdx],\cOutputEnc[\projIdx][\vecIdx]}_{\forall \projIdx \in 
+\nats[\numProjections], \forall \vecIdx \in 
+	\nats[\genericVecLen]}$
+	
+\end{enumerate}
+
+\smallskip\noindent\textbf{Server} ($\checkContent 
+(\setDefn{\projBucketsAugmented[\projIdx]}_{\projIdx \in \numProjections}, 
+\setDefn{\blindingFactor_{\projIdx}}_{\projIdx \in \numProjections}, \cOutputFile, 
+\cOutputMeta, 
+\setDefn{\genericSig[\projBucketsAugmented[\projIdx]]}_{\projIdx \in \numProjections}, 
+\pubKey$)
+
+\smallskip\noindent\algComment{Upon receiving $\tupleDefn{\cOutputFile, \cOutputMeta}$ from 
+client, perform \stepsref{server:verify}{server:decrypt} for each $\projIdx \in 
+\nats[\numProjections]$ and $\genericVec = \tupleDefn{\genericVec[1], \dots, 
+\genericVec[\genericVecLen]}\in \blocklistEmbedded$}
+
+\begin{enumerate}[leftmargin = 1.5em]
+
+	\item[\serverLabel{server:verify}] 
+$\forall \vecIdx \in \nats[\genericVecLen]$, $(\dhfOutput{\vecIdx}, \secretShare{\vecIdx}') 
+\assign 
+\ro(\cOutputSig[\projIdx][\vecIdx]\sigMinus[\pubKey]  
+\projBucketsAugmented[\projIdx] 
+	\setminus \setDefn{\genericVec[\vecIdx]}) \oplus \cOutputEnc[\projIdx][\vecIdx]$
+
+\item[\serverLabel{server:dhf}]
+$\matchedIndexSet \assign \dhf.\dhfDetect(\dhfOutput{1}, \dots, 
+\dhfOutput{\genericVecLen})$. 
+
+Abort if $\dhf.\dhfDetect(\dhfOutput{1}, \dots, \dhfOutput{\genericVecLen}) = \dhfFail$
+
+\item[\serverLabel{server:combine}] $\genericSymmKey' = 
+\secretSharingScheme.\SSCombine(\setDefn{\secretShare{\ssIdx}'}_{\ssIdx \in 
+	\matchedIndexSet})$
+
+\item[\serverLabel{server:decrypt}] $\clientData = 
+\decrypt[\genericSymmKey'](\cOutputFile)$ if $\genericSymmKey' = \genericSymmKey$
+
+\end{enumerate}
+\end{mdframed}
+
+
+
+
+\begin{theorem}
+	
+	The auditable content moderation protocol for detecting fuzzy matches against a blocklist 
+	when using a randomizable set-homomorphic signature scheme \sigScheme satisfies the security 
+	properties defined in \secref{sec:model}, that is 
+	
+	\iffalse
+	\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	
+	\begin{footnotesize}
+		\begin{gather*}
+		 \cprob{\bigg}{\begin{array}{@{}r@{}}
+					\genericSigAlt =  \createBlocklist\left(\setOfAuditorPrivkeys, \blocklistEmbedded' \right) \\
+					\land ~\blocklistEmbedded' \not \subseteq \blocklistEmbedded
+			\end{array}}{\begin{array}[m]{@{}l@{}}
+					\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in \nats[\numProjections]}
+					\assign 
+					\createBlocklist\left(\setOfAuditorPrivkeys, 
+					\blocklistEmbedded\right) \\
+					\genericSigAlt \assign 
+					\adversary\left(\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in 
+					\nats[\numProjections]}, \blocklistEmbedded, 
+					\begin{array}{@{}r@{}} \setOfAuditorPubkeys, \\ \setOfDishonestAuditorPrivkeys
+					\end{array}\right)
+			\end{array}} \\ \le \ufcmaAdv
+		\end{gather*}
+	\end{footnotesize}
+	
+	\item It hides non-matching content from the server 
+
+
+	
+	\begin{footnotesize}
+		\begin{gather*}
+			\cprob{\Bigg}{\begin{array}{@{}r@{}}
+					\begin{array}{@{}r@{}} \adversary\bigg( \setOfAuditorPubkeys, \blocklist, \cOutputFile, 
+					\cOutputMeta, \\
+					\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in \nats[\numProjections]},  
+					 \setOfDishonestAuditorPrivkeys
+					\end{array}\bigg)  = \indBit
+			\end{array}}{\begin{array}[m]{@{}l@{}}
+				\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in \nats[\numProjections]}
+				\assign 
+				\createBlocklist\left(\setOfAuditorPrivkeys, 
+				\blocklistEmbedded\right)
+					\\
+					(\clientData[0],\clientData[1]) \assign \adversary[1](	
+					\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in \nats[\numProjections]}, 
+					\blocklistEmbedded, 
+					\setOfDishonestAuditorPrivkeys) \land \\	
+					\genericCInputElmt_0 \assign \contentHash(\clientData[0]) ~\land 
+					\genericCInputElmt_1 \assign \contentHash(\clientData[1]) ~\land  \\ 
+					\forall\genericBlocklistElmt \in \blocklistEmbedded, 
+					\hammingDist{\genericBlocklistElmt}{\genericCInputElmt_0} > \threshold ~\land\\
+					\forall\genericBlocklistElmt \in \blocklistEmbedded, 
+					\hammingDist{\genericBlocklistElmt}{\genericCInputElmt_1} > \threshold\\
+					\indBit \assign \setDefn{0,1}\\
+					(\cOutputFile, \cOutputMeta) \assign \uploadFile\left(\clientData, \genericCInputElmt, 
+					\tupleDefn{\genericSig[\projBuckets[\projIdx]]}{\projIdx \in \nats[\numProjections]}\right)  
+					\land 	~\genericCInputElmt \notin \blocklist
+			\end{array}} \\ \le 1/2 + \Advantage{\indcpaLabel}{\encryptionSchemeDefn}(\timeBound, 
+			\oracleQueries')  + \numProjections \genericVecLen \indsrAdv 
+		\end{gather*}
+	\end{footnotesize}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{footnotesize}
+		\begin{gather*}
+			\cprob{\Bigg}{\begin{array}{@{}r@{}}
+					\adversary[2]\left(\tupleDefn{\genericSig_{\indBit, \projIdx}}{\projIdx \in 
+					\nats[\numProjections]},  
+					\setOfAuditorPubkeys, \adversaryState{1}\right) = \indBit
+			\end{array}}{\begin{array}[m]{@{}l@{}}
+					(\blocklist_0, \blocklist_1, \adversaryState{1}) \assign 
+					\adversary[1]\left(\setOfAuditorPubkeys\right) 
+					\\
+					\indBit \getsr \setDefn{0,1} \\
+					\tupleDefn{\genericSig_{\indBit, \projIdx}}{\projIdx \in \nats[\numProjections]} \assign  
+					\createBlocklist\left(\setOfAuditorPrivkeys, 
+					\blocklist_\indBit\right) 
+			\end{array}} \\ \le 1/2 + \frac{\numProjections \log \rsaMod}{\rsaMod}
+		\end{gather*}
+		
+	\end{footnotesize}
+	
+	
+	
+	\enumListEnd  
+	\fi
+	
+	
+\end{theorem}
+
+
+
+\begin{proofsketch}
+	For (1), note that if there are no collisions in the random oracle $\primeRO$, then the sets 
+	$\projBucketsAugmented[1], \dots, \projBucketsAugmented[\numProjections]$ do not have any 
+	common items. As a result, the adversary does not gain any additional advantage in forging a 
+	signature due to the blocklist partitioning. 
+
+	For (2), note that each of the metadata items $\cOutputSig[\projIdx][\vecIdx]$ is generated 
+	using an independent random coin $\genericRand[\projIdx, \vecIdx]$ and thus each of these 
+	values are independent, uniformly distributed elements in $\qrGroup$. The values 
+	$\cOutputEnc[\projIdx][\vecIdx]$ are encrypted with a one-pad where the pad is the output of a 
+	random oracle on a random element in $\qrGroup$. The adversary breaks the one-time pad if: i) 
+	it has queried the random oracle as a guess, or ii) it is able to compute the one-time pad
+	from $\cOutputEnc[\projIdx][\vecIdx]$, which means it violates the IND-SR property of the 
+	signature scheme. Thus, the adversary's advantage in obtaining the secret shares of the key for 
+	any of 	$\numProjections \genericVecLen$ values is upper bounded by $\numProjections 
+	\genericVecLen \indsrAdv$. Finally, since both the secret shares and the DHF outputs are 
+	identically distributed to 
+	uniformly random element in their respective ranges, with less than $\threshold$ correctly 
+	decrypted shares (and DHF outputs), the adversary does not learn any information about the key. 
+	Without the key, the adversary obtains the data from the ciphertext with advantage at most 
+	$\Advantage{\indcpaLabel}{\encryptionSchemeDefn}(\timeBound, 
+	\oracleQueries') $
+	
+	For (3), note that each of the signatures $\tupleDefn{\genericSig[\projIdx]}{\projIdx \in 
+	\nats[\numProjections]}$ is blinded with an independent random prime number 
+	$\blindingFactor_1, \dots, \blindingFactor_{\numProjections}$, and the sets have no common 
+	elements. So by a union bound over the probability to break confidentiality of any of the blocklists, 
+	we get the result. 
+\end{proofsketch}
+
+
+\myparagraph{Asymptotic costs}
+%
+The total size of the signatures is $2\numProjections$ \qrGroup elements. The client only needs to 
+store these signatures. The communication volume between the client and the server 
+includes the metadata which has $\numProjections \cdot \genericVecLen$ tuples, and each tuple 
+contains one \qrGroup element, and a random oracle output with $\bigO(\secParam)$ 
+bits. Also, the client performs $2\numProjections \genericVecLen$
+exponentiations. The server's compute cost is $\bigO(\numProjections \genericVecLen \blocklistSize 
+\log \genericVecLen \blocklistSize )$ exponentiations and $\bigO(\blocklistSize 
+\numProjections)$ DHF detections. As discussed before, the server compute can be performed 
+offline, and therefore does not impact the latency of file uploads. 
+
+
+
+
+
+
+
+
+
+
+\iffalse
+
+\setcounter{auditorLineNmbr}{0}
+\setcounter{clientLineNmbr}{0}
+\setcounter{serverLineNmbr}{0}
+
+
+\begin{mdframed}[frametitle={Delegated Fuzzy PSI}, frametitlealignment=\centering, 
+	font=\small]
+	
+	\smallskip\noindent\textbf{Parameters:} A randomizable set homomorphic signature scheme 
+	$\sigScheme \assign \genericSigSchemeDefn$ with signature space $\sigOutputSpace$; an 
+	IND-CPA secure encryption scheme $\encryptionSchemeDefn$ with key space 
+	$\encryptKeySpace$; set of uniformly sampled functions $\projFn[1], \dots, 
+	\projFn[\numProjections]: \setDefn{0,1}^{\genericVecLen} \rightarrow \projRange$ for a 
+	locality-preserving partition over Hamming vectors; an embedding function 
+	$\embed: \metricSpace \rightarrow \setDefn{0,1}^{\genericVecLen}$; 
+	random oracles $\primeRO: 
+	\setDefn{0,1} \times \nats[\genericVecLen] \times \projRange \rightarrow \primes$;  
+	a $(\scalingFn(\threshold), \genericVecLen - \scalingFn(\threshold))$ detectable hash 
+	function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$;
+	a secret-sharing scheme $\secretSharingScheme: \encryptKeySpace \rightarrow 
+	\secretShareOutputSpace^{\genericVecLen}$; random oracle $\ro: 
+	\sigOutputSpace \rightarrow \setDefn{0,1}^{\setSize{\dhfRange} + 
+		\setSize{\secretShareOutputSpace}}$;
+	
+	\smallskip\noindent\textbf{Inputs:}
+	\begin{itemize}[leftmargin=0.5em]
+		\item The auditor \auditor has a blocklist \blocklist, the public key for the signature scheme 
+		$\pubKey \assign \tupleDefn{\rsaMod, \qrGen}$ where $\rsaMod = \safePrime[1] \safePrime[2]$ 
+		and $\qrGen$ is a random generator of the quadratic residue group \qrGroup of 
+		\integersModNInv , and the corresponding private key $\privKey \assign \safePrime[1], 
+		\safePrime[2]$  
+		\item 	Client has set $\cInputSet = (\keySetLabel \times \valSetLabel) \subseteq \metricSpace 
+		\times \setDefn{0,1}^{\ast}$ and the public key $\pubKey$ of the signature scheme
+		\item Server has the set $\blocklist$ and the public key $\pubKey$ 	
+	\end{itemize}
+	
+	
+	\smallskip\noindent\textbf{Auditor}
+	%
+	\begin{enumerate}
+		\item[\auditorLabel{auditor:embed}] $\blocklistEmbedded \assign \setDefn{
+			\embed(\genericBlocklistElmt): \genericBlocklistElmt \in \blocklist }$ 
+		\item[\auditorNoLabel] $\forall \projIdx \in \nats[\numProjections], 
+		\projBuckets[\projIdx] \assign \emptyset$
+		\item[\auditorLabel{auditor:partition}] $\forall \projIdx \in \nats[\numProjections], \forall 
+		\genericVec \in \blocklistEmbedded, 
+		\projBuckets[\projIdx] =  \projBuckets[\projIdx] \cup \projFn[\projIdx](\genericVec) ~\mbox{if}~ 
+		\projFn[\projIdx](\genericVec) \notin \projBuckets[\projIdx]$ 
+		\item[\auditorLabel{auditor:augment}] $\forall \projIdx \in \nats[\numProjections],
+		\projBucketsAugmented[\projIdx] \assign \setDefn{\primeRO(\genericVec[\vecIdx], \vecIdx, 
+			\projFn[\projIdx](\genericVec))}_{\genericVec \in \blocklistEmbedded, \vecIdx \in 
+			\nats[\genericVecLen]}$ 
+		\item[\auditorLabel{auditor:sign}] $\forall \projIdx, 
+		\genericSig[\projBucketsAugmented[\projIdx]] \assign 
+		\signingAlg[\pubKey](\projBucketsAugmented[\projIdx]) = 
+		\qrGen^{\left(\frac{1}{\prod\limits_{\genericSetElmt \in \projBucketsAugmented[\projIdx]} 
+				\genericSetElmt}\right)} \bmod \rsaMod$
+	\end{enumerate}
+	
+	\smallskip\noindent\textbf{Client}
+	%
+	\begin{enumerate}
+		\item[\clientLabel{client:embed}] $\cInputSetEmbedded \assign \setDefn{
+			\embed(\genericCInputElmt.\keyLabel): \genericCInputElmt.\keyLabel \in \cInputKeySet}$
+		\item[] \textit{/* Repeat \stepsref{client:partition}{client:dhf} for all $\clientVec \in 
+			\cInputSetEmbedded$ */}
+		\item[\clientLabel{client:partition}] $\forall \projIdx \in \nats[\numProjections], 
+		\cInputSetAugmented[\projIdx] 
+		\assign \setDefn{\primeRO(\clientVec[\vecIdx], \vecIdx, \projFn[\projIdx](\clientVec))}_{\vecIdx 
+			\in \nats[\genericVecLen]}$ 	 	
+		\item[\clientLabel{client:sign}] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+		\nats[\genericVecLen], 
+		\genericSig[\projBucketsAugmented[\projIdx]\setminus\clientVec[\vecIdx]] = 
+		\genericSig[\projBucketsAugmented[\projIdx]] \sigMinus[\pubKey] \clientVec[\vecIdx] = 
+		\genericSig[\projBucketsAugmented[\projIdx]]^{\left(\clientVec[\vecIdx] \right)}  
+		\bmod \rsaMod$
+		\item[\clientLabel{client:randomize}] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+		\nats[\genericVecLen], \sigPair[\projIdx, \vecIdx] \assign 
+		\randomize[\pubKey](\genericSig[\projBucketsAugmented[\projIdx]\setminus\clientVec[\vecIdx]]
+		) = 
+		\tupleDefn{\genericSig[\projBucketsAugmented[\projIdx]\setminus\clientVec[\vecIdx]]^{\genericRand[\projIdx,\vecIdx]},
+			\ro(\qrGen^{\genericRand[\projIdx,\vecIdx]})}$
+		\item[\clientLabel{}] $\genericSymmKey \getsr \encryptKeySpace$
+		\item[\clientLabel{client:share}] $\forall \projIdx \in \nats[\numProjections]$, 
+		$\secretShare{\projIdx, 1}, 
+		\dots, \secretShare{\projIdx, \genericVecLen} 
+		\assign 
+		\secretSharingScheme(\genericSymmKey)$
+		\item[\clientNoLabel] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+		\nats[\genericVecLen], \cOutputSig[\projIdx][\vecIdx] \assign
+		\sigPair[\projIdx, \vecIdx][1]$
+		\item[\clientLabel{client:dhf}] $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+		\nats[\genericVecLen], \cOutputEnc[\projIdx][\vecIdx] \assign 
+		(\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]), \secretShare{\projIdx, \vecIdx}) 
+		\oplus \sigPair[\projIdx,\vecIdx][2]$ where $\genericRandAlt[\projIdx, \vecIdx] \getsr 
+		\dhfDomain$
+	\end{enumerate}
+	
+	\smallskip\noindent\textbf{Server}
+	
+	\noindent\textit{/* Upon receiving $\setDefn{\cOutputSig[\projIdx][\vecIdx], 
+			\cOutputEnc[\projIdx][\vecIdx]}_{\projIdx \in \nats[\numProjections], \vecIdx \in 
+			\nats[\genericVecLen]}$ and $\cOutputVal \assign 
+		\encrypt[\genericSymmKey](\genericCInputElmt.\valueLabel)$ for each of $\genericCInputElmt 
+		\in \cInputSet$, repeat \stepsref{server:verify}{server:decrypt} for $\genericVec \in 
+		\blocklistEmbedded, \projIdx \in \nats[\numProjections]$ */}
+	
+	
+	
+	\begin{enumerate}
+		
+		
+		\item[\serverLabel{server:verify}] 
+		$\forall \vecIdx \in \nats[\genericVecLen]$, $(\dhfOutput{\vecIdx}, \secretShare{\vecIdx}') 
+		\assign 
+		\ro(\cOutputSig[\projIdx][\vecIdx]\sigMinus[\pubKey]  
+		\setDefn{\projBucketsAugmented[\projIdx] 
+			\setminus \genericVec[\vecIdx]}) \oplus \cOutputEnc[\projIdx][\vecIdx]$
+		
+		\item[\serverLabel{server:dhf}]
+		$\matchedIndexSet \assign \dhf.\dhfDetect(\dhfOutput{1}, \dots, \dhfOutput{\genericVecLen})$. 
+		
+		Abort if $\dhf.\dhfDetect(\dhfOutput{1}, \dots, \dhfOutput{\genericVecLen}) = \dhfFail$
+		
+		\item[\serverLabel{server:combine}] $\genericSymmKey' = 
+		\secretSharingScheme.\SSCombine(\setDefn{\secretShare{\ssIdx}'}_{\ssIdx \in 
+			\matchedIndexSet})$
+		
+		\item[\serverLabel{server:decrypt}] $\genericCInputElmt.\valueLabel = 
+		\decrypt[\genericSymmKey'](\cOutputVal)$ if $\genericSymmKey' = \genericSymmKey$
+		
+	\end{enumerate}
+	
+\end{mdframed}
+\fi

@@ -1,0 +1,406 @@
+
+  
+
+
+
+
+
+
+
+
+
+\iffalse 
+\begin{figure}[th]
+\centering
+\resizebox{0.45\textwidth}{!}{\vbox{%
+\pcb{
+\textbf{\uploadFile} \hspace{6cm} \textbf{\checkContent} \\
+(\genericSig[\blocklist], \rsaMod, \qrGen, \clientData, \genericContentID)\hspace{4.8cm}(\rsaMod, \qrGen, \blocklist)
+\\[0.05\baselineskip] \\ [-0.3\baselineskip]
+\pcln\label{nf:client:token1} \genericRand \sample \nats[1, \rsaMod^2] \\
+\pcln \genericCInputElmt \assign \contentHash(\clientData) \\
+\pcln \genericSig[\blocklist] \sigMinus[\pubKey] \genericCInputElmt = \genericSig[\blocklist]^{\primeRO(\genericCInputElmt)} \bmod \rsaMod \\
+\pcln \randomize[\pubKey](\genericSig[\blocklist] \sigMinus[\pubKey] \genericCInputElmt) = \\
+\quad \t \t \langle  \genericSig[\blocklist]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod) \rangle \\
+%\pcln\label{nf:client:token2} \genericSigPair[2] \assign  
+%		\ro(\qrGen^{\genericRand} \bmod \rsaMod)\\
+\pcln\label{nf:client:token3} \cOutputMeta \assign  \genericSig[\blocklist]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod \\
+\pcln \fileKey \gets \ro(\qrGen^{\genericRand} \bmod \rsaMod) \\
+\pcln\label{nf:client:encrypt} \cOutputFile \assign 
+		\encrypt[\fileKey](\clientData)\\
+\pcln\label{nf:client:store} \text{store} ~\langle \genericContentID, \genericRand \rangle \\
+\hspace{2cm} \sendmessageright*[2.5cm]{\cOutputFile,\cOutputMeta}\\
+\hspace{2cm} \pcln\label{nf:server:check_sig} \text{For} ~\genericBlocklistElmt \in \blocklist:\\
+\hspace{3cm} \pcln \genericSymmKey  \assign \ro\left(\cOutputMeta^{\left(\prod\limits_{\genericFnInput \in \blocklist \setminus \{\genericBlocklistElmt\}}\primeRO(\genericFnInput)\right)} \bmod \rsaMod \right) \\
+%\hspace{3cm} \pcln \genericSymmKey \assign \kdf(\genericSigPair[2]')\\
+\hspace{3cm} \pcln\label{nf:server:decrypt}  /\!/~ \clientData = 
+		\decrypt[\genericSymmKey](\cOutputFile) ~\text{if} ~\genericCInputElmt \in 
+		\blocklist
+}
+%\vspace{-0.4cm}
+\caption{\protocolEM: Exact-matching against blocklist\label{fig:exact_match}}
+}}
+\end{figure}
+\fi 
+
+
+
+
+
+
+
+
+ 
+%\begin{table}
+%\footnotesize
+%\centering
+%\caption{Table of notations\label{tab:notation}}
+%\vspace{-10pt}
+%\begin{tabular}{@{}cp{0.9\columnwidth}@{}}
+%	\toprule	
+%	$\blocklist$ & the blocklist of $\blocklistSize$ content hashes \\
+%	$\embed$ & a content hash function from $\universe \rightarrow \bin^{\ell}$\\
+%	$\rsaMod, \qrGen$ & public key of the randomizable set homomorphic signature \genericSigSchemeDefn \ \\
+%	$\genericSig[\blocklist]$ & auditor's signature on blocklist $\genericSig[\blocklist] = \genericSigRSA$ \\
+%	$\ro$ & random oracle $\qrGroup \rightarrow \encryptKeySpace$ where \encryptKeySpace is the key space of \encryptionSchemeDefn \\
+%	$\primes$ & set of odd primes less than $\rsaMod$ \\
+%	$\primeRO$ & random oracle from $\universe \rightarrow \primes$ \\
+%	\bottomrule
+%\end{tabular}
+%\end{table}
+
+
+
+
+
+
+
+	\iffalse
+\begin{theorem}
+	
+	The protocol \protocolEM for detecting exact matches against a blocklist satisfies the security properties defined in \secref{sec:model}
+when using a randomizable set-homomorphic signature scheme \sigScheme 
+	
+
+	\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	\begin{small}
+	\begin{gather*}
+	\cprob{\bigg}{\begin{array}{@{}r@{}}
+			\genericSigAlt =  \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist'\right) \\
+			\land ~\blocklist' \not \subseteq \blocklist
+	\end{array}}{\begin{array}[m]{@{}l@{}}
+			\genericSig \assign \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist\right) \\
+			\genericSigAlt \assign \adversary\left(\genericSig, \blocklist, 
+			\begin{array}{@{}r@{}} \setOfAuditorPubkeys, \\ \setOfDishonestAuditorPrivkeys
+			\end{array}\right)
+	\end{array}}\\  \le \ufcmaAdv
+\end{gather*}
+	\end{small}
+	
+	\item It hides non-matching content from the server 
+	
+	\begin{small}
+					\begin{gather*}
+			\cprob{\bigg}{\begin{array}{@{}r@{}}
+					\adversary\left(\blocklist, \cOutputFile, \cOutputMeta, 
+					\genericSig,  \begin{array}{@{}r@{}} \setOfAuditorPubkeys,\\ 
+						\setOfDishonestAuditorPrivkeys
+					\end{array}\right)  = \indBit
+			\end{array}}{\begin{array}[m]{@{}l@{}}
+					\genericSig \assign  \createBlocklist(\setOfAuditorPrivkeys, 
+					\blocklist) 
+					\\
+					(\clientData[0],\clientData[1]) \assign \adversary[1](\genericSig, \blocklist, 
+					\setOfDishonestAuditorPrivkeys) \land \\	
+					\genericCInputElmt_0 \assign \contentHash(\clientData[0]) \notin \blocklist ~\land 
+					\genericCInputElmt_1 \assign \contentHash(\clientData[1]) \notin \blocklist\\
+					\indBit \assign \setDefn{0,1}\\
+					(\cOutputFile, \cOutputMeta) \assign \uploadFile(\clientData[\indBit], 
+					\genericCInputElmt_\indBit, 
+					\genericSig) 
+			\end{array}} \\ \le \Advantage{\indcpaLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries')  + \indsrAdv 
+		\end{gather*}
+		\end{small}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{small}
+				\begin{gather*}
+				\cprob{\Bigg}{\begin{array}{@{}r@{}}
+						\adversary[2]\left(\genericSig_\indBit,  
+						\setOfAuditorPubkeys, \adversaryState{1}\right) = \indBit
+				\end{array}}{\begin{array}[m]{@{}l@{}}
+						(\blocklist_0, \blocklist_1, \adversaryState{1}) \assign 
+						\adversary[1]\left(\setOfAuditorPubkeys\right) 
+						\\
+						\indBit \getsr \setDefn{0,1} \\
+						\genericSig_\indBit \assign  \createBlocklist\left(\setOfAuditorPrivkeys, 
+						\blocklist_\indBit\right) 
+				\end{array}} \\ \le 1/2 + \frac{\log \rsaMod}{\rsaMod}
+			\end{gather*}
+		\end{small}
+	
+	
+	
+	\enumListEnd  
+\end{theorem}
+	\fi
+	
+
+%\myparagraph{Asymptotic Cost}
+%
+%The \blklistToken $\genericSig[\blocklist]$ and the \contentToken $\cOutputMeta$ are both 
+%a single element in \qrGroup. The 
+%client compute cost involves performing two exponentiations and encrypting the content.
+%The server's compute cost is $\bigO(\blocklistSize^2)$
+%exponentiations, where $\setSize{\blocklist} = \blocklistSize$, when the check in \stepref{nf:server:check_sig} is performed naively.  However, the 
+%costs can be reduced to $\bigO(\blocklistSize \log \blocklistSize)$ using dynamic programming~\cite{ateniese2011if}. 
+%Note that the protocol is non-interactive: once the client uploads 
+%the \cOutputFile and \cOutputMeta , it does not need to participate in the verification. 
+
+
+
+
+
+
+%The security of the construction is implied by the security of the randomizable set homomorphic signature, 
+%and the random key robustness of the encryption scheme. We formally prove security of the protocol in \appref{sec:proof:em}.
+
+%Each invocation of \uploadFile uses a different random coin \genericRand and therefore the values of $\ro(\qrGen^{\genericRand \bmod \rsaMod})$ and $\cOutputMeta$ are independent across multiple invocations. 
+
+
+\iffalse 
+\subsection{Reducing Server Costs}
+\label{sec:em:pre}
+%
+
+\begin{figure}
+\footnotesize
+	\begin{mdframed}
+\smallskip\noindent\textbf{\underline{Preprocessing:}}
+
+\enumListStart
+
+\item \label{nf:pre:oprf} For all $\genericBlocklistElmt \in \blocklist$, client and auditor (server) invoke \oprfFunc with inputs $\prfKeyClient \in \prfKeyClientSpace$ and $\genericBlocklistElmt$ respectively. Server learns $\prf{\prfKeyClient}(\genericBlocklistElmt)$. 
+
+\item Server initializes $\numBuckets$ Bloom filters $\bloomFilter[1], \dots, \bloomFilter[\numBuckets]$.
+
+\item Server inserts $\genericBlocklistElmt$, $\prf{\prfKeyClient}(\genericBlocklistElmt)$ in $\bloomFilter[\bloomFilterIdx]$ where $\bloomFilterIdx = \prf{\prfKeyClient}(\genericBlocklistElmt) \bmod \numBuckets$. 
+
+\item Server computes the signature for each bucket: $\genericSig[\bloomFilter[\bloomFilterIdx]] \assign (\genericSig[\blocklist])^{\prod\limits_{\genericBlocklistElmt \notin \bloomFilter[\bloomFilterIdx]} \primeRO(\genericBlocklistElmt)}$ for all $\bloomFilterIdx \in \nats[\numBuckets]$.  
+
+
+\item Server samples a key for the symmetric key encryption scheme \encryptionSchemeDefn: $\genericSymmKey \assign \encryptKeyGen(1^\secParam)$. 
+
+\item Server sends to client $\{\encrypt[\genericSymmKey](\bloomFilter[1]), \dots, \encrypt[\genericSymmKey](\bloomFilter[\numBuckets])\}$ and $\{\genericSig[\bloomFilter[1]], \dots, \genericSig[\bloomFilter[\numBuckets]]\}$. 
+
+\enumListEnd
+
+\smallskip\noindent\textbf{\underline{Upload:}}
+
+\enumListStart
+
+\item Client computes $\bloomFilterIdx \assign \prf{\prfKeyClient}(\genericBlocklistElmt) \bmod \numBuckets$. 
+\item Client performs \stepsref{nf:client:token1}{nf:client:store} of \figref{fig:exact_match} with $\genericSig[\bloomFilter[\bloomFilterIdx]]$ and input $\genericCInputElmt$. 
+\item Client sends to server $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$, $\prf{\prfKeyClient}(\genericCInputElmt)$, $\cOutputFile$ and $\cOutputMeta$. 
+\item Server decrypts $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$ and obtains $\bloomFilter[\bloomFilterIdx]$. If $\prf{\prfKeyClient}(\genericCInputElmt) \in \bloomFilter[\bloomFilterIdx]$, 
+\enumListStart
+\item Server computes $\blocklist' \assign \{ \genericBlocklistElmt: \genericBlocklistElmt \in \blocklist ~\land ~\genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] \}$
+\item Server performs \stepsref{nf:server:check_sig}{nf:server:decrypt} of  \figref{fig:exact_match} with $\blocklist'$
+\enumListEnd
+\item Otherwise, Server returns $0$ 
+\enumListEnd
+\end{mdframed}
+%\vspace{-0.5cm}
+\caption{\protocolEMP: Coarse-grained check for exact match\label{fig:nf_pre}}
+\end{figure}
+
+
+The concrete costs of performing a check against the entire blocklist for every upload may prove too costly for the server, especially if the blocklist is large. We describe an optimization that leverages client-side storage (sublinear in $\blocklistSize$) to make the server-side compute more efficient. The optimization is based on two observations. 
+First, in most cases, the uploaded content  will not match an item on the blocklist (presumably), and so, the server can perform a coarse-grained check that does not have false negatives (but may have false positives) to avoid most of the checks. Second, when the coarse-grained check indicates that there is a potential match, we can reduce the costs by smartly partitioning the blocklist.  
+
+%Towards a solution, consider the following (flawed) design. The server partitions the blocklist by hashing each item into one of \numBuckets buckets. When uploading content, the client computes the content verification token and indicates to the server the hash bucket to check against. If the bucket load is sufficiently small, the check is going to be inexpensive. However, the problem with this idea is that the server may learn information about the client's content hash from its bucket allocation, particularly since the bucket allocation algorithm is public. 
+
+Our first idea is to allocate the blocklist items to $\numBuckets$ buckets during a preprocessing step between the client and the server. 
+Specifically, the client computes $\prf{\prfKeyClient}(\genericBlocklistElmt)$ for $\genericBlocklistElmt \in \blocklist$ by invoking the OPRF functionality \oprfFunc, where the client acts as the sender, and the server acts as the receiver. Then, given the set of tuples $\langle \genericBlocklistElmt, \prf{\prfKeyClient}(\genericBlocklistElmt) \rangle_{\genericBlocklistElmt \in \blocklist}$, the server creates $\numBuckets$ Bloom filters, where the $i$-th Bloom filter has all the items $\genericBlocklistElmt$ and their corresponding evaluation $\prf{\prfKeyClient}(\genericBlocklistElmt)$, such that $\prf{\prfKeyClient}(\genericBlocklistElmt)  \equiv i \bmod \numBuckets$. The server also computes the signature for each bucket; this is possible using the set-homomorphic properties of the signature scheme. 
+The $\numBuckets$ signatures and Bloom filters are stored client-side, with the Bloom filters encrypted under a symmetric key sampled by the server. 
+
+
+
+During an upload, the client sends $\prf{\prfKeyClient}(\genericCInputElmt)$, the encrypted Bloom filter $\bloomFilter[j]$, and the content verification token $\genericSig[\bucket{j} \setminus \{\genericCInputElmt\}]$ where $j = \prf{\prfKeyClient}(\genericCInputElmt) \bmod \numBuckets$. 
+If $\prf{\prfKeyClient}(\genericCInputElmt) \notin \bloomFilter[j]$, then the server avoids a fine-grained check with the content verification token. Otherwise, the server  checks the content verification token against the items in bucket $\bucket{j}$. The full protocol \protocolEMP is described in \figref{fig:nf_pre}.
+
+We use the 2HashDH OPRF (see \secref{sec:oprf}) to realize \oprfFunc. Specifically, the auditor acts as the receiver and signs a blinded blocklist $\{ \hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$; the server is provided $\genericRand[1], \dots, \genericRand[\blocklistSize]$. The client (the sender) verifies the signature before exponentiating the blinded elements $\{ \left(\hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\right)^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and sending it to the server. The server removes the blinding and computes $\{ \hashFn'(\genericBlocklistElmt[\setIdx], \hashFn(\genericBlocklistElmt[\setIdx])^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ to perform the bucket allocation.
+
+
+%
+%The client must ensure that the PRF it computes for the server in \stepref{nf:pre:oprf} of \protocolEMP is on the blocklist items only. Since the server cannot be trusted to provide the correct inputs, we ensure this by allowing the auditors to publish a blinded blocklist that is compatible with the OPRF computation. Specifically, we use the , where 
+%Conversely, if there is a false positive, the server learns nothing about $\genericCInputElmt$ from $\prf{\prfKeyClient}(\genericCInputElmt)$
+%
+%
+%indicates to the server that the content verification token should be checked against the items in bucket $\prf{\prfKeyClient}(\genericBlocklistElmt) \bmod \numBuckets$. The client also sends the corresponding encrypted Bloom filter, which allows the server to determine the items to check against. 
+%
+%
+%
+%% leverage client secrets to perform the bucket allocation (see \figref{fig:nf_pre}). Specifically, given the blocklist, the client allocates each item $\genericBlocklistElmt \in \blocklist$ to a bucket u
+%
+%
+% 
+%
+%
+%This idea reduces the server's asymptotic costs to $\bigO(\blocklistSize + \blocklistSize/\numBuckets \log \blocklistSize/\numBuckets)$, but the concrete costs can be reduced further. The idea is that in addition to storing the blocklist element $\genericBlocklistElmt$ in the Bloom filters, the server also stores $\prf{\prfKeyClient}(\genericBlocklistElmt)$. Then, during an upload, the client can additionally send $\prf{\prfKeyClient}(\genericCInputElmt)$ to the server. If $\prf{\prfKeyClient}(\genericCInputElmt) \notin \bloomFilter[\prf{\prfKeyClient}(\genericCInputElmt) \bmod \numBuckets]$, then the server entirely avoids the check. Conversely, if there is a false positive, the server learns nothing about $\genericCInputElmt$ from $\prf{\prfKeyClient}(\genericCInputElmt)$. 
+
+%\myparagraph{Authenticating OPRF inputs}
+%
+%The client must ensure that the PRF it computes for the server in \stepref{nf:pre:oprf} of \protocolEMP is on the blocklist items only. Since the server cannot be trusted to provide the correct inputs, we ensure this by allowing the auditors to publish a blinded blocklist that is compatible with the OPRF computation. Specifically, we use the 2HashDH OPRF (see \secref{sec:oprf}), where the auditor acts as the receiver and signs a blinded blocklist $\{ \hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$; the server is provided $\genericRand[1], \dots, \genericRand[\blocklistSize]$. The client (the sender) verifies the signature before exponentiating the blinded elements $\{ \left(\hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\right)^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and sending it to the server. The server removes the blinding and computes $\{ \hashFn'(\genericBlocklistElmt[\setIdx], \hashFn(\genericBlocklistElmt[\setIdx])^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$
+
+\myparagraph{Costs \& Security}
+%
+The preprocessing cost for the client is $\bigO(\blocklistSize)$ due to the $\blocklistSize$ invocations of \oprfFunc. We stress that is a one-time computation only. The online compute costs for the client is $\bigO(1)$, while the communication involves the encrypted Bloom filter for one of the buckets and the constant-sized content verification token. Consider the case when $\numBuckets = \sqrt{\blockSize}$. Each bucket will have in expectation $\bigO(\sqrt{\blockSize})$ elements and the Bloom filter will have  $\bigO(\blockSize^{1/2 - \epsilon})$ bits. Concretely, for a blocklist of a million elements, each Bloom filter will require roughly 6KB of storage for a false positive rate of 0.00001; the client's communication cost will be an additional 6KB per upload. The total client storage will be roughly 6MB for the Bloom filters and 256KB for the signatures. 
+
+The security of the scheme reduces to the security of \protocolEM, the IND-CPA guarantees of the encryption scheme, and the indistinguishability of the PRF scheme. We formally prove security in \appref{sec:proof:emp}
+
+\fi 
+
+
+\iffalse
+The server-side costs can be reduced with a one-time preprocessing step. The idea is that the client will obliviously compute a PRF on all the elements on the blocklist by invoking \oprfFunc as the sender with the PRF key \prfKeyClient. The auditor + server act as the receiver. In particular, we will use an OPRF protocol where the client is provided blinded inputs to compute the PRF, e.g., the 2HashDH OPRF~\cite{jarecki2014round}. The auditors sign the blinded blocklist elements (which is verified by the client), and provide the random coins used for blinding to the server. In effect, the server gets the OPRF outputs.  
+
+Then, the server stores the obfuscated (with the PRF) blocklist in a Bloom filter. During an upload, the client computes the PRF on the content hash and provides it as the \contentToken. If the value is not in the Bloom filter, then the content can be allowed since there are no false negatives. False positives can be eliminated with a fine-grained check, by running \protocolEM. By tuning the Bloom filter, false positives can be reduced but it is worth noting that a false positive does not violate security, since the server only learns the PRF output on the client's content hash. In terms of concrete storage requirements, a blocklist of a million elements will need a Bloom filter of size approximately 4BM to have a false positive rate of 0.000001. 
+ 
+
+Finally, if the client uploads multiple data items that have the same content, the server can derive correlations between them by observing the same content hash. While our security definition tolerates this leakage, in practice an encrypted file store will hide these correlations from the server. The leakage can be mitigated if the client stores the content hashes of previously uploaded files. Before uploading more content, the client can check if the particular content hash has been already checked before. If so, the client provides a random element from the range of the PRF as the content hash. With high probability, this random element will not collide with any of the elements on the blocklist. 
+\fi 
+
+
+
+
+%%%% OLD Protocol 
+
+
+\iffalse 
+
+
+
+ \setcounter{auditorLineNmbr}{0}
+\setcounter{clientLineNmbr}{0}
+\setcounter{serverLineNmbr}{0}
+
+\begin{mdframed}[frametitle={Protocol for Detecting Exact Blocklist Matches}, 
+frametitlealignment=\centering, 
+	font=\small]
+	
+%	\smallskip\noindent\textbf{Parameters:} A randomizable set homomorphic signature scheme 
+%	$\sigScheme \assign \genericSigSchemeDefn$ with signature space $\sigOutputSpace$, an 
+%	IND-CPA secure authenticated encryption scheme 
+%	$\encryptionSchemeDefn$ with key space $\encryptKeySpace$, 
+%	random oracles $\ro:  \sigOutputSpace \rightarrow \encryptKeySpace$ and $\primeRO: \universe 
+%	\rightarrow \primes$; a content hashing scheme $\contentHash: \setDefn{0,1}^{\ast} \rightarrow 
+%	\setDefn{0,1}^{\genericVecLen}$
+%	
+%	\smallskip\noindent\textbf{Inputs:}
+%	
+%	
+%	\begin{itemize}[leftmargin=0.5em]
+%		\item The auditor \auditor has a blocklist \blocklist with \blocklistSize content hashes derived 
+%		using \contentHash, 
+%		and the public-private key pair for the signature scheme $\pubKey, \privKey$. Let $\pubKey 
+%		\assign \tupleDefn{\rsaMod, \qrGen}$ where $\rsaMod = 
+%\safePrime[1]  \safePrime[2]$ and $\privKey \assign \safePrime[1], \safePrime[2]$ (see 
+%\secref{sec:sig_scheme})
+%
+%		\item The client \client has the public key $\pubKey$ and data $\clientData \in 
+%		\setDefn{0,1}^{\ast}$ that it wants to upload to the server. 
+%		
+%		\item The server \server has the public key $\pubKey$ and the blocklist $\blocklist$
+%	\end{itemize}	
+	
+	\smallskip\noindent\textbf{Auditor} ($\createBlocklist(\privKey, \blocklist)$)
+	%
+	
+	
+	\begin{enumerate}[leftmargin=1.5em]
+		
+		\item[\auditorLabel{nf:auditor:selectPrime}] $\blindingFactor \getsr \primes$ 
+		
+		\item[\auditorLabel{nf:auditor:publish}] $\genericSig[\blocklist] \assign 
+		\signingAlg[\privKey](\blocklist \cup \blindingFactor) = 
+		\qrGen^{\left(\frac{1}{\blindedBlocklistAccSet}\right)} \bmod \rsaMod$
+	\end{enumerate}
+	
+	\smallskip\noindent\textbf{Client} ($\uploadFile(\clientData, \genericCInputElmt \assign
+	\contentHash(\clientData), \genericSig[\blocklist], \pubKey)$)
+	
+	
+	\begin{enumerate}[leftmargin = 1.5em]
+		
+		
+		\item[\clientLabel{nf:client:sigminus}] 
+		$\genericSig[\blocklist] 
+		\sigMinus[\pubKey] \setDefn{\genericCInputElmt} =  
+		\genericSig[\blocklist]^{\primeRO(\genericCInputElmt)} \bmod \rsaMod =
+		\qrGen^{\left(\frac{\primeRO(\genericCInputElmt)}{\blindedBlocklistAccSet}\right)} \bmod 
+		\rsaMod$
+		
+		
+		
+		\item[\clientLabel{nf:client:randomize}] 
+		$\randomize[\pubKey](\genericSig[\blocklist] 
+		\sigMinus[\pubKey] \setDefn{\genericCInputElmt}) = 
+		\tupleDefn{\randomizeFn[\pubKey](\genericSig[\blocklist] 
+			\sigMinus[\pubKey] \setDefn{\genericCInputElmt}; \genericRand), 
+			\oneWayFn[\pubKey](\genericRand)} = $
+		
+	\[
+	 \tupleDefn{\qrGen^{\left(\frac{\genericRand \cdot 
+					\primeRO(\genericCInputElmt)}{\blindedBlocklistAccSet}\right)} 
+			\bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod)}; \genericRand \getsr 
+			\nats[1][\rsaMod^2]
+	\]
+
+		\item[\clientLabel{nf:client:encrypt}] $\cOutputFile \assign 
+		\encrypt[\genericSigPair[2]](\clientData)$   ~\qquad \algComment{$\genericSigPair[2] \assign  
+		\ro(\qrGen^{\genericRand} \bmod \rsaMod)$}
+				
+		\item[\clientLabel{nf:client:sig_output}] $\cOutputMeta \assign   
+			\qrGen^{\left(\frac{\genericRand \cdot 
+					\primeRO(\genericCInputElmt)}{\blindedBlocklistAccSet}\right)} 
+			\bmod \rsaMod$
+		
+		
+		
+	\end{enumerate}
+	
+	\smallskip\noindent\textbf{Server} ($\checkContent (\blocklist, \blindingFactor, \cOutputFile, 
+	\cOutputMeta, \genericSig[\blocklist], \pubKey$)
+	
+	\smallskip\noindent\algComment{Upon receiving $\tupleDefn{\cOutputFile, \cOutputMeta}$ from 
+	client, perform \stepsref{nf:server:check}{nf:server:decrypt}}
+	
+	\begin{enumerate}[leftmargin = 1.5em]
+		
+		\item[\serverLabel{nf:server:check}] 
+		$\forall \setIdx \in 
+		\nats[1][\blocklistSize], \genericSymmKey'  \assign 
+		\ro\left(\cOutputMeta^{\blindingFactor 
+		\blocklistAccSetMinusElmt{\setIdx}} \bmod \rsaMod \right)$ 
+		
+		
+		
+		\item[\serverLabel{nf:server:decrypt}] $\clientData = 
+		\decrypt[\genericSymmKey'](\cOutputFile)$ if $\genericCInputElmt \in 
+		\blocklist$
+		
+	\end{enumerate}
+\end{mdframed}
+
+\fi
+
+
+
+%This is a more efficient 
+%design compared to  constructions that require an interactive protocol between 
+%the client and the server during file uploads, e.g., \cite{}

@@ -1,0 +1,234 @@
+\section{Reducing server costs with preprocessing}
+\label{sec:reducing_server_cost}
+%
+
+
+\newcommand{\cuckooTablePerm}{\ensuremath{T'}\xspace}
+
+
+
+Our protocols optimize client costs but impose significant server compute load. The costs can be reduced if the client executes a one-time preprocessing step during initialization. The idea is that the server will store client-specific metadata to eliminate checks for a majority of the uploads that are not in the blocklist. Consider the following design for the exact matching variant of content moderation. During pre-processing, the client computes a pseudorandom function (PRF) of all the elements in the blocklist and a returns a shuffled set of elements to the server. The client must first verify the auditor's signature on the blocklist before performing this step. The server stores the outputs of the obfuscated blocklist and during an upload the client provides the PRF output on the content hash to the server along with the content. The server may now check inclusion of the content hash in the obfuscated blocklist. 
+
+This scheme would require the server to store a per-client obfuscated blocklist which may not scale to a large number of clients. To make the filtering step cost-effective we will use a probabilistic data structure to perform the check. Specifically, we will use a Bloom filter to store the obfuscated blocklist. Since the Bloom filter will not have false negatives, any content hash not included in the Bloom filter can be safely assumed to not exist in the original blocklist, assuming that the one-way function has collision resistance. False positives can be eliminated with a fine-grained check, e.g., by running the protocol described in \figref{}. By tuning the Bloom filter, false positives can be reduced but it is worth noting that a false positive does not violate security. Since for a false positive, the server learns the PRF output on a content hash that is not in the blocklist, the server cannot learn the content hash unless it breaks the guarantees of the PRF. 
+
+There is one caveat to this scheme. If there are false positives in the content hash, or the client uploads multiple data items that have the same content, then the server can derive correlations between the content uploaded by the client. A simple strategy to mitigate this leakage is by allowing the client to store the content hashes of the all the uploaded files encrypted on the server. Before uploading more content, the client can check if the particular content hash been checked before. If so, the client provides a random element from the range of the PRF as the content hash. With high probability, this random element will not collide with any of the elements in the blocklist. 
+
+
+
+While this solution may suffice the exact-matching variant of content moderation, for approximate matching, the server storage costs will become prohibitive. In particular, to get a reasonably accurate answer to the approximate matching query, the server may need to store the projections of the blocklist under different projection functions. Thus, the solution will not scale to a large number of clients. 
+
+
+client and the server will invoke \arpmtFunc when they want to test membership of the client's input \genericCInputElmt in the blocklist. This  We will design a protocol that securely realizes \arpmtFunc that can be executed with an expensive offline phase where the client preprocesses the blocklist, and an inexpensive online phase that may be repeated multiple times with the same preprocessed blocklist. Our goal is to also make the online phase non-interactive. We describe such a protocol below. 
+
+\subsection{Building block: A protocol for \arpmtFunc}
+%
+The main ingredient in our protocol is an oblivious PRF that can be computed on encrypted data. Consider as an example the 2HashDH OPRF which operates in a cyclic group of prime order, \group with order \groupOrder where the one-more gap Diffie Hellman assumption holds. The protocol also uses two hash function 
+$\hashFn{1}: \setDefn{0,1}^{\ast} \rightarrow \group$ and $\hashFn{2}: \group \rightarrow \setDefn{0,1}^{\secParam}$. The receiver for an input $\genericCInputElmt$ sends to the sender $\hashFn{1}(\genericFnInput)^{\genericRand}$ where $\genericRand \getsr \intsMod{\groupOrder}$. The sender who hold key $\genericPRFKey \getsr \intsMod{\groupOrder}$ computes and sends to the receiver $\hashFn{1}(\genericFnInput)^{\genericRand \genericPRFKey}$. From this, the receiver computes the OPRF output $\prf{\genericPRFKey} = \hashFn{2}(\hashFn{1}(\genericFnInput)^{\genericPRFKey})$
+
+Now consider that $\tupleDefn{\encryptKeyGen, \encrypt, \decrypt}$ is a public-key encryption scheme that is multiplicatively homomorphic over the 
+plaintext group \group. An alternative way to compute the OPRF is as follows. The receiver samples a key pair for the encryption scheme $\tupleDefn{\pubKey, \privKey}$. The receiver sends to the sender $\encrypt[\pubKey](\hashFn{1}(\genericFnInput))$. Using the scalar exponentiation operator \homomorphicScalerMult{\pubKey}, the sender computes and sends to the receiver $\genericPRFKey \homomorphicScalerMult{\pubKey} \encrypt[\pubKey](\hashFn{1}(\genericFnInput)) = \encrypt[\pubKey](\hashFn{1}(\genericFnInput)^{\genericPRFKey})$. After decrypting the value, the sender can compute 
+$\prf{\genericPRFKey} = \hashFn{2}(\hashFn{1}(\genericFnInput)^{\genericPRFKey})$. 
+
+This scheme can be easily adapted to the three-party functionality $\arpmtFunc$. The auditor, who plays the role of the creator, encrypts the items in the blocklist $\genericSetVar = \setDefn{\encrypt[\pubKey](\hashFn{1}(\genericBlocklistElmt[1])), \dots, \encrypt[\pubKey](\hashFn{1}(\genericBlocklistElmt[\blocklistSize])}$. Then, it creates a cuckoo hash table  $\cuckooTable$ of $\blocklistSize(1 + \delta)$ entries such that $\cuckooTable[\cuckooHashFn(\genericBlocklistElmt[\setIdx])] =  \encrypt[\pubKey](\hashFn{1}(\genericBlocklistElmt[\setIdx]))$. The 
+auditor publishes the table \cuckooTable and a signature on the table $\genericSig[\cuckooTable]$. The server, who plays the role of the receiver, is provided the key $\privKey$. The purpose of the cuckoo hash table will become evident when we describe our content moderation scheme later. 
+
+
+The client, who plays the role of the sender, verifies the signature $\genericSig[\cuckooTable]$ (and aborts if the verification fails) and selects a random permutation $\perm: \nats[\blocklistSize(1 + \delta)] \rightarrow \nats[\blocklistSize(1 + \delta)]$. Then, the sender compute a table 
+\cuckooTablePerm such that $\cuckooTablePerm[\perm(\setIdx)] = (\cuckooTable[\setIdx])^{\genericPRFKey} = \encrypt[\pubKey](\hashFn{1}(\genericBlocklistElmt[\setIdx])^{\genericPRFKey}) = \encrypt[\pubKey](\prf{\genericPRFKey}(\genericBlocklistElmt[\setIdx])$ for all $\setIdx \in \nats[\blocklistSize(1 + \delta)]$. The client sents $\cuckooTablePerm$ to the server. 
+After decrypting the items, the server computes the rest of the OPRF as described before and stores the table with entries $\cuckooTablePerm[\perm(\setIdx)] = \prf{\genericPRFKey}(\genericBlocklistElmt[\setIdx])$ for all $\setIdx \in \nats[\blocklistSize(1 + \delta)]$. This concludes the offline phase of the protocol, and is conducted only once when the client initializes. 
+
+During the online phase, when the client uploads content with hash $\genericCInputElmt$, it also sends $\prf{\genericPRFKey}(\genericCInputElmt)$. If $\prf{\genericPRFKey}(\genericCInputElmt) \in \blocklist$, the server will learn $\genericBlocklistElmt[\setIdx] = \genericCInputElmt$. Otherwise, the server learns $\genericCInputElmt$ only if it distinguishes  $\prf{\genericPRFKey}(\genericCInputElmt)$ from a random element. The security of this scheme is implied by the indistinguishability of the PRF from a random function, the IND-CPA security of the encryption scheme, and unforgeability of the signature scheme. The communication and compute costs of the offline phase  scale linearly in the number of items in the blocklist. The online costs are constant for both the client and the server. 
+
+
+\subsection{Content moderation from \arpmtFunc}
+%
+We will describe content moderation schemes that enable ere we use a technique proposed by \citet{bhowmick2021apple} using cuckoo hashing. The idea is to create a table \cuckooTable of $\blocklistSize(1 + \delta)$ entries such that $\cuckooTable[\cuckooHashFn(\genericCInputElmt')] =  \encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt')])$. Here $\cuckooHashFn: \{0,1\} \rightarrow \nats[\blocklistSize(1 + \delta)]$ is a cuckoo hash function. For 
+all indices $\setIdx \neq \cuckooHashFn(\genericCInputElmt')$ for all $\genericCInputElmt \in \blocklist$, $\cuckooTable[\setIdx] \getsr \group$ where \group is the ciphertext space of the encryption scheme. The client is provided the signed table. 
+Then, for an input \genericCInputElmt, the client may retrieve the value at $\cuckooTable[\genericCInputElmt]$ when performing the Bloom filter query. If $\genericCInputElmt \in \blocklist$, the client would get  $\encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)])$. Otherwise, the client would obtain the encryption of a random element $\genericFnOutput$ in the plaintext space such that $\genericFnOutput \neq \sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)]$ with high probability. 
+
+
+
+\myparagraph{Exact matching}
+%
+The protocol for \arpmtFunc gives a straightforward construction for content moderation. Since we assume that the keys are selected randomly for each content uploaded by the client, the key can be XORed with the content hash: $\genericSymmKey \oplus \prf{\genericPRFKey}(\genericCInputElmt)$. If $\prf{\genericPRFKey}(\genericCInputElmt) \in \blocklist$, the server will learn \genericSymmKey. But if $\prf{\genericPRFKey}(\genericCInputElmt) \notin \blocklist$, the key is a one-time pad that hides $\prf{\genericPRFKey}(\genericCInputElmt)$ from the server. 
+
+
+\myparagraph{Approximate matching}
+%
+The protocol for approximate matching needs more careful attention. As the first step, we can store multiple lists from the augmented sets 
+$\projBucketsAugmented[1], \dots, \projBucketsAugmented[\numProjections]$ created using the projection functions defined in \secref{}. More specifically, 
+let $\projBucketsAugmented[\projIdx] \assign \setDefn{\setDefn{\hashFn(\projIdx, \genericVec[\vecIdx], \vecIdx, \projFn[\projIdx](\genericVec))}_{\vecIdx \in \nats[\genericVecLen]}}_{\genericVec \in \blocklistEmbedded}$. Then, using \arpmtFunc, the client and server compute 
+$\genericSetVar[\projIdx] 
+\assign \setDefn{\setDefn{\prf{\genericPRFKey}(\hashFn(\projIdx, \genericVec[\vecIdx], \vecIdx, \projFn[\projIdx](\genericVec)))}_{\vecIdx \in \nats[\genericVecLen]}}_{\genericVec \in \blocklistEmbedded}$. The offline phase of will require $\bigO(\blocklistSize \numProjections \genericVecLen)$ computations. 
+
+When client wants to upload content with content embedding $\clientVec$, it computes and uploads $\genericSetVar' \assign \setDefn{\prf{\genericPRFKey}(\hashFn(\projIdx, \clientVec[\vecIdx], \vecIdx, \projFn[\projIdx](\clientVec)))}_{\vecIdx \in \nats[\genericVecLen]}$. Now, if there is some $\genericSetVar'' \assign \setDefn{\prf{\genericPRFKey}(\hashFn(\projIdx, \genericVec[\vecIdx], \vecIdx, \projFn[\projIdx](\genericVec)))}_{\vecIdx \in \nats[\genericVecLen]} \in \genericSetVar[\projIdx]$ such that $|\genericSetVar'' \setminus \genericSetVar'| \le \threshold$, we want the server to learn the key encrypting the content. 
+We will use the same trick with a DHF and secret sharing scheme as in \stepref{client:dhf}. In particular, the client secret shares the key, i.e., 
+$\forall \projIdx \in \nats[\numProjections]$, $\secretShare{\projIdx, 1}, \dots, \secretShare{\projIdx, \genericVecLen} \assign \secretSharingScheme(\genericSymmKey)$. Then it computes and uploads $\forall \projIdx \in \nats[\numProjections], \forall \vecIdx \in 
+\nats[\genericVecLen], (\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]), \secretShare{\projIdx, \vecIdx}) 
+\oplus \prf{\genericPRFKey}(\hashFn(\projIdx, \clientVec[\vecIdx], \vecIdx, \projFn[\projIdx](\clientVec)))$ (see \stepsref{}{}) 
+
+If the server is able to retrieve at least $\threshold + 1$ values of $\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]), \secretShare{\projIdx, \vecIdx}$ which happens when $\hammingDist{\genericVec}{\clientVec} \le \threshold$, then it can reconstruct \genericSymmKey and decrypt the content. Informally, the security arguments behind this protocol is as follows 
+
+
+\begin{theorem}
+The protocol described above is a secure content moderation scheme
+\end{theorem}
+
+\begin{proofsketch}
+Fix some projection $\projIdx \in \nats[\numProjections]$ and consider some $\genericVec \in \blocklistEmbedded$. For some $\vecIdx \in \nats[\genericVecLen]$
+if  $\prf{\genericPRFKey}(\hashFn(\projIdx, \clientVec[\vecIdx], \vecIdx, \projFn[\projIdx](\clientVec))) \neq \
+prf{\genericPRFKey}(\hashFn(\projIdx, \genericVec[\vecIdx], \vecIdx, \projFn[\projIdx](\genericVec))$
+\end{proofsketch}
+
+\iffalse
+We will describe a simple scheme to reduce compute costs on the server. 
+The idea is that client and server will interactively perform a coarse-grained check (with some false positives) 
+to eliminate candidates that are definitely not in the blocklist. 
+More specifically, we will use a Bloom filter to inform the server whether it needs to perform a check. 
+However, since false positives are not acceptable, we will augment the Bloom filter-based check with a confirmation step using the metadata verification mechanisms described before. 
+
+The first challenge is designing a mechanism where the client can query the Bloom filter without learning whether its content is in the blocklist. That is, only the server should be able to learn the result of the client's Bloom filter query. The second challenge is ensuring that the client can in fact authenticate the Bloom filter, e.g., by verifying auditor's signature(s). One possible solution is that we can provide the Bloom filter encrypted bit-by-bit under the server's key public key, and signed by the auditors, to the client. If the encryption scheme is partially homomorphic, the client can perform the query on the encrypted Bloom filter and return the results to the server~\cite{}. 
+The problem is that the client storage requirements will be unreasonable for large blocklists. 
+Alternatively, the server may store the Bloom filter, and the client could retrieve bits using a single-server PIR scheme. Unfortunately, authenticated PIR against a malicious server is costly and not practical for most devices~\cite{}. 
+
+We solve this problem by storing a randomized version of the Bloom filter on the client. Consider the Bloom filter 
+$\bloomFilter[] \in \setDefn{0,1}^\numBloomFilterBits$ initialized by the auditor. Let \blockCipher be a block cipher with block size \blockSize. The auditor encrypts the Bloom filter block-by-block. The $\blockIdx$-th block has a random $\log \numBloomFilterBits$-bit block ID as the prefix, followed by the Bloom filter bits $\bloomFilter[\bloomFilterIdx \numBloomFilterBitsPerBlock + 1], \dots \bloomFilter[(\bloomFilterIdx + 1)\numBloomFilterBitsPerBlock]$ where $\numBloomFilterBitsPerBlock = \lceil\frac{\numBloomFilterBits}{\blockSize - \log \numBloomFilterBits}\rceil$. The resulting encrypted Bloom filter \clientBloomFilter is signed by the auditors and stored on the client. The key of the block cipher \genericSymmKey is provided by the server. 
+
+
+
+% once items are added to , the auditor randomizes it by XORing a (pseudo)random string $\genericRand \in \setDefn{0,1}^\numBloomFilterBits$. The string is calculated using a pseudorandom permutation, e.g., an AES cipher. More specifically, we calculate $\genericRand[\bloomFilterIdx] \assign \equivClass{\aesEncrypt{\genericSymmKey}(\bloomFilterIdx)}{2}$ for all $\bloomFilterIdx \in \nats[\numBloomFilterBits]$. 
+%The client is then provided the signed string $\clientBloomFilter \assign  \bloomFilter[] \oplus \genericRand$ in the clear which hides the actual Bloom filter from the client. The server has the key \genericSymmKey. 
+
+
+For some input $\genericCInputElmt$, the client selects the encrypted blocks $\block'_{\lfloor\hashFn_{1}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}, \dots,\block'_{\lfloor\hashFn_{\numBloomFilterHashFn}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}$ from the Bloom filter \clientBloomFilter. These are the blocks  whose union in the unencrypted Bloom has all the bits needed to check membership of $\genericCInputElmt$. The client creates a garbled circuit which takes as input $\block_{\lfloor\hashFn_{1}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}, \dots,\block_{\lfloor\hashFn_{\numBloomFilterHashFn}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}$ and the bit masks $\mask_1, \dots, \mask_\numBloomFilterHashFn
+ \in \setDefn{0,1}^{\numBloomFilterBits}$ (described later). 
+The server' input is the key \genericSymmKey. 
+
+The circuit first computes 
+$\setDefn{\block_{\lfloor\hashFn_{\blockIdx}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor} = \aesDecrypt{\genericSymmKey}(\block'_{\lfloor\hashFn_{\blockIdx}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor})}_{\blockIdx \in \nats[\numBloomFilterHashFn]}$ followed by $\setDefn{\mask_{\blockIdx} \land \block_{\lfloor\hashFn_{\blockIdx}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}}_{\blockIdx \in \nats[\numBloomFilterHashFn]}$. The masks are created such that the bitwise AND between $\mask_{\blockIdx}$ and $\block_{\lfloor\hashFn_{\blockIdx}(\genericCInputElmt)/\numBloomFilterBitsPerBlock\rfloor}$ selects the bits that correspond to one or more values in $\hashFn_{1}(\genericCInputElmt), \dots, \hashFn_{\numBloomFilterHashFn}(\genericCInputElmt)$, and zeroes out the other bits. Finally, the circuit sums up 
+all the masked bit values and compares the sum with \numBloomFilterHashFn. If the values match, the circuit returns 1 and otherwise returns 0. 
+
+
+Notice that while the scheme has storage requirements linear in the size of the blocklist, the concrete costs are practical because the Bloom filter is encrypted with a block cipher without any ciphertext expansion. For example, the encrypted Bloom filter with a million entries, and false positive rate of 1 in 1000 would require about 2.2 MB of storage. Additionally, with a 128-bit block cipher optimized for a garbled circuit, e.g., ~\cite{}, the total communication cost is a few MBs, which is in most 
+cases less than the size of the file uploads~\cite{}. The full protocol is described in \appref{}
+\fi
+
+
+
+\iffalse
+Now consider that $\tupleDefn{\encryptKeyGen, \encrypt, \decrypt}$ is a additively homomorphic encryption scheme with the homomorphic operator \homomorphicAdd{\serverPubKey}. For some input \genericCInputElmt, the client computes $\homomorphicSummation{\serverPubKey}{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]}{} \encrypt[\serverPubKey](\clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)]) = \encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)]) = \bloomFilterCompOutput$. 
+
+Thus, if the client is also provided $\encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt')])$ for all $\genericCInputElmt' \in \blocklist$, the client may 
+compute and return to the server $\genericRandAlt \homomorphicScalerMult{\serverPubKey} \left(\homomorphicSummation{\serverPubKey}{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]}{} \encrypt[\serverPubKey](\clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)]) - \encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt')])\right)$ where \homomorphicScalerMult{\serverPubKey} is the scalar multiplication operator under the public key \serverPubKey. If $\genericCInputElmt = \genericCInputElmt'$, then the server will decrypt this to \groupIdentity, where \groupIdentity is the group is group identity. Otherwise, the server will get a random item in the plaintext space. 
+
+The only remaining challenge is to provide the values of $\encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt')])$ for all $\genericCInputElmt' \in \blocklist$. Here we use a technique proposed by \citet{bhowmick2021apple} using cuckoo hashing. The idea is to create a table \cuckooTable of $\blocklistSize(1 + \delta)$ entries such that $\cuckooTable[\cuckooHashFn(\genericCInputElmt')] =  \encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt')])$. Here $\cuckooHashFn: \{0,1\} \rightarrow \nats[\blocklistSize(1 + \delta)]$ is a cuckoo hash function. For 
+all indices $\setIdx \neq \cuckooHashFn(\genericCInputElmt')$ for all $\genericCInputElmt \in \blocklist$, $\cuckooTable[\setIdx] \getsr \group$ where \group is the ciphertext space of the encryption scheme. The client is provided the signed table. 
+Then, for an input \genericCInputElmt, the client may retrieve the value at $\cuckooTable[\genericCInputElmt]$ when performing the Bloom filter query. If $\genericCInputElmt \in \blocklist$, the client would get  $\encrypt[\serverPubKey](\sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)])$. Otherwise, the client would obtain the encryption of a random element $\genericFnOutput$ in the plaintext space such that $\genericFnOutput \neq \sum\limits_{\bloomFilterIdx \in \nats[\numBloomFilterHashFn]} \clientBloomFilter[\hashFn_{\bloomFilterIdx}(\genericCInputElmt)]$ with high probability. 
+
+
+Note that the scheme has an asymptotic storage cost of $\bigO(\blocklistSize)$ but \fi
+
+\iffalse
+We will describe an optimization that reduces server compute costs. The idea is to partition the blocklist into \numberOfBuckets (roughly) equal sized buckets, and then invoke a protocol implementing the \brpmtFunc functionality with 
+the client acting as the sender and the server acting as the receiver. 
+If the client's content hash is in one of the buckets then the server 
+learns the bucket identifier, and can only compare the file metadata 
+derived from the signature with the elements in that bucket. 
+
+
+%For instance, assume that there are $\sqrt{\blocklistSize}$ partitions of the blocklist where elements are assigned to partitions based on a hash function $\hashFn: \{0,1\}^{\ast} \rightarrow \numberOfBuckets$. In effect, each partition has at most $\sqrt{\blocklistSize} \log \blocklistSize$ elements with high probability. Also, denote the buckets as $\bucket{1}, \dots, \bucket{\numberOfBuckets}$. 
+
+We will describe a protocol that implements the \brpmtFunc with tunable 
+false positives and no false negatives. The protocol is described in 
+\figref{}.  
+
+
+\begin{mdframed}[frametitle={Protocol implementing \brpmtFunc}, frametitlealignment=\centering, font=\small]
+
+\noindent{\bf Parameters:} An additively homomorphic encryption scheme 
+with commutative re-encryption $\langle \encryptKeyGen, \encrypt, \decrypt \rangle$, a protocol implementing the $1$-out-of-$\numberOfBuckets$ OT functionality \otFunc, a hash function 
+$\hashFn: \{0,1\}^{\ast} \rightarrow \nats[\numberOfBuckets]$; 
+a false positive rate $\epsilon \in (0,1)$
+
+\smallskip\noindent{\bf Inputs:} The client's (sender's) input is \genericCInputElmt and a pair of keys $\langle \clientPubKey, \clientPrivKey \rangle$; the 
+server's (receiver's) inputs are $\numberOfBuckets$ buckets where 
+\blocklistSize elements are distributed into 
+the buckets using \hashFn, and a pair of keys $\langle \serverPubKey, \serverPrivKey \rangle$
+
+\smallskip\noindent{\bf Protocol:}
+
+\begin{enumerate}
+\item \label{server:create_bf} Server creates for each bucket \bucket{\bucketIdx} a Bloom filter \bloomFilter[\bucketIdx] with 
+\numBloomFilterHashFn hash functions and $\numBloomFilterBits$ bits. 
+
+\item \label{client:create_bf} When uploading \genericCInputElmt, the client initializes a bloom filter \clientBloomFilter with \numBloomFilterBits bits, and adds \genericCInputElmt to it. The client encrypts each bit of the bloom filter: $\tupleDefn{\encrypt[\clientPubKey](\clientBloomFilter[\bloomFilterIdx])}{\bloomFilterIdx \in \nats[\numBloomFilterBits]}$
+
+\item \label{server:compute_sum} Upon receiving $\tupleDefn{\encrypt[\clientPubKey](\clientBloomFilter[\bloomFilterIdx])}{\bloomFilterIdx \in \nats[\numBloomFilterBits]}$, the server computes for each $\bucketIdx \in \nats[\numberOfBuckets]$, $\bloomFilterCompOutput[\numberOfBuckets] \assign \homomorphicSummation{\clientPubKey}{\bloomFilterIdx \in \nats[\numBloomFilterBits]} \bloomFilter[\bucketIdx][\bloomFilterIdx] \homomorphicScalerMult{\clientPubKey} \encrypt[\clientPubKey](\clientBloomFilter[\bloomFilterIdx]) \homomorphicSubtract{\clientPubKey} \encrypt[\clientPubKey](\numBloomFilterHashFn)$. 
+
+\item For each $\bucketIdx \in \nats[\numberOfBuckets]$, the server computes $\encrypt[\serverPubKey](\bloomFilterCompOutput[\bucketIdx])$. 
+
+\item \label{ot} The client and the server call \otFunc, with the client acting as the receiver with input $\hashFn(\genericCInputElmt)$. Server's inputs are $\langle \encrypt[\serverPubKey](\bloomFilterCompOutput[1]), \dots, \encrypt[\serverPubKey](\bloomFilterCompOutput[\numberOfBuckets])\rangle$. The client receives $\encrypt[\serverPubKey](\bloomFilterCompOutput[\hashFn(\genericCInputElmt)])$ from \otFunc.
+
+\item The client decrypts under the client's private key. This produces a ciphertext $\encrypt[\serverPubKey](\genericFnOutput)$
+
+\item \label{client:upload} The client computes $\genericRand \homomorphicScalerMult{\serverPubKey}\encrypt[\serverPubKey](\genericFnOutput) \homomorphicAdd{\serverPubKey} \hashFn(\genericCInputElmt)$. The client sends this value to the server who decrypts and learns the bucket identifier.
+\end{enumerate}
+
+
+\end{mdframed}
+
+
+In brief, the server initializes a Bloom filter for all the buckets which includes the content hashes in each bucket \stepref{server:create_bf}. When uploading a file, the client creates a Bloom filter that only includes the content hash \genericCInputElmt (\stepref{client:create_bf}).
+Then, the client encrypts each bit of the Bloom filter using a additively homomorphic commutative
+encryption scheme under its own public key, and sends the ciphertexts to the server. Upon receiving the encrypted Bloom filter, the server compares the client's (encrypted) Bloom filter against the Bloom filter of each bucket (\stepref{server:compute_sum}). This comparison ensures that if $\genericCInputElmt \in \bucket{\bucketIdx}$, then the result $\bloomFilterCompOutput[\bucketIdx] = \encrypt[\clientPubKey](\groupIdentity)$, where $\groupIdentity$ is the additive identity of the homomorphic encryption scheme. The server re-encrypts each of the results under its own public key. Note that at this stage, the results of the comparisons are doubly-encrypted under the keys of the server and the client. 
+
+Then, the client and the server run a 1-out-of-\numberOfBuckets OT by invoking \otFunc where the client is the receiver with input \hashFn(\genericCInputElmt) and the server is the sender with the set of encrypted results $\langle \bloomFilterCompOutput[1], \dots, \bloomFilterCompOutput[\numberOfBuckets] \rangle$. The client obtains \bloomFilterCompOutput[\hashFn(\genericCInputElmt)] which is equal to $\encrypt[\serverPubKey](\encrypt[\clientPubKey](\groupIdentity)$ if $\genericCInputElmt \in \bucket{\bucketIdx}$. The 
+client decrypts the value using its own private key, and computes a ciphertext encoding the 
+bucket identifier (\stepref{client:upload}). The ciphertext can be decrypted by the server 
+to obtain the bucket identifier if $\genericCInputElmt \in \bucket{\bucketIdx}$. Otherwise, 
+the server does not learn any information. 
+
+\myparagraph{Analyzing the protocol}
+%
+Assume that there are $\sqrt{\blocklistSize}$ partitions of the blocklist such that each partition has at most $\sqrt{\blocklistSize} \log \blocklistSize$ elements with high probability. The overall communication cost of the protocol is $\bigO(\secParam \sqrt{\blocklistSize} \log \blocklistSize)$ bits: client sends an encrypted Bloom filter with $\bigO(\sqrt{\blocklistSize} \log \blocklistSize)$ bits to the 
+server and later runs a 1-out-of-$\sqrt{\blocklistSize}$ OT protocol. The client's cost is also in $\bigO(\sqrt{\blocklistSize} \log \blocklistSize)$ while the server's compute cost is $\bigO(\blocklistSize)$ due to the summation in \stepref{server:compute_sum}. Further, since $\sqrt{\blocklistSize} \ll \group$, with very high probability, $\decrypt[\serverPrivKey](\genericRand \homomorphicScalerMult{\serverPubKey}\encrypt[\serverPubKey](\genericFnOutput) \homomorphicAdd{\serverPubKey} \hashFn(\genericCInputElmt))$ when $\genericFnOutput \neq \groupIdentity$ will produce a random element in \group, that is not in $\nats[\numberOfBuckets]$.  
+Thus, if $\genericCInputElmt \notin \bucket{\bucketIdx}$, the server will not perform additional computation on the bucket. The caveat is that there will be non-zero false positives with the Bloom filter. In this case, while the server would learn that the content hash is a false positive, it will not learn the key to decrypt the content. The false positive rate can be tuned to reduce such leakage. 
+
+ The commutative encryption scheme can be implemented with 
+the Elgamal encryption scheme with the messages in the exponent. Since the only valid messages are in $\nats[\numberOfBuckets]$, the server may precompute the values of $\pubKeyComp[1]^{\plaintext}$ for $\plaintext \in \nats[\numberOfBuckets]$ which allows it to decrypt. Further, the summation the server performs in \stepref{server:compute_sum}, requires scalar multiplications with either 1 or 0 depending on the Bloom filter bits, which essentially means the server selects the encrypted bits to add in the sum. Thus, this step requires $\bigO(\blocklistSize)$ multiplications in \group but no exponentiations. The security of the scheme is implied by the IND-CPA guarantees of the encryption scheme and simulation security of the OT scheme. We omit the straightforward proof. 
+
+\myparagraph{Security against malicious server}
+%
+The scheme is not secure against a malicious server who may not return correct results in \stepref{server:compute_sum}. The straightforward solution is that the auditors can sign the encrypted (under the server's public key) Bloom filters for each of the buckets, and the client can store it for an additional storage cost of $\bigO(\secParam \sqrt{\blocklistSize}^{1 + \bloomFilterEpsilon} \log^{\bloomFilterEpsilon} \blocklistSize )$ bits. 	
+
+\fi
+
+
+\iffalse
+The client and the server run a 
+reverse private membership test with the Bloom filters that allows the server to learn the bucket identifier \bucket{\bucketIdx} if $\genericCInputElmt \in \bucket{\bucketIdx}$. While there are  
+
+
+\begin{enumerate}
+
+\item \label{server:create_bf} Initialize each bucket with a bloom filter indicating all the content hashes that are assigned to that bucket. So, there are $\sqrt{\blocklistSize}$ bloom filters with $(\sqrt{\blocklistSize} \log \blocklistSize)^{\bloomFilterEpsilon}$ bits each, where \bloomFilterEpsilon is tuned according to the desired false positive. Importantly, all the bloom filters use the same \numBloomFilterHashFn hash functions.
+
+\item \label{client:create_bf} When uploading \genericCInputElmt, the client initializes a bloom filter \clientBloomFilter with $\numBloomFilterBits \assign(\sqrt{\blocklistSize} \log \blocklistSize)^{\bloomFilterEpsilon}$ bits, and adds \genericCInputElmt to it. The client encrypts each bit of the bloom filter with a commutative homomorphic public key encryption scheme $\tupleDefn{\encrypt[\clientPubKey](\clientBloomFilter[\bloomFilterIdx])}{\bloomFilterIdx \in \nats[\numBloomFilterBits]}$ and sends it to the server. 
+
+\item \label{server:compute_sum} Using the homomorphic properties of the encryption scheme, the server computes for each $\bucketIdx \in \nats[\numberOfBuckets]$, $\bloomFilterCompOutput[\numberOfBuckets] \assign \homomorphicSummation{\clientPubKey}{\bloomFilterIdx \in \nats[\numBloomFilterBits]} \bloomFilter[\bucketIdx][\bloomFilterIdx] \homomorphicScalerMult{\clientPubKey} \encrypt[\clientPubKey](\clientBloomFilter[\bloomFilterIdx]) \homomorphicSubtract{\clientPubKey} \encrypt[\clientPubKey](\numBloomFilterHashFn)$. 
+
+\item  For each $\bucketIdx \in \nats[\numberOfBuckets]$, the server computes $\encrypt[\serverPubKey](\bloomFilterCompOutput[\bucketIdx])$. Note that if $\genericCInputElmt \in \bucket{\bucketIdx}$, then $\bloomFilterCompOutput[\bucketIdx] = \encrypt[\clientPubKey](0)$, where $0$ is the additive identity of the homomorphic encryption scheme. 
+
+\item \label{ot} The client and the server engage in a 1-out-of-$\sqrt{\blocklistSize}$ OT, where the client receives $\encrypt[\serverPubKey](\bloomFilterCompOutput[\hashFn(\genericCInputElmt)])$ and decrypts under the client's private key. This produces a ciphertext $\encrypt[\serverPubKey](\genericFnOutput)$ where $\genericFnOutput = 0$ if $\genericCInputElmt \in \bucket{\bucketIdx}$, encrypted under the server's public key only. 
+
+\item \label{client:upload} The client computes $\genericRand \homomorphicScalerMult{\serverPubKey}\encrypt[\serverPubKey](\genericFnOutput) \homomorphicAdd{\serverPubKey} \hashFn(\genericCInputElmt)$ which is $\encrypt[\serverPubKey](\hashFn(\genericCInputElmt))$ if $\genericCInputElmt \in \bucket{\bucketIdx}$ or a random element in the plaintext space \group otherwise. The client sends this value to the server who decrypts and learns the bucket identifier under the condition described above. 
+\end{enumerate}
+
+Once the server obtains the bucket identifier, it must still compute \stepsref{nf:server:check}{nf:server:decrypt} of \checkContent with the items in the 
+identified bucket. This is because the bloom filter may still return false positives. The client will upload the file metadata as computed by \uploadFile. On the other hand, if a valid bucket identifier is not returned by the protocol, then the server does not need to perform any further checks. This is because the bloom filter will not return false negatives. 
+
+\fi
+
+
+
+

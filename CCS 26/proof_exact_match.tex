@@ -1,0 +1,94 @@
+
+\begin{theorem}
+Assuming that there are protocols securely realizing \distSigningFunc and \authOPRFFunc, \protocolEM securely realizes \contentModFunc \end{theorem}
+
+\begin{proof}
+
+We show that there is a polynomial time simulator that can simulate \client's and \server's views in \protocolEM
+
+\myparagraph{Simulating \client's view}
+%
+The client is semi-honest in our model. The simulator implements the random oracles \primeRO and \ro and the simulation proceeds as follows: 
+
+\begin{enumerate}
+\item During an upload, the simulator gets \genericFileID from the message sent by \client to \server with the file.  
+\item When \client queries the random oracle \primeRO  on some $\genericCInputElmt \in \universe$, the simulator returns a random value $\genericRand \sample \bin^{\secParam}$ as the output of $\primeRO(\genericCInputElmt)$ and stores $\langle \genericCInputElmt, \genericRand \rangle$ 
+\item  The simulator sends $\langle \uploadFile, \genericFileID, \genericCInputElmt \rangle$ and obtain the key
+$\genericSymmKey$ from the \contentModFunc. 
+\item When the client queries the random oracle \ro on $\qrGen^{\genericRand}$, then return the key $\genericSymmKey$ as the output of $\ro(\qrGen^{\genericRand})$. 
+\item If \client's output tape has $\langle \genericFileID, \detected = \tru \rangle$, then the simulator simulates the the fine-grained check by sending a random set of indices $\hat{\bucketIDSet} \sample [1, \numBuckets]$ to \client. 
+\item If \client's output tape has $\langle \genericFileID, \detected = \fals \rangle$, then the simulator simulate the fine-grained by sending a set of indices $\hat{\bucketIDSet} \sample [1, \numBuckets]$ to \client with probability $\bloomFilterEpsilon$. 
+\end{enumerate}
+
+
+
+The simulation is indistinguishable from the real protocol execution because \client's messages in the simulation include the $\genericRand,\genericSymmKey$ when $\detected = \fals$. Due to the random oracle assumption, these messages are statistically indistinguishable from the messages received in the protocol from the random oracle. When $\detected = \tru$, \client receives a random set of indices from the simulation. This is indistinguishable from the actual set of indices \bucketIDSet received by \client in the real protocol execution. This is because the items in the Bloom filter $\bloomFilter[\bucketIdx]$ sent by \client are the items $\genericBlocklistElmt \in \blocklist$ such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt) \equiv \bloomFilterIdx \bmod \numBins$. Since $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt)$ is a pseudorandom value, the distribution of $\genericBlocklistElmt$ in $\bloomFilter[\bucketIdx]$ is uniformly random. Thus, their corresponding mappings to buckets are also uniformly random. 
+
+The simulator simulates false positives by requesting a fine-grained check with probability $\bloomFilterEpsilon$. A fine-grained check is necessary, in case of a false positive, when there is a collision in the Bloom filter $\bloomFilter[\bucketIdx]$ between 
+$\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ and $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)$ for some $\genericBlocklistElmt \in \blocklist$.  Again, since these are pseudorandom values, the probability of collision does not depend on \client's input $\genericCInputElmt$ and $\genericBlocklistElmt$. Therefore, the simulation only needs \bloomFilterEpsilon to simulate a false positive without information about $\genericBlocklistElmt$. 
+
+
+
+\myparagraph{Simulating \server's view}
+%
+\server is malicious in our model. The simulation proceeds as follows 
+
+
+\begin{itemize} 
+\item \textbf{Publishing the blocklist}
+\begin{enumerate}
+\item During the blocklist publishing phase, the simulator gets the items in \blocklist from the \publishList message sent by the auditors to \authOPRFFunc, and programs a random oracle $\primeRO(\genericBlocklistElmt) \sample \primes$ for each $\genericBlocklistElmt \in \blocklist$ 
+\item For the message to \distSigningFunc, the simulator answers the queries to \primeRO. 
+\end{enumerate}
+
+\item \textbf{Preprocessing}
+\begin{enumerate}[resume]
+\item During preprocessing, the simulator adds $\langle \genericBlocklistElmt_\setIdx, \genericCInputElmtPRFEval_\setIdx \rangle$ to a list $L$ for each $\genericBlocklistElmt_\setIdx \in \blocklist$ and $\genericCInputElmtPRFEval_\setIdx \sample \group$. The simulator sends $\{ \genericCInputElmtPRFEval_1, \dots, \genericCInputElmtPRFEval_\blocklistSize \}$ to \server. 
+\item The simulator gets the encrypted Bloom filters from \server's messages to \client $\{\encrypt[\bloomFilterKey](\bloomFilter[1]), \dots, \encrypt[\bloomFilterKey](\bloomFilter[\numBuckets])\}$ after the preprocessing phase
+\end{enumerate}
+
+\item \textbf{Upload}
+\item The simulator gets the set of \server's outputs from a polynomial number of uploads that have two types. Type 1: $\langle \detected = \tru, \genericFileID, \clientData \rangle$ and Type 2: $\langle \detected = \fals, \emptyset \rangle$
+
+\begin{enumerate}[resume]
+\item For every output of type 1 $\langle \detected = \tru, \genericFileID, \clientData \rangle$
+\begin{enumerate}
+\item The simulator computes $\genericCInputElmt \assign \embed(\clientData)$ and sends the message $(\checkContent, \genericFileID, \genericCInputElmt)$ to \contentModFunc. 
+\item If \contentModFunc aborts, then the simulation aborts. Otherwise, let $\fileKey$ be returned by \contentModFunc. 
+\item The simulator sends $\genericCInputElmtPRFEval$ and $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$ to \server where this is an entry $\genericCInputElmt, \genericCInputElmtPRFEval$ in $L$ where $\genericCInputElmtPRFEval \equiv \bloomFilterIdx \bmod \numBins$ 
+\item If \server aborts, then the simulator aborts. Otherwise if \server sends $\bucketIDSet$, the simulator computes and sends to \server $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\genericCInputElmt)}$, where $\genericRand_\bucketIdx \sample [1, \rsaMod^2]$, and $R_\bucketIdx \sample \bin^{\secParam}$ for $\bucketIdx \in \bucketIDSet$. The simulator stores $\langle \genericRand_\bucketIdx, R_\bucketIdx \rangle$
+\item The simulator answers queries to the random oracle \ro for \server. If \server sends a query for $\qrGen^{\genericRand_\bucketIdx}$ for some $\genericRand_\bucketIdx$ used in the previous step, then the simulator responds to the query by outputting $\fileKey \oplus R_\bucketIdx$. Otherwise, the simulator responds with a random element $\bin^{\secParam}$ and stores the output
+\item The simulator outputs whatever \server outputs
+\end{enumerate}
+\item For every output of Type 2 $\langle \detected = \fals, \emptyset \rangle$
+\begin{enumerate}
+\item The simulator samples a random value $\hat{\genericCInputElmtPRFEval} \sample \bin^{\secParam}$ and sends to server $\hat{\genericCInputElmtPRFEval}$ and $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$ where $\hat{\genericCInputElmtPRFEval} \equiv \bloomFilterIdx \bmod \numBins$ 
+\item If \server aborts, then the simulator abort. Otherwise, receive $\bucketIDSet$ from the adversary. 
+\item The simulator samples from $\hat{\genericCInputElmt} \notin \blocklist$
+\item For each $\bucketIdx \in \bucketIDSet$, the simulator computes and sends to \server $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\hat{\genericCInputElmt})}$, where $\genericRand_\bucketIdx \sample [1, \rsaMod^2]$, and $R_\bucketIdx \sample \bin^{\secParam}$ for $\bucketIdx \in \bucketIDSet$.  The simulator stores $\langle \genericRand_\bucketIdx, R_\bucketIdx \rangle$
+\item The simulator respond to queries to \ro from \server. If there is a query for $\qrGen^{\genericRand_\bucketIdx}$ for some $\genericRand_\bucketIdx$ selected in the previous step, then the simulator aborts. Otherwise, the simulator responds with a random element $\bin^{\secParam}$ and stores the output
+\item The simulator outputs whatever \server outputs
+\end{enumerate}
+\end{enumerate}
+\end{itemize}
+
+
+The simulation is indistinguishable from the real execution. During processing, \server's messages includes outputs of \authOPRFFunc 
+$\{ \prf{\prfKeyClient}(\genericBlocklistElmt_1), \dots,   \prf{\prfKeyClient}(\genericBlocklistElmt_\blocklistSize)\}$
+while in the simulation, the \server's messages includes $\{ \genericCInputElmtPRFEval_1, \dots, \genericCInputElmtPRFEval_\blocklistSize \}$. These are indistinguishable assuming that the outputs of \prf are indistinguishable from random outputs in $\bin^{\secParam}$. 
+
+
+
+
+Now, consider the following two cases during uploads
+
+
+\noindent \underline{Type 1 output}: In this case, \server's messages includes $ \prf{\prfKeyClient}(\genericCInputElmt)$, $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$, $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\genericCInputElmt)}$, $\ro(\qrGen^{\genericRand_\bucketIdx}) \oplus \fileKey $ in the real execution for all $\bucketIdx \in \bucketIDSet$. In the ideal world, \server's messages includes $\genericCInputElmtPRFEval$, $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$, $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\genericCInputElmt)}, R_\bucketIdx$ for all $\bucketIdx \in \bucketIDSet$. Assuming that \prf produces outputs indistinguishable from random  $ \prf{\prfKeyClient}(\genericCInputElmt)$ and $\genericCInputElmtPRFEval$ are indistinguishable to the adversary. Also, assuming that \ro is a random oracle $\ro(\qrGen^{\genericRand_\bucketIdx}) \oplus \fileKey $ is indistinguishable from $R_\bucketIdx$ unless the adversary has queried the random oracle on \ro on $\genericRand_\bucketIdx$ before which happens with negligible probability for a fresh randomness $\genericRand_\bucketIdx$ used in every query, since $\qrGen^{\genericRand_\bucketIdx}$ is a random element in \qrGroup~\cite{cramer2000signature}.  
+
+\smallskip\noindent\underline{Type 2 output:} Observe that in the type 2 case, there are two possibilities: i) the check terminates with the fast path, or ii) the check proceeds to a fine grained. Since the messages observed by the adversary in the second case subsumes the messages in the first case, we argue indistinguishability for this case. Later, we show that the distribution of these cases occurring does not break indistinguishability. 
+
+When the protocol performs a fine-grained check, \server's messages includes $ \prf{\prfKeyClient}(\genericCInputElmt)$, $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$, $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\genericCInputElmt)}, \ro(\qrGen^{\genericRand_\bucketIdx}) \oplus \fileKey$ such that $\genericCInputElmt \notin \blocklist$. In the
+simulation, \server's messages include $\hat{\genericCInputElmtPRFEval}$, $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$, $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\hat{\genericCInputElmt})}, R_\bucketIdx$ for all $\bucketIdx \in \bucketIDSet$. Observe that when $\genericCInputElmt \notin \blocklist$, the adversary does not know $\prf{\prfKeyClient}(\genericCInputElmt)$ in the real execution from the preprocessing phase. Thus, assuming that the \prf produces indistinguishable outputs from random $\prf{\prfKeyClient}(\genericCInputElmt)$ is indistinguishable from $\hat{\genericCInputElmtPRFEval}$. Also, due to \ro being a random oracle $\ro(\qrGen^{\genericRand_\bucketIdx}) \oplus \fileKey$ is indistinguishable from $R_\bucketIdx$ as discussed above. Finally, if the adversary can distinguish between $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\genericCInputElmt)}$ and $\genericSig[\bucket{\bucketIdx}]^{\genericRand_\bucketIdx \primeRO(\hat{\genericCInputElmt})}$ when $\genericCInputElmt, \hat{\genericCInputElmt} \notin \blocklist$, then it violates the IND-SR property of the signature scheme, which happens with negligible probability as per \thmref{thm:indsr}. 
+
+The probability that any of the type 2 cases terminates with the fast path depends on the false positives in the Bloom filter, which in turn depends on potential collisions between $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ and $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt))$ for some $\genericBlocklistElmt \in \binn{\binIdx}$. In the simulation, a false positive occurs when there is a collision between  $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ and $\prp{\prpKeyServer}(\genericCInputElmtPRFEval)$. Since \prf{\prfKeyClient}(\genericBlocklistElmt) and \genericCInputElmtPRFEval are indistinguishable due to the \prf, the probability of a false positive in the simulation is distributed indistinguishably to the probability of a false positive in the real execution. 
+\end{proof}

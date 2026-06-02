@@ -1,0 +1,116 @@
+
+
+\begin{figure*}[h]
+\fbox{
+\begin{minipage}[t]{\textwidth}
+\footnotesize
+
+\underline{$\contentModFunc$: Ideal Functionality for Auditable Content Moderation}		
+		
+		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a server $\server$ and a client $\client$. A distributed signature algorithm $\sigSchemeDefn$. An encryption scheme \encryptionSchemeDefn with key space \encryptKeySpace. Distance threshold $\threshold$ for a metric distance $\distanceNotation[\distance][\cdot]$
+
+% and false negative rate $\funcFNR \in (0,1)$. 
+		
+		\smallskip\noindent\textbf{Creating blocklist:} 
+		\enumListStart
+		
+		\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from auditor $\auditor[\auditorIdx]$, store the blocklist and the auditor's share of a private key $\langle \privKey \rangle_{\auditorIdx}$
+
+		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output the $\blklistToken{\blocklist} \assign \sign[\privKey](\blocklist)$. Store $\blocklist$ and $\blklistToken{\blocklist}$
+
+		\enumListEnd
+		
+		\smallskip\noindent\textbf{Verifying uploads:} 
+		
+	
+	%	\smallskip\noindent\textbf{Inputs:} \server has the blocklist \blocklist. The client has the \blklistToken \genericBlocklistToken, a file $\clientData$ and a \contentToken \clientMeta derived from \genericBlocklistToken and \clientData. 
+	
+
+
+		
+		\enumListStartResume
+		\item Initialize two lists $\retList$ and $\keyList$ 
+		\item Upon receiving $(\uploadFile, \genericFileID, \clientMeta)$ from \client, sample a key $\genericSymmKey \getsr \encryptKeySpace$ and return $\genericSymmKey$. Store $\langle \genericFileID, \clientMeta, \genericSymmKey \rangle$ in $\keyList$
+
+		
+		\item (\algComment{For exact matching}) Upon receiving $(\checkContent,  \genericFileID, \clientMeta')$ from \server, 
+		\enumListStartResume
+
+		\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ in \keyList, then abort. 
+
+		\item If there is an entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, then return $\genericSymmKey$
+	
+	\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, 
+	\itemListStart
+	\item Check if $\clientMeta' \in \blocklist$. If so, return the key $\genericSymmKey$ and add  $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ to \retList
+		\item If $\clientMeta' \notin \blocklist$, return $	\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ in $\retList$.
+
+	\itemListEnd
+
+		\enumListEnd
+
+		\item (\algComment{For fuzzy matching}) Upon receiving $(\checkContentFuzzy,  \genericFileID, \clientMeta')$ from \server, 
+		\enumListStart
+		\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ in \keyList, then abort. 
+		\item If there is an entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, then return $\genericSymmKey$
+
+		\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, 
+		\itemListStart
+		\item Check if there is some entry $\genericBlocklistElmt \in \blocklist$ such that $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] \le \threshold$. If so, return the key $\genericSymmKey$ and add $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ to \retList. Otherwise, return $\genericSymmKey' \sample \encryptKeySpace$ and add $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ to \retList.
+
+
+%Toss a biased coin with probability of heads $1 - \funcFNR$. 
+%Upon receving heads, return the key 
+
+		\item If for all $\genericBlocklistElmt \in \blocklist$, $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] > \threshold$,  check whether there is some entry $\langle \genericFileID, \clientMeta' \genericSymmKey' \rangle \in \retList$. If so, return $\genericSymmKey'$. Otherwise, return $\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ in $\retList$
+
+		
+		\itemListEnd
+
+
+
+		\enumListEnd
+
+		\enumListEnd
+
+	\iffalse 
+\bigskip\noindent\underline{$\contentModFuncFuzzy$: Ideal Functionality for Auditable Content Moderation with Fuzzy Matching}		
+		
+		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ content auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a file server $\server$ and a client $\client$. A distributed signature algorithm $\sigSchemeDefn$. An encryption scheme with random key robustness \encryptionSchemeDefn
+		
+		\smallskip\noindent\textbf{Creating blocklist:} 
+		\enumListStart
+		
+		\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $			\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
+
+		\item After receiving \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the 			same. Otherwise, output the \blklistToken $\genericBlocklistToken \assign \sign[\privKey[1], \dots, \privKey[\numAuditors]](\blocklist)$. Store $\blocklist$ and $\blklistToken$
+
+		\enumListEnd
+		
+		\smallskip\noindent\textbf{Verifying uploads:} 
+		
+	
+	%	\smallskip\noindent\textbf{Inputs:} \server has the blocklist \blocklist. The client has the \blklistToken \genericBlocklistToken, a file $\clientData$ and a \contentToken \clientMeta derived from \genericBlocklistToken and \clientData. 
+	
+
+
+		
+		\enumListStartResume
+		\item Initialize two lists $\retList$ and $\keyList$ 
+		\item Upon receiving $(\uploadFile, \genericFileID, \clientMeta)$ from \client, sample a key $\genericSymmKey \getsr \encryptKeySpace$ and return $\genericSymmKey$. Store $\langle \genericFileID, \clientMeta, \genericSymmKey \rangle$ in $\keyList$ and $\langle \clientMeta, \genericSymmKey \rangle$ in $\retList$  
+
+		
+		\item Upon receiving $(\checkContent,  \clientMeta')$ from \server, 
+		\enumListStartResume
+		\item If there is no entry $\langle \dots, \clientMeta', \dots \rangle$ in \keyList, check if there is an entry $\langle \clientMeta', \genericSymmKey' \rangle \in \retList$. If so, return $\genericSymmKey'$. Otherwise, return $	\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \clientMeta', \genericSymmKey' \rangle$ in $\retList$. 
+		\item If there is an entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ in \keyList, check if 
+there is some entry $\genericBlocklistElmt \in \blocklist$ and $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] \le \threshold$. If so, return the key $\genericSymmKey$. Otherwise, if there is some $\langle \clientMeta' \genericSymmKey' \rangle \in \retList$, return $\genericSymmKey'$. If there is no such entry in \retList, return $\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \clientMeta', \genericSymmKey' \rangle$ in $\retList$. 
+
+		\enumListEnd
+		\enumListEnd
+\fi 
+
+\end{minipage}
+}
+\caption{Ideal functionality for auditable content moderation with exact and fuzzy matching\label{fig:ideal_func}}
+\end{figure*}

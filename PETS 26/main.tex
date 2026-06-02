@@ -1,0 +1,212 @@
+\documentclass[sigconf,anonymous,review]{acmart}
+\usepackage{popets}
+
+% Copyright
+\setcopyright{popets}
+\copyrightyear{YYYY}
+
+% Issue info
+\acmYear{YYYY}
+\acmVolume{YYYY}
+\acmNumber{X}
+\acmDOI{XXXXXXX.XXXXXXX}
+\acmISBN{}
+\acmConference{Proceedings on Privacy Enhancing Technologies}
+\settopmatter{printacmref=false,printccs=false,printfolios=true}
+
+
+
+
+%%%% Packages 
+
+\usepackage{xspace}
+\usepackage{xparse}
+\usepackage{amsfonts,amsmath}
+\usepackage{stackrel}
+\usepackage{balance}
+\usepackage{nicefrac}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage[english]{babel}
+%\usepackage{txfonts}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{patterns}
+\usepackage{pstricks}
+\usepackage{wrapfig}
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\usepackage{booktabs}
+\usepackage{expl3}
+\usepackage{collcell}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{subcaption}
+\captionsetup[subfigure]{skip=0pt}
+\captionsetup[subfigure]{belowskip=0pt}
+\usepackage{framed}
+\usepackage{verbatim}
+\usepackage{mdframed}
+%\usepackage[numbers]{natbib}
+\usepackage{algorithm}
+\usepackage[commentColor=gray]{algpseudocodex}
+\usepackage{etoolbox}
+\usepackage{makecell}
+\usepackage[operators,sets]{cryptocode}
+\usepackage[most]{tcolorbox}
+\usepackage{lipsum}
+\tcbuselibrary{skins, breakable} % Necessary libraries
+\createprocedureblock{game}{}{}{}{}
+\createpseudocodeblock{pcb}{center , boxed, space=0.2cm}{}{}{}
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+\mdfsetup{frametitlealignment=\center}
+
+
+
+
+\input{macros}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+
+
+
+\begin{document}
+
+
+\title{Authenticated Blocklisted Systems with Applications to Content Moderation}
+
+
+
+\begin{abstract}
+An auditable content moderation scheme enables a file server to detect problematic content, e.g., CSAM, in encrypted files uploaded by a client(s). In such a system, the client uploads the encrypted file along with cryptographic metadata that allows the server to decrypt the file if the content matches an item in a blocklist. Otherwise, if the content is not on the blocklist, then the metadata does not reveal any information about the encrypted content.  We present new designs for auditable content moderation schemes that (i) enable multiple file servers to use a common, approved blocklist that they cannot undetectably modify; (ii) offer server-client communication and client compute costs that scale sublinearly in the number of elements in the blocklist; and (iii) generalize to various blocklist types and supports exact and fuzzy matching of content.  We demonstrate with benchmarks that our schemes are practical and outperform the state of the art. 
+\end{abstract}
+
+
+
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>00000000.0000000.0000000</concept_id>
+  <concept_desc>Applied Cryptography, privacy and secure multiparty computation</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Applied Cryptography~privacy and secure multiparty computation}
+%\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+%\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+%\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Secure multiparty computation, homomorphic signature, oblivious PRF, encrypted content moderation}
+
+\maketitle
+\input{intro}
+\input{related}
+\input{problem}
+\input{defn}
+\input{blocklist.tex}
+\input{content_mod_new.tex} 
+%\input{exact_match_new.tex} 
+%\input{sig_scheme.tex}
+%\input{exact_match.tex}
+%\input{fuzzy_match.tex}
+%\input{preprocess.tex}
+\input{eval.tex}
+\input{conclusion.tex}
+
+\newpage
+\section{Ethical Considerations}
+%
+If deployed, our research will provide a tool for service providers to
+safeguard against misuse of their services to store harmful
+content. By introducing independent auditors, we reduce the potential
+risk of surveillance and censorship. However, the ethical risks of
+general content moderation itself needs to be taken into account when
+evaluating the ethical implications of our work. The debate regarding
+free speech vs.\ moderating misinformation does not have a conclusive
+answer but several works have tried to summarize arguments both in
+favor or against it~\cite{kozyreva2023resolving}.
+
+Nonetheless, service providers have a responsibility to ensure that
+their services are not being misused to proliferate harmful
+content. Therefore, moderating for such content is justified, and
+arguably necessary~\cite{howard2023ethics}. However, to protect the
+interests of the clients, we need to ensure that auditors of the
+blocklist act independently and without influence. While in many cases
+this may not be possible, e.g., due to government interference, we
+believe this trust model is more suitable than endowing trust entirely
+on self-interested service providers.
+
+All that said, our research itself, as a design for a
+content-moderation system, poses little ethical risk, at least
+directly.  (The parameters and policies around its deployment need to
+be carefully considered, however.)  Note, moreover, that our research
+did not involve testing with any real-world data or human subjects. As
+such, no direct harms or violations of privacy resulted from this
+research.
+
+We acknowledge that, sometimes, the most ethical path is not to do the
+research or not to publish the research after it is complete. However,
+due to the urgent need to combat the proliferation of CSAM, we believe
+that the potential benefits of our research far outweigh its risks,
+thereby satisfying the Beneficence criterion of the Menlo Report.
+
+\iffalse
+We will discuss the ethical considerations of our work in the following
+
+\enumListStart
+\item \textbf{Stakeholders}: If deployed, our research will provide a tool for service providers to safeguard against misuse of their services to store harmful content. By introducing independent auditors, we reduce the potential risk of surveillance and censorship. However, the ethical risks of general content moderation itself needs to be taken into account when evaluating the ethical implications of our work. The debate regarding free speech vs. moderating misinformation does not have a conclusive answer but several works have tried to summarize arguments both in favor or against it~\cite{kozyreva2023resolving}. 
+
+Nonetheless, service providers have a responsibility to ensure that their services are not being misused to proliferate harmful content. Therefore, moderating for such content is justified, and necessary~\cite{howard2023ethics}. However, to protect the interests of the clients, we need to ensure that auditors of the blocklist act independently and without influence. While in many cases this may not be possible, e.g., due to government interference, we believe this trust model is more suitable than endowing trust entirely on self-interested service providers. 
+
+
+
+\item \textbf{Impacts:} Our research did not involve testing with any real data or human subjects. As such, there are no violations of privacy or potential for harm. 
+
+\item \textbf{Mitigations:} 
+%
+We acknowledge that, sometimes, the most ethical path is not to do the research or not to publish the research after it is complete. However, 
+due to the urgent need to combat the proliferation of CSAM, we believe that our research is socially-relevant, and take possible countermeasures to prevent misuse of the system. 
+\enumListEnd
+\fi
+
+
+
+
+
+\bibliographystyle{ACM-Reference-Format}
+{
+\bibliography{bib.bib, misc.bib}
+
+
+\newpage
+
+\appendix
+\input{appx.tex}
+
+\end{document}

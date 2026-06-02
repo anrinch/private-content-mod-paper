@@ -1,0 +1,224 @@
+
+\iffalse 
+\subsection{Proof of Security for Protocol \protocolEM}
+\label{sec:proof:em}
+%
+
+
+\begin{theorem}
+	\label{thm:proof:em}
+	The protocol \protocolEM for detecting exact matches against a blocklist satisfies the security properties defined in \ref{sec:security}.
+when using a randomizable set-homomorphic signature scheme \ourSigSchemeDefn 
+	
+
+	\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	\begin{small}
+	\begin{gather*}
+    \prob{\unforgeBlocklistExp = 1} \le \ufcmaAdv
+\end{gather*}
+	\end{small}
+	
+	\item It hides non-matching content from the server 
+	
+	\begin{small}
+					\begin{gather*}
+			\prob{\hidingContentExp = 1} \le 1/2 + \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries') \\  + \indsrAdv +  \Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries) 
+		\end{gather*}
+		\end{small}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{small}
+				\begin{gather*}
+				\prob{\hidingBlocklistExp = 1} \le 1/2 + \frac{\log \rsaMod}{\rsaMod}
+			\end{gather*}
+		\end{small}
+	
+	\enumListEnd  
+\end{theorem}
+
+
+\begin{proof}
+Since the blocklist verification token is a randomizable set-homomorphic signature, an adversary that can forge a blocklist token in \unforgeBlocklistExp, can also forge a signature under the key of the auditor. This happens with probability at most \ufcmaAdv. 
+
+Next, observe that if the adversary is able to distinguish between $\clientData_0$ and $\clientData_1$ from the ciphertext \cOutputFile in \hidingContentExp, then it violates the IND-CPA\$ guarantees of the encryption scheme. This happens with probability at most  \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries'). Alternatively, the adversary can win the experiment by determining whether $\genericSig[\indBit]$ is a signature on $\blocklist \setminus \{\genericCInputElmt{0} \} $ or $\blocklist \setminus \{\genericCInputElmt{1} \} $. The adversary can do that with probability at most \indsrAdv. Also, if the server invokes $\genericSymmKey \assign \ro\left(\cOutputMeta^{\left(\prod\limits_{\genericFnInput \in \blocklist \setminus \{\genericBlocklistElmt\}}\primeRO(\genericFnInput)\right)} \bmod \rsaMod \right)$ for $\genericBlocklistElmt \neq \genericCInputElmt$, then $\genericSymmKey \neq \fileKey$  unless there is a collision in the random oracle $\ro$, which happens with probability at most $\oracleQueries^{2}/\setSize{\encryptKeySpace}$. Thus, the adversary decrypts $\clientData_\indBit$ using $\genericSymmKey$ with probability at most \Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries).
+
+
+Finally, if the adversary is able to distinguish between $\blocklist_0$ and $\blocklist_1$ in \hidingBlocklistExp, then it has correctly guessed $\blindingFactor$. Due to the the prime number theorem, this happens with probability $\frac{\log \rsaMod}{\rsaMod}$.
+
+\end{proof}
+
+
+
+\subsection{Proof of Security for Protocol \protocolFM}
+\label{sec:proof:fm}
+%
+
+
+\begin{theorem}
+	
+	The protocol \protocolFM for detecting exact matches against a blocklist satisfies the security properties defined in \ref{sec:security}.
+when using a randomizable set-homomorphic signature scheme \ourSigSchemeDefn 
+	
+
+	\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	\begin{small}
+	\begin{gather*}
+    \prob{\unforgeBlocklistExp = 1} \le \ufcmaAdv
+\end{gather*}
+	\end{small}
+	
+	\item It hides non-matching content from the server 
+	
+	\begin{small}
+					\begin{gather*}
+			\prob{\hidingContentExp = 1} \le \numProjections \genericVecLen \cdot (1/2 + \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries') \\  + \indsrAdv +  \Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)  + \numProjections \cdot \Advantage{\prgLabel}{\prg}(\timeBound)
+		\end{gather*}
+		\end{small}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{small}
+				\begin{gather*}
+				\prob{\hidingBlocklistExp = 1} \le 1/2 + \numBlocklistParts \left(\frac{\log \rsaMod}{\rsaMod}\right)
+			\end{gather*}
+		\end{small}
+	
+	\enumListEnd  
+\end{theorem}
+
+\begin{proof}
+
+Since the blocklist verification token is a randomizable set-homomorphic signature, an adversary that can forge a blocklist token in \unforgeBlocklistExp, can also forge a signature under key of the auditor. This happens with probability at most \ufcmaAdv. 
+
+The server gets the items $\{\cOutputFile, \ssSet_{\projIdx, \vecIdx}, \dhfSet_{\projIdx, \vecIdx}, \cOutputMeta{\projIdx, \vecIdx}\}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}$. The elements in $\{\cOutputMeta{\projIdx, \vecIdx}\}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}$ are computed using independent random coins, and they are used to blind the elements in $\ssSet_{\projIdx}$. Thus the ensemble $\{\cOutputMeta{\projIdx, \vecIdx}, \ssSet_{\projIdx, \vecIdx} \}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}$ can be viewed as 
+the output of $\numProjections \genericVecLen$ 	independent invocations of 
+$\protocolEM$. In addition, the server gets the elements $\{  \dhfSet_{\projIdx, \vecIdx} \}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}$, which are blinded by pseudorandom strings generated by a psuedorandom generator PRG using independent seeds. 
+If the adversary is able to learn $\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx])$ from $\prg(\genericSymmKey_\vecIdx) \oplus \dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]$ without the seed $\genericSymmKey_\vecIdx$ then it can also distinguish between the outputs of the PRG and a random string. This happens with probability at most $\Advantage{\prgLabel}{\genericFnFamily}(\timeBound)$. 
+Due to the statistical security of the DHF scheme and the secret-sharing scheme, the adversary does not gain any advantage if there are less than $\threshold$ matches in 
+$\{\cOutputMeta{\projIdx, \vecIdx}\}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}$, unless there is a collision in \primeRO. 
+
+
+Finally, if the adversary is able to distinguish between $\blocklist_0$ and $\blocklist_1$ in \hidingBlocklistExp, then it has correctly guessed $\blindingFactor$. Due to the the prime number theorem, this happens with probability $\frac{\log \rsaMod}{\rsaMod}$.
+
+\end{proof}
+
+
+\subsection{Proof of security for protocol \protocolEMP}
+\label{sec:proof:emp}
+%
+
+\begin{theorem}
+	
+	The protocol \protocolEMP for detecting exact matches against a blocklist satisfies the security properties defined in \ref{sec:security}.
+when using a randomizable set-homomorphic signature scheme \ourSigSchemeDefn 
+
+\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	\begin{small}
+	\begin{gather*}
+    \prob{\unforgeBlocklistExp = 1} \le \ufcmaAdv
+\end{gather*}
+	\end{small}
+	
+	\item It hides non-matching content from the server 
+	
+	\begin{small}
+					\begin{gather*}
+			\prob{\hidingContentExp = 1} \le 1/2 + \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries') \\  + \indsrAdv +  \Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)  +  \Advantage{\prfLabel}{\prf}(\timeBound, \oracleQueries)
+		\end{gather*}
+		\end{small}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{small}
+				\begin{gather*}
+				\prob{\hidingBlocklistExp = 1} \le 1/2  \\ + ~\numBlocklistParts \cdot \left(\frac{\log \rsaMod}{\rsaMod} + \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)\right)
+			\end{gather*}
+		\end{small}
+	
+	\enumListEnd  
+
+
+
+
+\end{theorem}
+
+\begin{proof}
+
+We prove the result assuming that the \oprfFunc is realized using the 2HashDH PRF. In this case, during preprocessing, 
+the client's view includes the obfuscated blocklist  $\{ \hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$, the encrypted Bloom filters $\{\encrypt[\genericSymmKey](\bloomFilter[1]), \dots, \encrypt[\genericSymmKey](\bloomFilter[\numBlocklistParts])\}$ and the signatures $\{ \genericSig[\partition{\setIdx}] \}_{\setIdx \in \nats[\numBlocklistParts]}$. When $\hashFn$ is a random oracle, $\{ \hashFn(\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ is indistinguishable from 
+$\{\qrGen_\setIdx^{\genericRand[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ where $\qrGen_1, \dots, \qrGen_\blocklistSize$ are generators of the group \group where the OM gap-DH problem is assumed hard. Also, the client can learn the blocklist elements if it is able to decrypt any of the Bloom filters. This happens with probability at most $\numBlocklistParts \cdot \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)$. 
+The blocklist verification tokens $\{ \genericSig[\partition{\setIdx}] \}_{\setIdx \in \nats[\numBlocklistParts]}$ ensure confidentiality as shown in \thmref{thm:proof:em}. 
+
+During an upload, the server's view includes $\prf{\prfKey}(\genericCInputElmt)$ in addition to the content verification token generated due to the 
+invocation of \protocolEM. If the adversary can learn $\genericCInputElmt$ from $\prf{\prfKey}(\genericCInputElmt)$, then it can also distinguish between a random element and the output of $\prf$. This happens with probability at most $\Advantage{\prfLabel}{\prf}(\timeBound, \oracleQueries)$
+
+\end{proof}
+
+
+\subsection{Proof of security \protocolFMP}
+\label{sec:proof:fmp}
+%
+\begin{theorem}
+	
+	The protocol \protocolFMP for detecting exact matches against a blocklist satisfies the security properties defined in \ref{sec:security}.
+when using a randomizable set-homomorphic signature scheme \ourSigSchemeDefn 
+
+\enumListStart
+	
+	\item It satisfies unforgeability of the blocklist token 
+	\begin{small}
+	\begin{gather*}
+    \prob{\unforgeBlocklistExp = 1} \le \ufcmaAdv
+\end{gather*}
+	\end{small}
+	
+	\item It hides non-matching content from the server 
+	
+	\begin{small}
+					\begin{gather*}
+			\prob{\hidingContentExp = 1} \le 1/2 + 2 \numProjections \cdot \Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, 
+		\oracleQueries') \\  + \indsrAdv +  \Advantage{\cciLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)  + \numProjections \cdot \Advantage{\prgLabel}{\prg}(\timeBound)
+		\end{gather*}
+		\end{small}
+	
+	\item It preserves confidentiality of the blocklist elements
+	
+	\begin{small}
+				\begin{gather*}
+				\prob{\hidingBlocklistExp = 1} \le 1/2  \\ + ~\numBlocklistParts \cdot \left(\frac{\log \rsaMod}{\rsaMod}\right) + 2 \blocklistSize (1 +  \cuckooTableParam)\Advantage{\indcpaRandLabel}{\encryptionSchemeDefn}(\timeBound, \oracleQueries)
+			\end{gather*}
+		\end{small}
+	
+	\enumListEnd  
+
+
+\end{theorem}
+
+
+
+\begin{proof}
+The confidentiality of the blocklist against the client is due to the IND-CPA guarantees of the encryption scheme used to encrypt the entries in the cuckoo hash table, and the blinding used for the signature, if \protocolFM is invoked. The unforgeability of the blocklist token is due to the unforgeability of the signature on the blocklist partitions and the cuckoo hash table provided to the client. 
+
+For some projection function $\projFn[\projIdx]$, if $\projFn[\projIdx](\clientVec)$ is not in the table \cuckooTable, then the ciphertext $\langle \ciphertext[1] \rangle$ at location $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx])]$ and $\langle \ciphertext[1]' \rangle$ at location $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx])]$ correspond to some $\blocklistVec$ and $\blocklistVec'$ such that $\blocklistVec \neq \clientVec$ and $\blocklistVec' \neq \clientVec$. Thus, $(\ciphertext[1] \homomorphicAdd{\encryptPubKey} \pkencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[1, \projIdx] \homomorphicAdd{\encryptPubKey} \pkencrypt[\encryptPubKey](\genericSymmKey_{\projIdx}, \secretShare{\projIdx})$ results in the encryption of a random element in \group. As a result, 
+the PRG key obtained by decrypting does not allow the server to learn the $\dhf[\dhfKey](\genericRandAlt[1,j])$ 
+or learn the secret share $\secretShare{\projIdx}$. A similar argument holds for $\dhf[\dhfKey](\genericRandAlt[1,j])$
+
+If the server learns $\dhf[\dhfKey](\genericRandAlt[1,j])$ (resp. $\dhf[\dhfKey](\genericRandAlt[1,j])$) 
+from $\dhf[\dhfKey](\genericRandAlt[1,j]) \oplus \prg(\genericSymmKey_{\projIdx})$ without $\genericSymmKey_\projIdx$, then it violates the pseudorandomness guarantees of PRG scheme, which happens with probability at most $\Advantage{\prgLabel}{\genericFnFamily}(\timeBound)$. Finally, the statistical security of the secret sharing scheme and the detectable hash function ensure that if the server has less than $\threshold$ secret shares and DHF evaluations, then the server does not learn the voucher key \voucherKey. The IND-CPA guarantees of the encryption scheme ensures that the server does not learn the contents of the voucher without the key. If the server runs a fine-grained check, then the security of \protocolFM, shown in \thmref{sec:proof:fm}, ensures that the server does not learn the content key unless there is a match.
+
+
+
+
+\end{proof}
+\fi 

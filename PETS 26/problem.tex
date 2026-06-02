@@ -1,0 +1,321 @@
+\section{Model}
+\label{sec:model}
+%
+
+\input{ideal_func.tex}
+
+\subsection{Problem}
+%
+
+A content moderation scheme enables a file server to detect harmful content, e.g., 
+CSAM, in encrypted files uploaded by a client(s). The client provides metadata that allows the server to decrypt the file if the content matches an item in a \textit{blocklist}. Otherwise, if the content is not on the blocklist, then the 
+metadata does not reveal any information about the encrypted content. Typically, a blocklist 
+is created from a content hash~\cite{bhowmick2021apple} or an 
+\textit{embedding}~\cite{du2020perceptual, lu2017deep, raginsky2009locality}. In this work, we envision that the blocklist is jointly created by a group of \emph{auditors}. Clients can verify the authenticity of the blocklist using some public cryptographic token, e.g., a signature. Further, clients do not learn the items on the blocklist, as otherwise they can try simple transformations to evade detection. 
+
+\iffalse
+At a high level, we want a \emph{content moderation scheme} to have the following properties
+
+\itemListStart
+
+\item \textbf{Auditable blocklist:} The contents in the blocklist must be approved by a group of known independent agencies, and users must be able to verify the authenticity of the blocklist. 
+\item \textbf{Privacy for non-blocked uploads:} The content moderation mechanism that uses the blocklist should not divulge information of items that not on the blocklist to the server. 
+\item \textbf{Blocklist confidentiality:} The items on the blocklist are not revealed to the users. Otherwise, the users can try simple transformations that will allow them to evade detection. 
+\itemListEnd
+\fi
+
+%a key challenge lies in deciding who creates the blocklist. Obviously, an untrusted server may include items of its own choice and misuse the mechanism for  
+%Therefore, the blocklist needs to be created honestly by a group of independent 
+%\textit{auditors}, and should be rendered tamper-proof against a malicious server. Also, as we will describe in our security goals, we want to preserve blocklist confidentiality against 
+%curious clients. This is because content embeddings do not guarantee preimage resistance~\cite{prokos2023squint}; 
+%given an embedding, a client may be able to learn information about the content on the blocklist, 
+%which is problematic~\cite{kulshrestha2021identifying}.  Thus, a client cannot directly check its content against the blocklist, and preempt itself from uploading blocked content.
+
+%\myparagraph{Type of matching} 
+%
+Depending on the type of items in the blocklist, content matching may either be in the form of \emph{exact matching} or \emph{fuzzy matching}. Exact matching is an 
+equality test between an input and the items in the blocklist, while fuzzy matching typically computes a 
+distance between content embeddings and compares against a threshold. In both cases, the goal is to 
+detect content that is similar (and not just identical) because simple transformations like adding a filter 
+will make the content different enough from a nearby blocklist element. Typically, exact matching is performed over learned content hashes, e.g., a NeuralHash~\cite{apple2021csam} that derives strings or integers from the content such that two similar items hash to the same value with high probability. On the 
+other hand, fuzzy matching leverages an embedding function  that maps content $\genericSetElmt[1]$ and 
+$\genericSetElmt[2]$ to corresponding elements in a metric space 
+$\metricSpace$ with distance $\distance$. If the content is similar then 
+$\distanceNotation[\distance][\contentHash(\genericSetElmt[1])][\contentHash(\genericSetElmt[2])] 
+\le \threshold$ with high 
+probability, where $\threshold$ is a threshold. Both mechanisms may introduce false positives and false negatives that can be tuned using parameters. 
+ 
+
+\iffalse
+Blocklist elements are typically derived from the content either 
+using a learned hash function, , or by embedding the content into a metric 
+space. The rationale is that the blocklist should not only detect content that exactly matches one of 
+the included items, but also detect \textit{similar} content which should be blocked. Indeed, for 
+content like CSAM, . Learned hash functions  In the first type of blocklist, 
+it is enough to check exact matches against learned hashes, while in the second type, the matches 
+are \textit{fuzzy} and depend on the metric space and distance threshold. We will describe 
+two variants of our protocol: an \textit{exact-matching} variant where detecting matches only entails 
+checking inclusion in the blocklist, and a \textit{fuzzy} variant where a match indicates that the 
+content embedding is within certain threshold distance of an embedded item in the blocklist. 
+\fi
+
+\subsection{Threat Model}
+%
+Our content moderation system has three parties.
+
+\enumListStart
+
+
+	\item \textbf{Auditors:} There is a group of agencies that publish and/or verify the items on the blocklist. 
+	The auditors may include representatives from law enforcement, social rights groups, 
+	independent journalists, etc. Some of the auditors may also be untrusted, i.e., 
+	they may collude with the file servers. For this work, we assume that a majority of the auditors are honest\footnote{The honest majority assumption is an artifact of the cryptographic tool we use in our scheme but it is not a fundamental requirement of the general framework.}.
+%        We use \numAuditors to denote the number of auditors,
+%        $\auditor[\auditorIdx] \in \nats[\numAuditors]$ to denote auditor
+%        \auditorIdx, and when convenient, use
+%        $\nats[\numDishonestAuditors]$ as the indices of the malicious
+%        $\numDishonestAuditors < \numAuditors/2$ auditors .
+        
+	\item \textbf{File server:} The server has the blocklist, although it may not necessarily participate 
+	in creating it. The file server may behave maliciously and collude 
+with the dishonest auditors to learn information in the encrypted files. However, it ensures 
+	integrity and availability of the files. 
+
+	\item \textbf{Client:} The client is semi-honest, i.e., it will follow protocols. While at first glance, it might appear that the assumption is too strong, this model has largely proven successful in detecting content 
+like CSAM, and acting as a deterrent against less sophisticated users~\cite{kulshrestha2021identifying,scheffler2023public,bhowmick2021apple}. 
+Moreover, sophisticated users capable of circumventing checks, e.g., by modifying the client-side code, can also use unmonitored channels for storing harmful content~\cite{kulshrestha2021identifying,scheffler2023public,bhowmick2021apple}. 
+
+%Our schemes do not protect against clients that deviate from the protocol
+%	 since a dishonest client can simply use other unmonitored channels to exfiltrate data or collude with the dishonest server. However, we will protect 
+%	the contents of the blocklist against a curious client. This assumption is consistent with existing works. 
+	
+\enumListEnd
+
+\myparagraph{On the semi-honest client assumption}
+%
+Before proceeding further with our security goals, we pause to consider the practicality of our security model. Of course, the obvious objection is that clients who upload CSAM may not follow protocols since circumventing detection is ultimately their goal. Indeed, a malicious client can leverage tools for adversarial noising~\cite{shan2023glaze}, or ``double-encrypt'' their files so that the client-side software only observes random data. Unfortunately, it is unclear how such attacks can be prevented without using more sophisticated cryptographic tools such as general purpose verifiable computation~\cite{fiore2014efficiently}, or trusted execution environments~\cite{jauernig2020trusted}. Both approaches add overheads/assumptions that are not be suitable for resource-constrained client devices. Consequently, \textbf{all encrypted content moderation tools for detecting CSAM, including Apple's (proposed but now defunct) solution to detect CSAM on iCloud assume a semi-honest client}.
+
+
+%(We briefly discuss how these tools can be leveraged in \secref{} to address a malicious client but generally consider these attacks out-of-scope)
+
+Moreover, there are several reasons to consider semi-honest clients a realistic threat. First, there is ample evidence that CSAM is often uploaded by unsophisticated users ``in the clear''~\cite{csam_example_1,csam_example_2}. However, if cloud providers support end-to-end encryption by default (as it is emerging as a de-facto standard), the opportunities for detecting even such obvious cases are hindered. A tool for a semi-honest client will enable servers to at least perform a baseline level of detection. Second, our mechanisms are compatible with content embeddings that are resilient to adversarial image manipulations~\cite{yang2025certphash} by the client while \emph{also tolerating a malicious server}. Existing works do not simultaneously consider both of these potential threats (\tblref{tab:related}), 
+and therefore our work is an important first step towards designing schemes for a realistic threat model.
+
+
+%\mkr{$\createBlocklist(\langle \privKey[\auditorIdx]\rangle_{\auditorIdx \in \nats[\numAuditors]}, 
+%	\blocklist)$ saves space horizontally, which looks like it might be useful later.}
+
+
+
+\subsection{Security Goals}
+\label{sec:security}
+
+The core building block of our content moderation schemes are blocklists that can be stored on the client while  ensuring: i) \textbf{confidentiality}: clients do not learn the constituent blocked elements, and ii) \textbf{unforgeability}: only the auditors can create/modify the blocklist. We call such blocklist designs  \emph{authenticated and confidential blocklists} (ACBs). The ideal functionality for auditable content moderation using such blocklists is presented in \figref{fig:ideal_func}. \contentModFuncExact supports exact matching against the blocklist, while \contentModFuncFuzzy supports a metric distance based fuzzy match. 
+
+The auditors invoke the functionality with the \createBlocklist to create an ACB, \blklistToken, from a given set of blocked items, \blocklist, and a signature under the auditors' private keys. The ACB and the signatures are published and stored by the client. During an upload, the client invokes the functionality with the \uploadFile message providing an input \clientMeta which is derived from the file content it wants to upload. The functionality stores \clientMeta along with a file identifies
+\clientMeta can be either a hash of the file, or a metric space embedding depending on the type of matching. After the client uploads the file, the server checks whether $\clientMeta \in \blocklist$ by invoking the functionality with the \checkContent (resp. \checkContentFuzzy) message. The functionality returns the result of the check with false positive rate \fpr and false negative rate \fnr. 
+
+
+\iffalse 
+, and iii) \textbf{oblivious matching}: the client can obliviously match its input against items in the blocklist and reveal the result to the server; If the client's input is not in the blocklist, then the result of the match does not reveal any information. . 
+\fi 
+
+
+
+
+
+
+
+
+
+
+\begin{remark}
+The need for blocklist confidentiality is motivated by real-world requirements where child safety groups and hosting platforms have opposed releasing public blocklists since they can be considered unlawful and reveal information about victims~\cite{canetti2021broken,kulshrestha2021identifying}.
+\end{remark}
+
+
+
+
+
+
+
+\iffalse 
+Our content moderation scheme has two types of tokens. 
+
+\enumListStart
+\item A \emph{blocklist authentication token} (\blklistToken{\blocklist}) allows clients to verify that the blocklist \blocklist used by the file server is authentic and has been vetted by the group of auditors. 
+\item A \emph{content verification token} (\contentToken{\clientData}) is computed by the client using \blklistToken{\blocklist} and its file input \clientData using a content hash or embedding that allows the server to identify blocked content.
+\enumListEnd
+
+
+
+Informally, the scheme satisfies the following 
+
+\enumListStart
+	
+	\item \itemHeading{The blocklist authentication token is unforgeable:} Given a blocklist \blocklist and the corresponding blocklist authentication token \blklistToken{\blocklist}, it should not be possible for an adversary to generate a different blocklist authentication token \blklistToken{\blocklist'} using a set $\blocklist' \not \subseteq \blocklist$, even when it colludes with the dishonest auditors
+
+
+
+	\item \itemHeading{The content verification reveals no information about content that is not in the blocklist:}
+	Given the items in the blocklist, the encrypted content and the corresponding \contentToken{\clientData}, a 
+	PPT adversary does not learn any information about the content if it is not on the blocklist, even when it 
+	colludes with the dishonest auditors. 
+	
+
+	\item \textbf{Blocklist Confidentiality:} The blocklist authentication token \blklistToken{\blocklist} hides the 
+	blocklisted items from an adversary performing an \emph{offline} dictionary attack.  We do not consider an \emph{online} dictionary attack -- where a client uploads content that is blocked and learns one (or more) entries in the blocklist when it is informed about the violation -- a realistic threat because once blocked content, e.g., CSAM, is detected at an account, presumably the account will be suspended. \emph{The need for blocklist confidentiality is motivated by real-world requirements where child safety groups have previously opposed releasing blocklists without confidentiality guarantees}. 
+	
+\enumListEnd
+
+
+
+\myparagraph{Ideal functionality}
+
+%
+We will formally prove security in the simulation framework~\cite{lindell2017simulate}. 
+
+
+%The functionality gets the blocklisted items from \numAuditors auditors and ensures that they all agree on the same items. Then, \contentModFunc signs the blocklist using a distributed signing algorithm under the keys of all the auditors. When the client wants to upload a file, it first computes the content verification token \contentToken{\clientData} from its file \clientData, and sends a \uploadFile message to the \contentModFunc with \contentToken{\clientData} as the argument. Upon receiving this message, \contentModFunc returns a random encryption key to the client and stores the key in a keylist alongside \contentToken{\clientData}. Once the client uploads the file, the server sends the \checkContent message to \contentModFunc with the \contentToken{\clientData} for exact matching, or \checkContentFuzzy message for fuzzy matching. In case of exact matching, \contentModFunc checks whether the token is in the blocklist. If so, it returns the corresponding key from the key list; otherwise it returns a random key. In case of \checkContentFuzzy, \contentModFunc returns the key from the key list if there is some item $\genericBlocklistElmt \in \blocklist$ such that $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] \le \threshold$ with probability $1 - \funcFNR$. With probability $\funcFNR$, it returns a random key. Also, if there is no item $\genericBlocklistElmt \in \blocklist$ such that $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] \le \threshold$, then \contentModFunc always returns a random key. 
+
+
+\enumListStart
+
+
+
+\item We do not verify correctness of \contentToken{\clientData} computed by the client because in out threat model 
+the client is semi-honest and is trusted to provide inputs correctly. 
+
+\item The functionalities allow false positives and false negatives, quantified by the false positive rate \fpr and false negative rate \fnr. This is 
+
+
+\item The functionality allows the client to upload multiple files with the same \contentToken{\clientData} and tracks the files using unique file IDs. In practice, a client may want to avoid leaking such correlations to the server. We overcome this leakage in our protocols.
+
+
+
+%\item All existing blocklisted content moderation systems that support fuzzy matching, including ours, have false negatives (\tblref{tab:related}). Ideally \funcFNR will be tuned to a reasonably low value. \contentModFunc does not return false positives. 
+
+\item In case of \contentModFuncExact, a match will 
+
+\enumListEnd
+\fi 
+
+
+%
+%Intuitively, an auditable content moderation system should ensure that the file server is not able to tamper with 
+%the blocklist published/approved by the set of auditors, even if it colludes with some of them. 
+%Additionally, the metadata uploaded by the client should not divulge any information 
+%to the file server if the content is not on the blocklist. 
+
+\iffalse 
+We will formally define the properties of a content moderation scheme. 
+We will assume that each auditor has cryptographic secrets, e.g., auditor \auditorIdx has public-private 
+key pair  $\tupleDefn{\pubKey[\auditorIdx], 
+\privKey[\auditorIdx]}$, that enables it to generate a cryptographic token 
+from the blocklist. The server and the client do not hold any long-term secrets. 
+The client uses an encryption scheme with weak random key robustness 
+$\encryptionSchemeDefn$.
+
+Our content moderation scheme has three algorithms.
+%\mkr{The first is a distributed algorithm, right?  Maybe be explicit
+ % about that.}
+
+\enumListStart
+	\item \underline{$\createBlocklist(\setOfAuditorPrivkeys, \blocklist)$} 
+	 is a distributed algorithm that is invoked by the group of \numAuditors auditors (which may  
+	 include the file server) with their own secret inputs (e.g., private keys) and a set of agreed-upon 
+	 content hashes \blocklist that the auditors wants to block/detect.
+        The algorithm outputs a \blklistToken $\genericSig[\blocklist]$, derived from $\blocklist$ 
+        and allows the server to match uploaded content against the blocklist elements. In addition,  
+	$\genericSig[\blocklist]$ allows clients to ascertain that the token has been approved by the auditors. 
+
+	\item \underline{$\uploadFile(\clientData, \genericSig[\blocklist])$} is invoked by a client when it 
+	wants to upload content $\clientData$ to the server. The algorithm first computes a hash (or embedding) of the the content 
+	$\genericCInputElmt \assign \contentHash(\clientData)$. 
+	Then, it encrypts the content $\cOutputFile \assign 
+	\encrypt[\genericSymmKey](\clientData)$,
+	and derives a \contentToken $\cOutputMeta$ from $\genericCInputElmt$ and $\genericSig[\blocklist]$. The encrypted content and the \contentToken are uploaded to the file server. 
+	
+	\item \underline{$\checkContent(\blocklist,\cOutputFile, \cOutputMeta)$}
+          is invoked by the file server.  It returns the key
+          $\genericSymmKey$ that is used to encrypt $\cOutputFile$
+          if $\contentHash(\clientData) \in \blocklist$, and returns 0 otherwise.
+\enumListEnd
+
+\myparagraph{Correctness}
+%
+A content moderation scheme is correct if it allows the file server to detect blocked 
+content when the client uploads some $\genericCInputElmt \in \blocklist$. That is, we want 
+
+\begin{footnotesize}
+	\begin{align*}
+	& \cprob{\bigg}{\begin{array}{@{}r@{}}
+		\checkContent(\blocklist, \cOutputFile, \cOutputMeta) = 0 
+		\end{array}}{\begin{array}[m]{@{}l@{}}
+		\genericSig \assign \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist\right) \\
+		(\cOutputFile, \cOutputMeta) \assign \uploadFile(\clientData, \genericSig) 
+		\\ ~\quad \land ~\genericCInputElmt \in \blocklist
+	\end{array}} \le \fnr
+\end{align*}
+\end{footnotesize}
+
+\myparagraph{Security}
+% 
+The security of a content moderation scheme relies on three properties (formally defined in \appref{sec:defn:content_mod}).
+\fi 
+
+
+
+
+
+%We assume that each file uploaded by the client has a separate key so 
+%as to ensure that only the offending content is disclosed. However, this means that the client needs
+%additional mechanisms for key management; we treat this as an orthogonal issue and refer to 
+%existing solutions~\cite{yan2023optimal}. 
+
+
+\iffalse
+\subsection{System Requirements}
+%
+We will adhere to the following design goals.
+
+\itemListStart
+	
+	\item \textbf{Common blocklist:} We will allow multiple file servers to use a common blocklist, 
+	a feature that is unavailable with existing designs. More specifically, we will allow 
+	the auditors to independently create the blocklist and authorize file servers to use it. 
+	Alternatively, if a file server wants to create a 	blocklist specifically for its own use, it may do 
+	so by simply playing the role of one of the auditors in our schemes. This design is 
+	advantageous from a practical standpoint since clients need to trust and store only a single 
+	blocklist for multiple file services, and the file servers themselves do not need to participate 
+	in the (potentially expensive) blocklist creation process. 
+	
+	
+%	Indeed, for certain types of content, e.g., 
+%	CSAM, a file server may not want to directly participate in the blocklist creation 
+%	as this will require prior authorization, sandboxing mechanisms, etc.
+%        \mkr{I don't quite understand these requirements.  Do you mean
+%          so they don't get accused of trafficking this material?}
+%	
+	
+	
+	\item \textbf{Optimal client costs:} We will simultaneously optimize three 
+	metrics: server-client communication, client compute costs and client local storage. Specifically, our 
+	goal is to make all three \textit{sublinear in the number of elements in the blocklist}. This feature is important since client devices like 
+	phones, tablets, etc. can be under-resourced to run complex computation or 
+	store large blocklists.  
+		
+%	\item \textbf{Generalizing to different blocklist types:} Often content moderation mechanisms are 
+%	designed to work with particular types of blocklists (or embedding functions) and do not 
+%	generalize to other data types. We will propose cryptographic mechanisms that can be 
+%	generalized to many 
+%	different types of embeddings functions/learned content hashes, etc.  
+		
+	\item\textbf{Efficient blocklist updates:} Items can be added to the blocklist, or removed from 
+	it on demand. We require that dynamically growing or shrinking the blocklist should be 
+	inexpensive, e.g., the cost of updating the cryptographic token should scale as a function of 
+	the 
+	number of items that are added/removed, independent of the blocklist size. 
+	
+\itemListEnd
+\fi

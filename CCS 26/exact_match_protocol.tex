@@ -1,0 +1,140 @@
+
+\newcommand{\bucketIDSet}{\ensuremath{\mathcal{I}}\xspace}
+
+\begin{figure*}
+\fbox{%
+\footnotesize
+\begin{minipage}[t]{\textwidth}
+
+\noindent\underline{\protocolEM: Protocol realizing \contentModFunc}
+
+\smallskip\textbf{Parameters:} An encryption scheme $\encryptionSchemeDefn$, a randomizable homomorphic signature scheme \ourSigSchemeDefn with distributed signing functionality \distSigningFunc, a digital signature scheme \sigSchemeDefn, a protocol realizing \authOPRFFunc, a content embedding function $\embed: \universe \rightarrow \bin^{\ell}$, a PRF $\prf: \prfKeySpace \times \bin^{\ell} \rightarrow \bin^{\secParam}$, a PRP scheme $\prp: \prpKeySpace \times \prfRange \rightarrow \prfRange$
+
+
+%\smallskip\textbf{Inputs:} Auditors
+
+
+\smallskip\noindent\textbf{Publishing the blocklist}
+%
+\protocolStepListStart{I}
+\item Auditors randomly partition the blocklist into $\numBuckets$ buckets, $\blocklist = \bucket{1} \cup  \dots \cup \bucket{\numBuckets}$
+
+
+\item Auditors invoke \authOPRFFunc with $(\publishList, \blocklist, \auditorPrivKeyGenericScheme[\auditorIdx])$ which outputs $\blocklist', \genericSig[\blocklist'], \kvs$. (A server that wants to use the blocklist \blocklist is provided \kvs). 
+
+\item Auditors sample $\numBuckets$ random elements $\blindingFactor_1, \dots, \blindingFactor_{\numBuckets} \sample [1, \rsaMod^2]$ and jointly invert the elements to obtain additive shares of $\blindingFactor_{\bucketIdx}^{-1} \bmod \orderFn(\qrGroup)$ using \cite{catalano2000computing}. 
+
+
+%\item Auditors sample $\numBuckets$ random prime numbers $\blindingFactor_1, \dots, \blindingFactor_{\numBuckets}$ and add $\blindingFactor_\bucketIdx$ to $\bucket{\bucketIdx}$ as blinding factors to hide blocklist elements from \client
+
+
+%publish $\blocklist', \genericSig[\blocklist']$. 
+
+\item Using $\distSigningFunc$ auditors jointly sign each bucket $\sign[\privKey](\bucket{\bucketIdx})$. The signatures are blinded with the random elements $\genericSig[\bucket{\bucketIdx}] \assign \sign[\privKey](\bucket{\bucketIdx})^{(\blindingFactor_{\bucketIdx})^{-1}} = \qrGen^{\frac{1}{\blindingFactor_\bucketIdx \prod\limits_{\genericBlocklistElmt \in \bucket{\bucketIdx}}{\primeRO(\genericBlocklistElmt)}}}$
+
+\item 
+Each auditor $\auditor[\auditorIdx]$ signs the (hash of) i) the public key of the distributed signing algorithm, ii) the joint signatures on the blocklist partitions and iii) the joint signature on $\blocklist'$:  $\auditorSig{\auditorIdx} \assign \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\pubKey,  \genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}], \genericSig[\blocklist']))$
+
+\item The auditors publish $\{\pubKey, \blocklist', \genericSig[\blocklist'], \genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}], \auditorSig{1}, \dots, \auditorSig{\numAuditors}  \}$ 
+
+
+\protocolStepListEnd
+
+\smallskip\noindent\textbf{Preprocessing (one-time):}
+
+\protocolStepListStart{P}
+
+
+\item \label{pre:authOPRF} \client downloads $\{\pubKey, \blocklist', \genericSig[\blocklist'], \genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}], \auditorSig{1}, \dots, \auditorSig{\numAuditors} \}$ published by the auditors, and aborts if $\verifyGenSig[\auditorPubKeyGenericScheme[\auditorIdx]] (\auditorSig{\auditorIdx}, \hashFn(\pubKey,  \genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}], \genericSig[\blocklist'])) \neq 1$. 
+
+\item \client samples a key $\prfKeyClient \in \prfKeySpace$ for \prf.  \client sends $(\evaluate, \blocklist', \prfKeyClient)$ to \authOPRFFunc. \server receives $\prf(\prfKeyClient, \genericBlocklistElmt)$ for all $\genericBlocklistElmt \in \blocklist$
+
+
+
+%The auditors $\auditor[1], \dots, \auditor[\numAuditors]$, \client and \server invoke \authOPRFFunc with the client acting as the sender and the server acting as the receiver. Server learns $\prf(\prfKeyClient, \genericBlocklistElmt)$ for all $\genericBlocklistElmt \in \blocklist$. 
+
+\item \label{pre:bloom_filter_init} \server initializes $\numBins$ Bloom filters $\bloomFilter[1], \dots, \bloomFilter[\numBins]$ with false positive rate \bloomFilterEpsilon and samples key $\prpKeyServer \sample \prpKeySpace$ for the PRP \prp.
+
+\item \label{pre:bloom_filter_assign} \server inserts $\genericBlocklistElmt$ and $\prp(\prpKeyServer, \prf(\prfKeyClient,\genericBlocklistElmt))$ into $\bloomFilter[\bloomFilterIdx]$ where $\bloomFilterIdx = \prp(\prpKeyServer, \prf(\prfKeyClient,\genericBlocklistElmt) \bmod \numBins$. 
+
+%\item \label{pre:sign} \server computes the signature for each bucket: $\genericSig[\bloomFilter[\bloomFilterIdx]] \assign (\genericSig[\blocklist])^{\prod\limits_{\genericBlocklistElmt \notin \bloomFilter[\bloomFilterIdx]} \primeRO(\genericBlocklistElmt)}$ for all $\bloomFilterIdx \in \nats[\numBuckets]$.  
+
+
+\item \label{pre:encrypt_filter} \server sends to \client $\{\encrypt[\bloomFilterKey](\bloomFilter[1]), \dots, \encrypt[\bloomFilterKey](\bloomFilter[\numBuckets])\}$, where  $\bloomFilterKey$ is a random key for \encryptionScheme
+
+\protocolStepListEnd
+
+
+\smallskip\noindent\textbf{Upload:} \algComment{\client uploads the file \clientData}
+
+
+\protocolStepListStart{U}
+
+\item \client samples a key for the encryption scheme, $\fileKey$, and sends the encrypted file and a unique identifier $\langle \genericFileID, \encrypt[\fileKey](\clientData)\rangle$ to \server. 
+
+\item \label{upload:bloom_filter_idx} \client computes $\genericCInputElmt \assign \contentHash(\clientData)$. If $\genericCInputElmt \notin \prevHashList$, it sets $\genericCInputElmtPRFEval \assign \prf(\prfKeyClient, \genericCInputElmt)$, otherwise it sets $\genericCInputElmtPRFEval \getsr \bin^{\secParam}$. \client sets $\bloomFilterIdx \assign \genericCInputElmtPRFEval \bmod \numBins$, and sends $\genericCInputElmtPRFEval, \encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$ to \server. 
+
+\item \label{upload:fast_path_1} \server decrypts $\encrypt[\bloomFilterKey](\bloomFilter[\bloomFilterIdx])$ and sets $\detected = \fals$ if $\prf(\prpKeyServer,\genericCInputElmtPRFEval) \notin \bloomFilter[\bloomFilterIdx]$. Otherwise, \server sets $\detected = \tru$. 
+
+%.
+
+\item \label{upload:fast_path_2} (\algComment{Fast path}) If $\detected = \fals$, \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$ and \client adds $\genericCInputElmt$ to $\prevHashList$. \server and \client abort. 
+
+\item (\algComment{Fine-grained check}) If $\detected = \tru$, \server computes the buckets corresponding to the elements in the Bloom filter returned by \client: $\bucketIDSet \assign \{ \bucketIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \bucket{\bucketIdx}\}$. \server sends \bucketIDSet to \client.  For each $\bucketIdx \in \bucketIDSet$
+
+\begin{enumerate}
+\item \label{upload:fine_grained:token_gen} \client computes $\randomize[\pubKey](\genericSig[\bucket{\bucketIdx}] \sigMinus[\pubKey] \genericCInputElmt) = 
+\langle  \genericSig[\bucket{\bucketIdx}]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod) \rangle$, and sends the content verification token $\contentToken{\clientData}^{(\bucketIdx)} \assign  \genericSig[\bucket{\bucketIdx}]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod$, and a blinded encryption key $\fileKey' \assign \fileKey \oplus \ro(\qrGen^{\genericRand} \bmod \rsaMod)$ to \server. 
+
+\item \label{upload:verify_sig_decrypt} For each $\genericBlocklistElmt \in \bucket{\bucketIdx}$, compute $\accSet_{\genericBlocklistElmt} \assign \prod\limits_{\genericFnInput \in \bucket{\bucketIdx} \setminus \{\genericBlocklistElmt\}}\primeRO(\genericFnInput)$. \server  tries to decrypt $\encrypt[\fileKey](\clientData)$  with the key $\genericSymmKey' \assign \ro\left(\left(\contentToken{\clientData}^{(\bucketIdx)}\right)^{\blindingFactor_{\bucketIdx} \accSet_{\genericBlocklistElmt}} \bmod \rsaMod\right) \oplus \fileKey'$. (Note that $\genericSymmKey' = \fileKey ~\text{if} ~\genericCInputElmt \in 
+		\blocklist$ and \server obtains \clientData.)
+
+\item If the decryption is successful for some $\genericBlocklistElmt \in \bucket{\bucketIdx}$, then \server outputs 
+$\langle \genericFileID, \detected = \tru, \clientData \rangle$. Otherwise, it outputs and sends to \client $\langle \genericFileID, \detected = \fals, \emptyset \rangle$
+
+\end{enumerate}
+
+
+
+%\item \label{nf:client:token1} \client samples  $\genericRand \sample \nats[1, \rsaMod^2]$ and computes 
+
+%\item \client computes $\genericSig[\bloomFilter[\bloomFilterIdx]] \sigMinus[\pubKey] \genericCInputElmt = \genericSig[\bloomFilter[\bloomFilterIdx]]^{\primeRO(\genericCInputElmt)} \bmod \rsaMod$
+
+%\item \label{upload:verif_token_1} \client computes $\randomize[\pubKey](\genericSig[\bloomFilter[\bloomFilterIdx]] \sigMinus[\pubKey] \genericCInputElmt) = 
+%\langle  \genericSig[\bloomFilter[\bloomFilterIdx]]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod) \rangle$ where $\genericRand \sample \nats[1, \rsaMod^2]$.
+%
+%\item \label{upload:verif_token_2} \client sets the \contentToken $\cOutputMeta \assign  \genericSig[\bloomFilter[\bloomFilterIdx]]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod$
+%
+%\item \label{upload:encrypt} \client encrypts the file $\cOutputFile \assign \encrypt{\fileKey}(\clientData)$ where $\fileKey \gets \ro(\qrGen^{\genericRand} \bmod \rsaMod)$
+%
+%%\item Client performs \stepsref{nf:client:token1}{nf:client:store} of \figref{fig:exact_match} with $\genericSig[\bloomFilter[\bloomFilterIdx]]$ and input $\genericCInputElmt$. 
+%
+%\item \client sends to \server $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$, $\genericCInputElmtPRFEval$ , $\cOutputFile$ and $\cOutputMeta$. 
+%
+%\item \label{upload:decrypt} \server decrypts $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$ and obtains $\bloomFilter[\bloomFilterIdx]$. If $\genericCInputElmtPRFEval \notin \bloomFilter[\bloomFilterIdx]$, then return $\langle \detected = \fals, \emptyset \rangle$ . 
+%
+%\item \label{upload:verify_sig} Otherwise, \server computes $\bucket{\bloomFilterIdx} \assign \{ \genericBlocklistElmt: \genericBlocklistElmt \in \blocklist ~\land ~\genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] \}$ 
+%
+%
+%\enumListStart
+%\item For each $\genericBlocklistElmt \in \bucket{\bloomFilterIdx}$, compute $\accSet_{\genericBlocklistElmt} \assign \prod\limits_{\genericFnInput \in \bucket{\bloomFilterIdx} \setminus \{\genericBlocklistElmt\}}\primeRO(\genericFnInput)$. 
+%
+%
+%
+%\item \label{upload:verify_sig_decrypt} For each $\genericBlocklistElmt \in \bucket{\bloomFilterIdx}$, \server  tries to decrypt $\cOutputFile$ with the key $\genericSymmKey' \assign \ro(\cOutputMeta^{\accSet_{\genericBlocklistElmt}} \bmod \rsaMod)$ \quad \algComment{$\clientData = 
+%		\decrypt[\genericSymmKey'](\cOutputFile) ~\text{if} ~\genericCInputElmt \in 
+%		\blocklist$ }
+%
+%\item If the decryption is successful for some $\genericBlocklistElmt \in \bucket{\bloomFilterIdx}$, then \server outputs 
+%$\langle \detected = \tru, \clientData \rangle$. Otherwise, \server outputs $\langle \detected = \fals, \emptyset \rangle$
+%
+%\enumListEnd
+ 
+\item If \client receives $\langle \detected = \fals, \emptyset \rangle$ from \server, \client adds $\genericCInputElmt$ to $\prevHashList$. Otherwise, \client outputs $\langle \genericFileID, \detected = \tru \rangle$. 
+
+\protocolStepListEnd
+ 
+
+\end{minipage}
+} \caption{\protocolEM: Exact matching content moderation protocol \label{fig:exact_match}}
+\end{figure*}

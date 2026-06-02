@@ -1,0 +1,263 @@
+\section{Content Moderation with Exact Matching}
+\label{sec:exact_match}
+
+%\input{dss_protocol.tex}
+\input{exact_match_protocol.tex}
+
+We describe our content moderation scheme with exact-matching capabilities in \figref{fig:exact_match}; we assume that the client wants to upload files that are drawn from the universe \universe, and the content hash function $\contentHash: \universe \rightarrow \bin^{\genericVecLen}$ maps any such content to an \genericVecLen-bit string. Two items $\genericUniverseElmt, \genericUniverseElmtAlt$ are similar iff. $\contentHash(\genericUniverseElmt) = \contentHash(\genericUniverseElmtAlt)$.  
+Before describing the protocol, we pause to define a building block. 
+
+\subsection{Building Block: Authenticated OPRF}
+%
+
+Our protocol provides a \emph{fast path} for verification such that for the average case when blocklisted items are not uploaded frequently, the server and client costs for uploads are constant time operations. To support this, we will define a functionality called \emph{authenticated OPRF}, that extends the definition of an OPRF to a three party functionality \authOPRFFunc (\figref{fig:authOPRF_func}), where a group of $\numAuditors$ auditors with semi-honest majority jointly sign a list of inputs to a pseudorandom function. \authOPRFFunc receives the key for the PRF from the client, who acts as the sender. The receiver of the PRF evaluations is the server, who does not input anything.
+
+
+
+ 
+%two functionalities that serve as building blocks. First, we define a distributed signing functionality that allows us to support the multiple signers for the signature scheme presented in \secref{sec:sig_scheme} such that signing parties only have the shares of the private key. Second, we define a a functionality called an \emph{authenticated Oblivious PRF} that adapts the standard OPRF functionality to a three-party settings and allows us to provide a fast path for verification. 
+
+%Thus, the blocklist for content moderation is created from such content hashes, and when a client uploads a new file, its content hash is compared against all the hashes on the blocklist. This model is identical to the Apple PSI system if the content hashes are derived using NeuralHash. 
+
+%Specifically, $\blklistToken{\blocklist} = \sign[\privKey](\blocklist)$ is a distributed signature on \blocklist by all the auditors.
+
+%\subsubsection{Distributes signature }
+%%
+%In our scheme, the auditors leverage the randomizable set homomorphic signature \ourSigScheme to publish the blocklist authentication token $\blklistToken{\blocklist} =  \sign[\privKey](\blocklist)$.  However, in order to use \ourSigScheme for computing $\blklistToken{\blocklist}$, we must extend the protocol to support distributed key generation and signature, as defined by the ideal function \distSigningFunc. Fortunately, we can realize this functionality using existing techniques. 
+
+%We first define the ideal functionality \distSigningFunc for a distributed randomizable homomorphic signature, and then show how to realize it using existing techniques. 
+
+
+\iffalse 
+\begin{figure}
+\begin{mdframed}
+\small 
+
+\underline{\dssFunc: Distributed Signing Functionality}
+
+\smallskip\noindent\textbf{Parameters:} A randomizable homomorphic signature scheme \ourSigSchemeDefn. $\numAuditors$ auditors $\auditor[1]$, $\dots$, $\auditor[\numAuditors]$. 
+
+\smallskip\noindent\textbf{Inputs:} The auditors have a common list of item $\blocklist \subseteq \universe$ 
+
+%and public-private key pair $\{ \auditorPubKeyOurScheme[\auditorIdx], \auditorPrivKeyOurScheme[\auditorIdx] \}_{\auditorIdx \in \nats[\numAuditors]}$ for signature scheme \ourSigScheme
+
+\smallskip\noindent\textbf{Functionality:}
+
+\itemListStart
+\item Sample and store a public-private key pair $\pubKey, \privKey$ for the signature scheme \ourSigScheme. Send a secret share $\langle \privKey\rangle_{\auditorIdx}$ to auditor $\auditor[\auditorIdx]$
+\item Upon receiving $(\distSign, \auditor[\auditorIdx], \blocklist)$ from $\auditor[\auditorIdx]$, store $\blocklist$. After receiving the $\distSign$ message from all auditors, output $\sign[\privKey](\blocklist)$ if all messages have the same input $\blocklist$. Otherwise abort.  
+\item Upon receiving $(\distAdd, \auditor[\auditorIdx], \blocklist, \genericSetVar)$ from $\auditor[\auditorIdx]$, store $\blocklist, \genericSetVar$. After receiving the $\distAdd$ from all auditors, output $\sign[\privKey](\blocklist \cup \genericSetVar)$ 
+if all the messages have the same inputs $\blocklist, \genericSetVar$. Otherwise abort. 
+\item Upon receiving $(\distDel, \auditor[\auditorIdx], \blocklist, \genericSetVar)$ from $\auditor[\auditorIdx]$, store $\blocklist,\genericSetVar$. After receiving the $\distDel$ from all auditors, output $\sign[\privKey](\blocklist \setminus\genericSetVar)$ if all the message have the same inputs $\blocklist, \genericSetVar$. Otherwise abort. 
+\itemListEnd
+\end{mdframed}
+\end{figure}
+\fi 
+%The protocol was later extended by \citet{ong2005optimizing} to support a malicious minority of signing parties, and we will use this version to realize \distSigningFunc.
+
+\iffalse
+\myparagraph{Realizing \distSigningFunc } We can realize \distSigningFunc by extending our RSA-based signature scheme. The full protocol is in \figref{fig:protocol:dist_sign} in \appref{}. Recall that the public key of the signature scheme is the modulus $\rsaMod$ and a generator $\qrGen$, and the private key is the factorization of $\rsaMod$. To support distributed signing, we use the protocol of \citet{algesheimer2002efficient}\footnote{To the best of our knowledge this is the only protocol that ensures that $\rsaMod$ is generated from safe primes, which is necessary to ensure that $\qrGroup$ is cyclic} to generate a shared modulus $\rsaMod = (2 \sgPrime[1] + 1) (2 \sgPrime[2] + 1)$ such that the auditors only have additive shares of $\sgPrime[1], \sgPrime[2]$.  
+ The shares allow the auditors to securely compute $\rsaMod$ and $\orderFn(\qrGroup) = \sgPrime[1] \sgPrime[2]$ using invocations of the BGW protocol. \rsaMod is included in the public key while the shares of $\orderFn(\qrGroup)$ are distributed to the auditors and kept as the private key. The generator selection is also performed using the BGW protocol by checking that for a random value $\qrGen \in [2, \rsaMod -1]$, selected by the auditors, $\qrGen^{\sgPrime[1]} \not \equiv 1 \bmod \rsaMod ~\land ~\qrGen^{\sgPrime[2]} \not \equiv 1 \bmod \rsaMod$. The protocol finds a random generator within $\bigO{\secParam}$ tries with overwhelming probability. 
+While the key generation is the most expensive step of our protocol, \emph{this setup is only performed once when the auditors initialize the system}.
+
+%It is necessary to perform this check without revealing the outputs of   
+%$\qrGen^{\sgPrime[1]}, \qrGen^{\sgPrime[2]}$ in the clear, and thus we use the BGW instantiations. We introduce several optimizations to reduce the number of BGW invocations by trivially excluding cases where $\qrGen \notin \qrGroup$ without interactions among the auditors (by locally checking the Jacobi symbol) and ensure that within $\bigO(\secParam)$ tries, the protocol identifies a random generator with overwhelming probability. 
+
+\myparagraph{Signing and updating signatures}
+%
+The function $\distSign$ used to sign a set of items $\blocklist$ is significantly cheaper.  We leverage the protocol of \citet[Fig. 3]{catalano2000computing} to compute an inverse modulo a shared order, $\prod\limits_{\genericBlocklistElmt \in \blocklist}\primeRO(\genericBlocklistElmt)^{-1} \bmod \sgPrime[1] \sgPrime[2]$. Knowing a share $\langle \genericSetElmt \rangle_{\auditorIdx}$, the auditors can compute $\sign[\privKey](\blocklist) = \qrGen^{\left(\sum\limits_{\auditorIdx \in [1, \numAuditors]}\langle \genericSetElmt \rangle_{\auditorIdx}\right)}\bmod \rsaMod = \prod\limits_{\auditorIdx = 1}^{\numAuditors} \qrGen^{\langle \genericSetElmt_{\setIdx} \rangle_{\auditorIdx}} \bmod \rsaMod$. Crucially, this product is computed \emph{in the clear} after each auditor broadcasts  $\qrGen^{\langle \genericSetElmt \rangle_{\auditorIdx}} \bmod \rsaMod$. The costs scale polynomially in the size of $\blocklist$. Concretely, it takes 166 seconds to sign a blocklist with 1 million items (see \secref{sec:eval}). 
+
+
+The $\distAdd$ function is implemented using the homomorphic operations. $\sign[\privKey](\blocklist \cup \genericSetVar) = \genericSig[\blocklist] \sigHomomorphism[\pubKey] \genericSig[\genericSetVar]$. Note that the cost of an update scales in the \emph{number of new elements that must be added $\setSize{\genericSetVar}$ and not $\setSize{\genericSetVar \cup \blocklist}$}. The $\distDel$ can be implemented for ``free'', i.e., without any interaction between the auditors because computing $\genericSig[\blocklist \setminus \genericSetVar] = \genericSig[\blocklist] \sigMinus[\pubKey] \genericSetVar$ does not require any inversions.  
+\fi 
+
+%Specifically, we compute the signature $\genericSig[\genericSetVar] \assign \sign[\privKey](\genericSetVar)$ using the method described above, and then leverage the homomorphism to compute 
+
+\begin{figure}
+\begin{mdframed}
+\footnotesize 
+
+\underline{$\authOPRFFunc$: Ideal Functionality for Authenticated OPRF}		
+		
+		\smallskip\noindent\textbf{Parameters:} \numAuditors auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a sender \client and a receiver \server. A pseudorandom function $\prf: \prfKeySpace \times \universe   \rightarrow \prfRange$, a signature scheme \ourSigSchemeDefn with distributed key generation and signing capabilities and message space \group, a hash function $\hashFn: \bin^{\ast} \rightarrow \group$   
+
+		\smallskip\noindent\textbf{Inputs:} The auditors have a common list of item $\blocklist \subseteq \universe$ and the share of a distributed private key $\langle \privKey \rangle_{\auditorIdx \in \nats[\numAuditors]}$ for \ourSigScheme corresponding to a public key $\pubKey$. \client has the key \prfKey for \prf. 
+
+
+
+		\smallskip\noindent\textbf{Functionality:} 
+\itemListStart
+
+\item	Upon receiving the message $(\publishList, \auditor[\auditorIdx], \blocklist, \langle \privKey \rangle_{\auditorIdx \in \nats[\numAuditors]})$ from $\auditor[\auditorIdx]$, store the list of item \blocklist and the auditor's private key share
+
+\item After receiving the \publishList message from all auditors, abort if the list of items \blocklist submitted by the auditors are not the same. Otherwise, 
+
+\enumListStart
+\item Initialize a key-value store \kvs. 
+\item For each $\genericBlocklistElmt \in \blocklist$, add an entry $\langle \genericBlocklistElmt, \genericRand \rangle$ to $\kvs$, where $\genericBlocklistElmt$ is the key and $\genericRand \getsr \bin^{\secParam}$
+\item Add each value $\genericRand$ in \kvs to a set $\blocklist'$.   
+\item Sign a hash of $\blocklist'$ under the combined private key $\genericSig[\blocklist'] \assign \sign[\privKey](\hashFn(\blocklist'))$. Output $\blocklist', \genericSig[\blocklist'], \kvs$
+
+
+
+%$\genericSig[\blocklist']^{(1)} \assign \sign[\auditorPrivKeyGenericScheme[1]](\hashFn(\blocklist')), \dots, \genericSig[\blocklist']^{(\numAuditors)} \assign \sign[\auditorPrivKeyGenericScheme[\numAuditors]](\hashFn(\blocklist'))$. and $\genericSig[\blocklist']^{(1)}, \dots, \genericSig[\blocklist']^{(\numAuditors)}$
+\enumListEnd
+
+\item Upon receiving the message $(\evaluate, \blocklist', \prfKey)$ from \client, for each $\langle \genericBlocklistElmt, \genericRand \rangle \in \kvs$, output to \server $\langle \genericBlocklistElmt, \prf{\prfKey}(\genericRand)\rangle$. 
+
+\itemListEnd
+\end{mdframed}
+\caption{\authOPRFFunc: Authenticated OPRF\label{fig:authOPRF_func}}
+\end{figure}
+
+\myparagraph{Realizing \authOPRFFunc}
+%
+We realize \authOPRFFunc by leveraging the the 2HashDH PRF construction~\cite{jarecki2014round} in a group where the OM gap-DH problem is hard; $\prf{\prfKeyClient}(\genericFnInput) = \oprfRO[2](\genericFnInput, \oprfRO[1](\genericFnInput)^{\prfKeyClient})$, where $\oprfRO[1], \oprfRO[2]$ are modeled as random oracles. The full protocol is in \figref{fig:authOPRF} in \appref{app:authOPRF}. In brief, 
+the auditors ``blind'' the blocklist elements $\{ \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and the server is provided $\genericRand[1]', \dots, \genericRand[\blocklistSize]'$ . The auditors publish $\blocklist'$ and sign (a hash of) $\blocklist'$ under their private keys. The client obtains $\blocklist'$ and the auditors' signatures. After verifying the signatures, the client exponentiates the blinded elements $\{ \left(\oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]}\right)^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ and sends them to the server. Finally, the server removes the blinding and computes $\{ \oprfRO[2](\genericBlocklistElmt[\setIdx], \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\prfKeyClient}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$. 
+
+
+
+\iffalse 
+Then, to select a generator of \qrGroup, the auditors sample random value $\qrGen \in [2, \rsaMod -1]$ using a protocol to generate distributed randomness~\cite{}, and decide whether $\qrGen$ is a generator by checking $\qrGen^{\sgPrime[1]} \not \equiv 1 \bmod \rsaMod ~\land ~\qrGen^{\sgPrime[2]} \not \equiv 1 \bmod \rsaMod$. To perform this check, auditor $\auditor[\auditorIdx]$ computes $\qrGen^{\langle \sgPrime[1]} \rangle_{\auditorIdx} \bmod \rsaMod$ and $\qrGen^{\langle \sgPrime[2]} \rangle_{\auditorIdx} \bmod \rsaMod$ locally, and then use the BGW protocol to compute (and check) $\qrGen^{\sum\limits_{\auditorIdx}\langle \sgPrime[1] \rangle_{\auditorIdx}} \neq 1 \bmod \rsaMod~\land ~\qrGen^{\sum\limits_{\auditorIdx}\langle \sgPrime[2] \rangle_{\auditorIdx}} \neq 1 \bmod \rsaMod$. Note that the computation inside the BGW circuit is relatively inexpensive because it only involves two share multiplications
+ $\qrGen^{\sum\limits_{\auditorIdx}\langle \sgPrime[1] \rangle_{\auditorIdx}} = \prod\limits_{\auditorIdx = 1}^{\numAuditors} \qrGen^{\langle \sgPrime[1]} \rangle_{\auditorIdx} $ and $\qrGen^{\sum\limits_{\auditorIdx}\langle \sgPrime[2] \rangle_{\auditorIdx}} = \prod\limits_{\auditorIdx = 1}^{\numAuditors} \qrGen^{\langle \sgPrime[2]} \rangle_{\auditorIdx}$ modulo \rsaMod respectively, followed by two equality test. 
+
+We further optimize this process by eliminating obvious quadratic non-residues by locally checking that the Jacobi symbol $\left(\frac{\qrGen}{\rsaMod}\right) \neq -1$. This does not require any interaction between the auditors. For any non-trivial and randomly chosen $\qrGen$, if $\left(\frac{\qrGen}{\rsaMod}\right) = 1$, then the probability it is a quadratic residue is exactly 1/2. Moreover, a random value in $\qrGroup$ is a generator with overwhelming probability. Thus, running the BGW protocol $\bigO(\secParam)$ number of times allows us to identify a generator $\langle \qrGen \rangle = \qrGroup$, failing only with negligible probability. While the steps, \emph{but this setup is only performed once when the auditors initialize the system}
+\fi 
+
+
+
+%That is, the auditors use the protocol to invert $\accSet \assign \prod\limits_{\genericBlocklistElmt \in \blocklist}\primeRO(\genericBlocklistElmt)$ such that each auditor knows an additive share of the inverse. Knowing a share $\langle \genericSetElmt \rangle_{\auditorIdx}$ of $\genericSetElmt = \accSet^{-1} \bmod \orderFn(\qrGroup)$, the auditors jointly compute $\genericSig[\genericBlocklistElmt[\setIdx]] \assign \sign[\privKey[1], \dots, \privKey[\numAuditors]](\genericBlocklistElmt) = \qrGen^{\left(\sum\limits_{\auditorIdx \in [1, \numAuditors]}\langle \genericSetElmt \rangle_{\auditorIdx}\right)}\bmod \rsaMod = \prod\limits_{\auditorIdx = 1}^{\numAuditors} \qrGen^{\langle \genericSetElmt_{\setIdx} \rangle_{\auditorIdx}} \bmod \rsaMod$. Crucially, this product can be computed \emph{in the clear} after each auditor broadcasts  $\qrGen^{\langle \genericSetElmt \rangle_{\auditorIdx}} \bmod \rsaMod$. The costs of the protocol scale polynomially in the size of $\accSet$. To make the costs concretely reasonably really large sets, we can divide the set into smaller disjoint partitions $\blocklist = \blocklist_1 \cup \blocklist_2, \dots, \blocklist_{\numBuckets}$ and compute signatures on each individual partition $\genericSig[\blocklist_1], \dots, \genericSig[\blocklist_\numBuckets]$. Then, we leverage the homomorphism of the signature scheme to derive the signature on the full set $\genericSig[\blocklist] = \genericSig[\blocklist_1] \sigHomomorphism[\pubKey] \genericSig[\blocklist_2] \dots \sigHomomorphism[\pubKey]  \genericSig[\blocklist_\numBuckets]$. 
+
+
+
+%Then, using the homomorphic properties of the signature scheme, they can compute $\genericSig[\blocklist] =  \sign[\privKey[1], \dots, \privKey[\numAuditors]](\blocklist) = \genericSig[\genericBlocklistElmt[1]] \sigHomomorphism \genericSig[\genericBlocklistElmt[2]] \dots \sigHomomorphism \genericSig[\genericBlocklistElmt[\blocklistSize]]$. 
+
+
+
+
+
+\subsection{Protocol Description}
+%
+
+
+The protocol \protocolEM realizing \contentModFunc is described in \figref{fig:exact_match}. We describe the high level steps of the protocol below.
+
+
+%The auditors first publish the blocklist authentication token \blklistToken{\blocklist} using a distributed signing algorithm. The upload protocol between the client and server proceeds in two phases: a one-time \emph{preprocessing} step, and ii) an online phase that is executed every time the client wants to upload a file. The preprocessing step is used to partition the blocklist so that the costs for server-side verification scales sublinearly in the blocklist size. 
+
+
+\subsubsection{Publishing the Blocklist}
+%
+Given a blocklist, the auditors distribute the items into \numBuckets disjoint buckets. Then using \distSigningFunc, they sign each bucket separately to generate \numBuckets blocklist authentication (sub)tokens $\blklistToken{\blocklist} \assign \{ \blklistToken{\blocklist}^{(1)}, \dots, \blklistToken{\blocklist}^{(\numBuckets)}\}$, where $\blklistToken{\blocklist}^{(\bucketIdx)} \assign \sign[\privKey](\bucket{\bucketIdx})$. The partitioning makes the verification during file uploads more efficient since the entire blocklist is not checked, as described later. The auditors add a random number to each bucket to prevent offline dictionary attacks against the signature; this a common trick to hide the items in cryptographic accumulators~\cite{li2007universal}. 
+ Additionally, the auditors invoke $\authOPRFFunc$ to publish a jointly signed and blinded blocklist $\blocklist'$, that is used for a fast path verification. Finally, all the auditors individually sign, using a standard signature scheme, a hash of all the public parameters of the scheme, which includes the public key of the distributed signature scheme, the blocklist authentication token and the blinded blocklist. 
+
+%They also sign and publish the blocklist authentication tokens $\{ \sign[\privKey[1]](\hashFn(\blklistToken)), \dots, \sign[\privKey[\numAuditors]](\hashFn(\blklistToken))\}$ where $\hashFn$ is a collision-resistant hash function. The server is provided \blocklist.
+
+
+
+
+
+\subsubsection{Client-side preprocessing}
+%
+\protocolEM has a one-time preprocessing step that is performed by the client using the blinded blocklist $\blocklist'$ published by the auditors. This is to provide a \emph{fast path} for the server during file verification. Presumably, majority of the content uploaded to the server will not be blocklisted, and so in such cases the server can avoid a full check against the blocklist using the fast path verification. Essentially, the preprocessing creates a space-efficient data structure that can be used to perform a coarse-grained check against the blocklist without any false negatives (but with some false positives). We use a Bloom filter for this purpose. 
+
+\enumListStart
+
+\item The client invokes $\authOPRFFunc$ with $\blocklist'$ and $\prfKeyClient$. The server receives  $\prf{\prfKeyClient}(\genericBlocklistElmt)$ for $\genericBlocklistElmt \in \blocklist$ from \authOPRFFunc (\stepref{pre:authOPRF}). 
+
+\item Given $\langle \genericBlocklistElmt, \prf{\prfKeyClient}(\genericBlocklistElmt) \rangle_{\genericBlocklistElmt \in \blocklist}$, the server does the following
+
+\enumListStart
+\item Select a key for a PRP $\prp: \bin^{\secParam} \rightarrow \bin^{\secParam}$
+\item Map the tuples received from the client to $\numBins = \blocklistSize/ \log \blocklistSize$ bins $\binn{1} \dots, \binn{\numBins}$ such that $\langle \genericBlocklistElmt, \prf{\prfKeyClient}(\genericBlocklistElmt) \rangle_{\genericBlocklistElmt \in \blocklist}$ is in $\binn{\bloomFilterIdx}$ if $ \prf{\prfKeyClient}(\genericBlocklistElmt) \equiv \bloomFilterIdx \bmod \numBins$
+\item For each bin $\binn{\bloomFilterIdx}$, create a Bloom filter with false positive rate \bloomFilterEpsilon by adding $\genericBlocklistElmt$ and $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ (\stepsref{pre:bloom_filter_init}{pre:bloom_filter_assign}). 
+\item The $\numBins$ Bloom filters are stored client-side, after encrypting them under a key sampled by the server (\stepref{pre:encrypt_filter}).
+\enumListEnd
+\enumListEnd
+
+The intuition is that during an upload we will perform a \emph{fast path} check using the client's input $\prf{\prfKeyClient}(\genericCInputElmt)$ by comparing it to the values stored in the corresponding Bloom filter. Since the Bloom filter does not have false negatives, if the check returns a negative, we can conclude the verification at this point. The fast path requires constant time operations for both the server and the client, and $\bigO(\log \blocklist)$ communication to transfer a single Bloom filter. 
+
+\subsubsection{Uploading and Checking against Blocklist}
+%
+During an upload, the client samples a random key $\fileKey$ for encrypting its file, and computes the content hash $\genericCInputElmt \gets \embed(\clientData)$ from the file. Then, it checks whether this hash has already been checked against the blocklist in a previous upload: the client stores a list of previously-checked hashes locally \prevHashList. If the hash was already checked before, the client sets a random token $\genericCInputElmtPRFEval \getsr \bin^{\secParam}$ for the \emph{fast path} check against the Bloom filter $\bloomFilter[\genericCInputElmtPRFEval \bmod \numBins]$ ; otherwise, the token is derived from the content hash $\genericCInputElmtPRFEval \getsr \prf{\prfKeyClient}(\clientData)$.
+
+% The client uses the token to derive the bin $\bloomFilterIdx \assign \genericCInputElmtPRFEval \bmod \numBuckets$ in which the hash resides, if it exists (\stepref{upload:bloom_filter_idx}). The client sends the encrypted file, \genericCInputElmtPRFEval and $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$ to the server. 
+%
+%The server first decrypts $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$ and checks whether $\prp{\prpKeyServer}(\genericCInputElmtPRFEval)$ is in $\bloomFilter[\bloomFilterIdx]$. Since the Bloom filter does not have false negatives, 
+%$\prp{\prpKeyServer}(\genericCInputElmtPRFEval) \notin \bloomFilter[\bloomFilterIdx]$ implies that $\genericCInputElmt \notin \blocklist$, and so the check concludes here (\stepsref{upload:fast_path_1}{upload:fast_path_2}). This \emph{fast path} verification and will suffice in most cases, since blocklisted content is typically uncommon. 
+
+
+If $\prp{\prpKeyServer}(\genericCInputElmtPRFEval) \in \bloomFilter[\bloomFilterIdx]$, the server performs a fine-grained check. The server first determines all the items $\genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx]$, and their corresponding buckets. Assuming that the server has also precomputed and locally stored a Bloom filter for each bucket $\bloomFilter[\bucket{\bucketIdx}]$, this is equivalent to computing the items in the Bloom filter intersections $\bigcup_{\bucketIdx \in \nats[\numBuckets]} \bloomFilter[\bloomFilterIdx] \cap \bloomFilter[\bucket{\bucketIdx}]$ and a set of their corresponding bucket indices \bucketIDSet. The set of indices is sent to the client to perform a fine-grained check. (If the client does not respond, then the file is deleted). 
+
+
+
+After receiving \bucketIDSet, the client uses the locally-stored signature $\genericSig[\bucket{\bloomFilterIdx}]$ for each $\bucketIdx \in \bucketIDSet$ to derive the content verification token 
+$\contentToken{\clientData}^{(\bucketIdx)}$, and a one-time pad for the key encrypting the uploaded file, using the \emph{randomizing token} from the output of $\randomize[\pubKey](\genericSig[\bucket{\bloomFilterIdx}] \sigMinus[\pubKey] \genericCInputElmt)$ (\stepref{upload:fine_grained:token_gen}). If $\genericCInputElmt \in \blocklist$, then the server obtains the randomizing token by computing $\ro(\contentToken{\clientData}^{(\bucketIdx)} \sigMinus[\pubKey] \{\bucket{\bucketIdx} \setminus \{\genericBlocklistElmt\})$ for all $\genericBlocklistElmt \in \bucket{\bucketIdx}$ (\stepref{upload:verify_sig_decrypt}). In this case, the server outputs \clientData. Otherwise, if $\genericCInputElmt \notin \blocklist$, then the key remains hidden due to the security guarantees of \ourSigScheme, and random key robustness of the encryption scheme.  
+
+\begin{theorem}
+Assuming that there are protocols securely realizing \distSigningFunc and \authOPRFFunc, \protocolEM securely realizes \contentModFunc 
+\end{theorem}
+
+\iffalse 
+\begin{proofsketch}
+We show in \appref{} that both the client's and server's views can be simulated. In brief, the client's view includes the blinded blocklist $\blocklist'$, and the signatures $\genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}]$. Each element in $\blocklist'$ is of the form $\oprfRO[1](\genericBlocklistElmt)^{\genericRand}$ which is a random value in the $\group$. The signatures 
+are blinded with random prime numbers, and the probability that the client correctly guesses the prime numbers is overwhelmingly small. During an upload, if there is a fine-grained check, the client receives a set of bucket indices. When $\genericCInputElmt \notin \blocklist$, the fine-grained check is due to a false positive in the Bloom filter. But this information does not divulge anything to the client because the false positive is due to a collision between
+$\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ for some $\genericBlocklistElmt \in \blocklist$ and $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt))$. Both of these are pseudo-random values not known to the client. 
+
+%The bucket identifiers also do not reveal anything because the blocklist elements are randomly partitioned by the auditors. 
+
+The server's view during an upload includes $\prf{\prfKeyClient}(\genericCInputElmt)$ which looks (pseudo) random to the server if 
+$\genericCInputElmt \notin \blocklist$. During a fine-grained check, the server gets the content verification token $\contentToken{\clientData}^{(\bucketIdx)}$ for each $\bucketIdx \in \bucketIDSet$. If $\genericCInputElmt \notin \blocklist$, then each content verification token does not divulge any information to the server about $\genericCInputElmt$ due to the security guarantees of \ourSigScheme. Also, each invocation of $\randomize[\pubKey](\genericSig[\bucket{\bucketIdx}] \sigMinus[\pubKey] \genericCInputElmt) = \langle  \genericSig[\bucket{\bucketIdx}]^{\genericRand \primeRO(\genericCInputElmt)} \bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod) \rangle$ uses independent randomness, ensuring that the outputs are independent. Since $\ro$ is a random oracle $ \ro(\qrGen^{\genericRand_1} \bmod \rsaMod)$ and $ \ro(\qrGen^{\genericRand_2} \bmod \rsaMod)$ are uniformly random values. Further, with high probability  $\genericSig[\bucket{\bucketIdx}]^{\primeRO(\genericCInputElmt)} \bmod \rsaMod$ is a generator of \qrGroup, and thus $(\genericSig[\bucket{\bucketIdx}]^{\primeRO(\genericCInputElmt)})^{\genericRand_1} \bmod \rsaMod$ and 
+$(\genericSig[\bucket{\bucketIdx}]^{\primeRO(\genericCInputElmt)})^{\genericRand_2} \bmod \rsaMod$ are uniformly distributed in \qrGroup~\cite{cramer2000signature}. 
+\end{proofsketch}
+\fi 
+
+\myparagraph{Asymptotic costs}
+%
+The preprocessing phase requires a one-time $\bigO(\blocklistSize)$ compute costs and communication for the client and the server. The client also requires $\bigO(\blocklistSize^{1/\bloomFilterEpsilon} + \numBuckets)$ storage to store the encrypted Bloom filters and the $\numBuckets$ blocklist authentication token. During uploads, the client and server costs are as follows
+
+
+\itemListStart
+\item $\bigO(1)$ compute cost for the client and server (with high probability) when the client's uploaded file does not match an item in the blocklist, i.e., fast path verification.
+\item $\bigO(\log \blocklistSize)$ compute cost for the client and $\bigO(\blocklistSize)$ server cost when the client's uploaded file matches an item in the blocklist
+\item $\bigO((\blocklistSize/\numBuckets)^{1/\bloomFilterEpsilon} + \log \blocklistSize)$ communication cost for sending an encrypted Bloom filter, and $\bigO(\log \blocklistSize)$ content verifications tokens if a fine-grained check is deemed necessary. 
+\itemListEnd
+
+\iffalse 
+Specifically, the client computes $\randomize[\pubKey](\genericSig[\bucket{\bloomFilterIdx}] \sigMinus[\pubKey] \genericCInputElmt)$ which includes a randomized signature on $\bucket{\bloomFilterIdx} \setminus \{\genericCInputElmt\}$ if $\genericCInputElmt \in \bucket{\bloomFilterIdx}$ (\stepsref{upload:verif_token_1}{upload:verif_token_2}). The client uses the \emph{randomizing token} from the output of $\randomize[\pubKey](\genericSig[\bucket{\bloomFilterIdx}] \sigMinus[\pubKey] \genericCInputElmt)$ to encrypt the file. 
+The client sets the \emph{blinded signature} as the \contentToken, \cOutputMeta. The client sends the encrypted file \cOutputFile, the encrypted Bloom filter $\encrypt[\genericSymmKey](\bloomFilter[\bloomFilterIdx])$ and the token $\genericCInputElmtPRFEval$. 
+
+
+
+
+Otherwise, given $\cOutputMeta = \randomizeFn[\pubKey](\genericSig[\blocklist] \sigMinus[\pubKey] 
+\setDefn{\genericCInputElmt}, \genericRand)$, the server computes  
+$\randomizeFn[\pubKey](\genericSig[\blocklist] 
+\sigMinus[\pubKey] 
+\setDefn{\genericCInputElmt}, 
+\genericRand)\sigMinus[\pubKey] (\blocklist \setminus \setDefn{\genericBlocklistElmt})$ for 
+all $\genericBlocklistElmt \in \blocklist$ (\stepref{upload:verify_sig}).  Note that 
+due to \eqnsref{eq:sig_homomorphism_minus}{eq:homomorphic_randomizeFn}, if 
+$\genericBlocklistElmt = \genericCInputElmt$, 
+$\randomizeFn[\pubKey](\genericSig[\blocklist] 
+\sigMinus[\pubKey] 
+\setDefn{\genericCInputElmt},
+\genericRand)\sigMinus[\pubKey] (\blocklist  \setminus \setDefn{\genericCInputElmt}) = 
+\randomizeFn[\pubKey](\genericSig[\emptyset]; \genericRand) \equiv \qrGen^{\genericRand} \bmod 
+\rsaMod$. Since the content key is derived from $\ro(\qrGen^{\genericRand} \bmod 
+\rsaMod)$, once the server can compute $\qrGen^{\genericRand} \bmod \rsaMod$, it can decrypt 
+the ciphertext 
+$\cOutputFile$ (\stepref{upload:verify_sig_decrypt}). 
+Due to random key robustness, with overwhelming probability, a different random  key 
+will not result in a successful decryption. On the other hand, if 
+$\genericCInputElmt \notin \blocklist$, then the key remains hidden and the server cannot decrypt 
+$\cOutputFile$ due to \thmref{thm:key_recovery}.
+\fi 
+
+%\myparagraph{Example parameters}
+%%
+%Consider the case when $\numBuckets = \sqrt{\blockSize}$. For a blocklist of a million elements, each Bloom filter will require roughly 6KB of storage for a false positive rate of $10^{-5}$; the client's communication cost will be an additional 6KB per upload when the check concludes with the fast path verification. An additional $10$ KB of communication will be required for a fine grained check. The total client storage will be roughly 6MB for the Bloom filters and 256KB for the signatures. In contrast, the Apple PSI system requires around 64 MB of client storage, and introduces false negatives. 
+
+
+%Each bucket will have in expectation $\bigO(\sqrt{\blockSize})$ elements and the Bloom filter will have  $\bigO(\blockSize^{1/2 - \epsilon})$ bits. Concretely, 
+

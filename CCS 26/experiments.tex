@@ -1,0 +1,88 @@
+
+\begin{figure*}
+\fbox{%
+\small
+    \begin{minipage}[t]{0.48\textwidth}
+     \begin{tabbing}
+			*** \= *** \= *** \= \kill
+			\underline{Experiment $\Experiment{\ufcmaLabel}{\sigScheme}(\ufcmaAdversary)$} \\
+			\> $\langle \pubKey, \privKey \rangle \gets \keyGen(1^{\secParam})$ \\
+			\> $\langle \genericSetVar, \genericSig \rangle \gets 
+			\ufcmaAdversary^{\signingAlg[\privKey](\cdot)}(\pubKey)$ \\
+			\> if $\verify[\pubKey](\genericSetVar, \genericSig) = 1 \land 
+			\genericSetVar \setminus \queriedSets \neq \emptyset$ \\
+			\> \> $\mbox{where $\queriedSets$ is the 
+				union of all the sets queried to $\signingAlg[\privKey](\cdot)$ }$ \\
+			\> \> \> then output 1 \\
+			\> \> \> else output 0 
+		\end{tabbing}
+
+\iffalse 
+\begin{eqnarray*}
+	\Advantage{\ufcmaLabel}{\sigScheme}(\ufcmaAdversary) & = 
+	\prob{\Experiment{\ufcmaLabel}{\sigScheme}(\ufcmaAdversary) = 1} \\
+	\Advantage{\ufcmaLabel}{\sigScheme}(\timeBound, \oracleQueries) & = \max_{\ufcmaAdversary} 
+	\Advantage{\ufcmaLabel}{\sigScheme}(\ufcmaAdversary) 
+\end{eqnarray*}
+\fi 
+
+\smallskip  \begin{tabbing}
+			*** \= *** \= *** \= \kill
+			\underline{Experiment $\Experiment{\recoverLabel}{\sigScheme}(\recoverAdversary{1}, \recoverAdversary{2})$} \\
+			\> $\langle \pubKey, \privKey \rangle \gets \keyGen(1^{\secParam})$ \\
+			\> $\tupleDefn{\genericSetVar, \genericCInputElmt, \adversaryState{1}} \gets 
+			\recoverAdversary{1}^{\signingAlg[\privKey](\cdot)}(\pubKey)$  \\
+			\> If $\genericCInputElmt \in \genericSetVar$, then abort \\
+			\> $\genericSig[\genericSetVar]  \gets \signingAlg[\privKey](\genericSetVar)$ \\
+			\> $\genericSig[\genericSetVar \setminus \{\genericCInputElmt\}] \gets \genericSig[\genericSetVar] \sigMinus[\pubKey] 
+			\{\genericCInputElmt \}$ \\			
+			\> $\langle \genericSigPair[1], \genericSigPair[2] \rangle \assign \randomize[\pubKey](\genericSig[\genericSetVar \setminus \{\genericCInputElmt\}] )$ \\
+			\> $\genericSigPair[2] \assign \recoverAdversary{2}^{\sign[\privKey](\cdot)}(\genericSetVar, \genericCInputElmt, \genericSig[\genericSetVar], \genericSig[\genericSetVar \setminus \{\genericCInputElmt\}],  \genericSigPair[1], \pubKey, \adversaryState{1})$ \\
+			\> if $\verifyRand[\pubKey](\genericSig[\genericSetVar \setminus \{\genericCInputElmt\}], \genericSigPair) = 1$ \\
+			\> \> then output 1 \\
+			\> \> else output 0 
+		\end{tabbing}
+
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[t]{0.48\textwidth}
+      \begin{tabbing}
+			** \= ** \= ** \=\kill
+			\underline{Experiment $\Experiment{\indsrLabel[\indBit]}{\sigScheme}(\indsrAdversaryCombDefn)$} \\
+			\> $\langle \pubKey, \privKey \rangle \gets \keyGen(1^{\secParam})$ \\
+			\> $\tupleDefn{\genericSetVar, \adversaryState{1}} \gets 
+			\indsrAdversary{1}^{\signingAlg[\privKey](\cdot)}(\pubKey)$  \\
+			\> $\genericSig[\genericSetVar]  \gets \signingAlg[\privKey](\genericSetVar)$ \\
+			\> $\tupleDefn{\genericCInputElmt{0}, \genericCInputElmt{1}, 
+			\adversaryState{2} } 
+			\gets  
+			\indsrAdversary{2}^{\signingAlg[\privKey](\cdot)}(\genericSig, \adversaryState{1})$  \\
+			\> If $\genericCInputElmt{0} \in \queriedSets \cup \genericSetVar ~\lor~
+			\genericCInputElmt{1} \in \queriedSets \cup \genericSetVar$\\
+			\> \> $\mbox{where $\queriedSets$ is the 
+				union of all the sets queried to $\signingAlg[\privKey](\cdot)$ }$ \\
+			\> \> \> then abort \\
+			\> $\advBit \gets 
+			\indsrAdversary{3}(\randomize[\pubKey](\genericSig \sigMinus[\pubKey] 
+			\{\genericCInputElmt{\indBit}\}), \adversaryState{2})$ \\
+			
+			\> If $\advBit = \indBit$ \\
+			\> \> then output 1 \\
+			\> \> else output 0
+		\end{tabbing}
+
+
+\iffalse 
+\begin{eqnarray*}
+	& \Advantage{\indsrLabel}{\sigScheme}(\indsrAdversaryComb) = \\
+	&  \left|	\prob{\Experiment{\indsrLabel[0]}{\sigScheme}(\indsrAdversaryComb) = 1} - 
+	\prob{\Experiment{\indsrLabel[1]}{\sigScheme}(\indsrAdversaryComb) = 1} \right| \\
+	& \Advantage{\indsrLabel}{\sigScheme}(\timeBound, \oracleQueries) = 
+	\max_{\indsrAdversaryComb} 
+	\Advantage{\indsrLabel}{\sigScheme}(\indsrAdversaryComb) 
+\end{eqnarray*}
+\fi 
+    \end{minipage}%
+}
+\caption{Security experiments for a randomizable set homomorphic signature\label{fig:experiments}}
+\end{figure*}

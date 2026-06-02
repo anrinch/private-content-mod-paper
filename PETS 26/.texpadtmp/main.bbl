@@ -1,0 +1,401 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{46}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[cod(2025)]%
+        {code}
+ \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{Code repository for auditable content moderation}.
+\newblock
+\urldef\tempurl%
+\url{https://anonymous.4open.science/r/content-mod-code-2125/README.md}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Algesheimer et~al\mbox{.}(2002)]%
+        {algesheimer2002efficient}
+\bibfield{author}{\bibinfo{person}{Joy Algesheimer}, \bibinfo{person}{Jan Camenisch}, {and} \bibinfo{person}{Victor Shoup}.} \bibinfo{year}{2002}\natexlab{}.
+\newblock \showarticletitle{Efficient computation modulo a shared secret with application to the generation of shared safe-prime products}. In \bibinfo{booktitle}{\emph{Advances in Cryptology -- CRYPTO}}. Springer, \bibinfo{pages}{417--432}.
+\newblock
+
+
+\bibitem[Amazon(2023)]%
+        {amazonCSAM}
+\bibfield{author}{\bibinfo{person}{Inc. Amazon}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{An update on Amazon’s efforts to combat child sexual abuse material}.
+\newblock \bibinfo{howpublished}{\url{https://www.aboutamazon.com/news/policy-news-views/amazon-csam-transparency-report-2023}}.
+\newblock
+
+
+\bibitem[{Apple, Inc.}(2021)]%
+        {apple2021csam}
+\bibfield{author}{\bibinfo{person}{{Apple, Inc.}}} \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{{CSAM} detection -- Technical summary}.
+\newblock \bibinfo{howpublished}{\url{https://www.apple.com/child-safety/pdf/CSAM_Detection_Technical_Summary.pdf}}.
+\newblock
+
+
+\bibitem[Asharov and Lindell(2017)]%
+        {asharov2017full}
+\bibfield{author}{\bibinfo{person}{Gilad Asharov} {and} \bibinfo{person}{Yehuda Lindell}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{A full proof of the BGW protocol for perfectly secure multiparty computation}.
+\newblock \bibinfo{journal}{\emph{Journal of Cryptology}} \bibinfo{volume}{30}, \bibinfo{number}{1} (\bibinfo{year}{2017}), \bibinfo{pages}{58--151}.
+\newblock
+
+
+\bibitem[{BBC}(2022)]%
+        {applePSICriticBBC}
+\bibfield{author}{\bibinfo{person}{{BBC}}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{Apple criticised for system that detects child abuse}.
+\newblock \bibinfo{howpublished}{\url{https://www.bbc.com/news/technology-58124495}}.
+\newblock
+
+
+\bibitem[Bellare et~al\mbox{.}(1998)]%
+        {bellare1998relations}
+\bibfield{author}{\bibinfo{person}{M. Bellare}, \bibinfo{person}{A. Desai}, \bibinfo{person}{D. Pointcheval}, {and} \bibinfo{person}{P. Rogaway}.} \bibinfo{year}{1998}\natexlab{}.
+\newblock \showarticletitle{Relations among notions of security for public-key encryption schemes}. In \bibinfo{booktitle}{\emph{Advances in Cryptology -- CRYPTO 1998}} \emph{(\bibinfo{series}{Lecture Notes in Computer Science}, Vol.~\bibinfo{volume}{1462})}.
+\newblock
+
+
+\bibitem[Bhowmick et~al\mbox{.}(2021)]%
+        {bhowmick2021apple}
+\bibfield{author}{\bibinfo{person}{Abhishek Bhowmick}, \bibinfo{person}{Dan Boneh}, \bibinfo{person}{Steve Myers}, \bibinfo{person}{Kunal Talwar}, {and} \bibinfo{person}{Karl Tarbe}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{The {Apple} {PSI} system}.
+\newblock \bibinfo{howpublished}{\url{https://www.apple.com/child-safety/pdf/Apple_PSI_System_Security_Protocol_and_Analysis.pdf}}.
+\newblock
+
+
+\bibitem[Canetti and Kaptchuk(2021)]%
+        {canetti2021broken}
+\bibfield{author}{\bibinfo{person}{Ran Canetti} {and} \bibinfo{person}{Gabriel Kaptchuk}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{The Broken Promise of Apple’s Announced Forbidden-photo Reporting System – And How To Fix It}.
+\newblock \bibinfo{howpublished}{Center for Reliable Information Systems \& Cyber Security, Boston University}.
+\newblock
+\urldef\tempurl%
+\url{https://www.bu.edu/riscs/2021/08/10/apple-csam/}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Canetti and Kaptchuk(2026)]%
+        {applePSICriticBU}
+\bibfield{author}{\bibinfo{person}{Ran Canetti} {and} \bibinfo{person}{Gabriel Kaptchuk}.} \bibinfo{year}{2026}\natexlab{}.
+\newblock \bibinfo{title}{The Broken Promise of {Apple}’s Announced Forbidden-photo Reporting System – And How To Fix It}.
+\newblock \bibinfo{howpublished}{\url{https://www.bu.edu/riscs/2021/08/10/apple-csam/}}.
+\newblock
+
+
+\bibitem[Catalano et~al\mbox{.}(2000)]%
+        {catalano2000computing}
+\bibfield{author}{\bibinfo{person}{Dario Catalano}, \bibinfo{person}{Rosario Gennaro}, {and} \bibinfo{person}{Shai Halevi}.} \bibinfo{year}{2000}\natexlab{}.
+\newblock \showarticletitle{Computing inverses over a shared secret modulus}. In \bibinfo{booktitle}{\emph{Advances in Cryptology -- EUROCRYPT}}. Springer, \bibinfo{pages}{190--206}.
+\newblock
+
+
+\bibitem[Choi et~al\mbox{.}(2023)]%
+        {choi2023sok}
+\bibfield{author}{\bibinfo{person}{Kevin Choi}, \bibinfo{person}{Aathira Manoj}, {and} \bibinfo{person}{Joseph Bonneau}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Sok: Distributed randomness beacons}. IEEE, \bibinfo{pages}{75--92}.
+\newblock
+
+
+\bibitem[Chongchitmate et~al\mbox{.}(2024)]%
+        {chongchitmate2024approximate}
+\bibfield{author}{\bibinfo{person}{Wutichai Chongchitmate}, \bibinfo{person}{Steve Lu}, {and} \bibinfo{person}{Rafail Ostrovsky}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Approximate {PSI} with Near-Linear Communication}.
+\newblock \bibinfo{journal}{\emph{Cryptology ePrint Archive}} (\bibinfo{year}{2024}).
+\newblock
+
+
+\bibitem[CNN(2022)]%
+        {applePSIabandon}
+\bibfield{author}{\bibinfo{person}{CNN}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{Apple abandons controversial plan to check iOS devices and iCloud photos for child abuse imagery}.
+\newblock \bibinfo{howpublished}{\url{https://www.cnn.com/2022/12/08/tech/apple-csam-tool}}.
+\newblock
+
+
+\bibitem[Colombo et~al\mbox{.}(2023)]%
+        {colombo2023authpir}
+\bibfield{author}{\bibinfo{person}{S. Colombo}, \bibinfo{person}{K. Nikitin}, \bibinfo{person}{H. Corrigan-Gibbs}, \bibinfo{person}{D.~J. Wu}, {and} \bibinfo{person}{B. Ford}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Authenticated private information retrieval}. In \bibinfo{booktitle}{\emph{32\textsuperscript{nd} USENIX Security Symposium}}.
+\newblock
+
+
+\bibitem[Cramer and Shoup(2000)]%
+        {cramer2000signature}
+\bibfield{author}{\bibinfo{person}{Ronald Cramer} {and} \bibinfo{person}{Victor Shoup}.} \bibinfo{year}{2000}\natexlab{}.
+\newblock \showarticletitle{Signature schemes based on the strong {RSA} assumption}.
+\newblock \bibinfo{journal}{\emph{ACM Transactions on Information and System Security}} (\bibinfo{year}{2000}).
+\newblock
+
+
+\bibitem[Du et~al\mbox{.}(2020)]%
+        {du2020perceptual}
+\bibfield{author}{\bibinfo{person}{Ling Du}, \bibinfo{person}{Anthony~TS Ho}, {and} \bibinfo{person}{Runmin Cong}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Perceptual hashing for image authentication: A survey}.
+\newblock \bibinfo{journal}{\emph{Signal Processing: Image Communication}}  \bibinfo{volume}{81} (\bibinfo{year}{2020}), \bibinfo{pages}{115713}.
+\newblock
+
+
+\bibitem[Fiore et~al\mbox{.}(2014)]%
+        {fiore2014efficiently}
+\bibfield{author}{\bibinfo{person}{Dario Fiore}, \bibinfo{person}{Rosario Gennaro}, {and} \bibinfo{person}{Valerio Pastro}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Efficiently verifiable computation on encrypted data}. In \bibinfo{booktitle}{\emph{Proceedings of the 2014 ACM SIGSAC conference on computer and communications security}}. \bibinfo{pages}{844--855}.
+\newblock
+
+
+\bibitem[for Missing and Children(2026)]%
+        {ncemc}
+\bibfield{author}{\bibinfo{person}{National~Center for Missing} {and} \bibinfo{person}{Exploited Children}.} \bibinfo{year}{2026}\natexlab{}.
+\newblock \bibinfo{title}{Missing Childen Posters}.
+\newblock \bibinfo{howpublished}{\url{https://www.missingkids.org/home}}.
+\newblock
+
+
+\bibitem[{Google, Inc.}(2026)]%
+        {googleCSAM}
+\bibfield{author}{\bibinfo{person}{{Google, Inc.}}} \bibinfo{year}{2026}\natexlab{}.
+\newblock \bibinfo{title}{Fighting child sexual abuse online}.
+\newblock \bibinfo{howpublished}{\url{https://protectingchildren.google/introduction}}.
+\newblock
+
+
+\bibitem[Howard(2023)]%
+        {howard2023ethics}
+\bibfield{author}{\bibinfo{person}{Jeffrey~William Howard}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{The ethics of social media: Why content moderation is a moral duty}.
+\newblock \bibinfo{journal}{\emph{Journal of Practical Ethics}} (\bibinfo{year}{2023}).
+\newblock
+
+
+\bibitem[Jarecki et~al\mbox{.}(2014)]%
+        {jarecki2014round}
+\bibfield{author}{\bibinfo{person}{Stanislaw Jarecki}, \bibinfo{person}{Aggelos Kiayias}, {and} \bibinfo{person}{Hugo Krawczyk}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Round-optimal password-protected secret sharing and T-PAKE in the password-only model}. In \bibinfo{booktitle}{\emph{Advances in Cryptology -- ASIACRYPT}}. Springer, \bibinfo{pages}{233--253}.
+\newblock
+
+
+\bibitem[Jauernig et~al\mbox{.}(2020)]%
+        {jauernig2020trusted}
+\bibfield{author}{\bibinfo{person}{Patrick Jauernig}, \bibinfo{person}{Ahmad-Reza Sadeghi}, {and} \bibinfo{person}{Emmanuel Stapf}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Trusted execution environments: properties, applications, and challenges}.
+\newblock \bibinfo{journal}{\emph{IEEE Security \& Privacy}} \bibinfo{volume}{18}, \bibinfo{number}{2} (\bibinfo{year}{2020}), \bibinfo{pages}{56--60}.
+\newblock
+
+
+\bibitem[Johnson et~al\mbox{.}(2002)]%
+        {johnson2002homomorphic}
+\bibfield{author}{\bibinfo{person}{Robert Johnson}, \bibinfo{person}{David Molnar}, \bibinfo{person}{Dawn Song}, {and} \bibinfo{person}{David Wagner}.} \bibinfo{year}{2002}\natexlab{}.
+\newblock \showarticletitle{Homomorphic signature schemes}. In \bibinfo{booktitle}{\emph{Topics in Cryptology -- CT-RSA 2002}} \emph{(\bibinfo{series}{Lecture Notes in Computer Science}, Vol.~\bibinfo{volume}{2271})}. Springer, \bibinfo{pages}{244--262}.
+\newblock
+
+
+\bibitem[Kozyreva et~al\mbox{.}(2023)]%
+        {kozyreva2023resolving}
+\bibfield{author}{\bibinfo{person}{Anastasia Kozyreva}, \bibinfo{person}{Stefan~M Herzog}, \bibinfo{person}{Stephan Lewandowsky}, \bibinfo{person}{Ralph Hertwig}, \bibinfo{person}{Philipp Lorenz-Spreen}, \bibinfo{person}{Mark Leiser}, {and} \bibinfo{person}{Jason Reifler}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Resolving content moderation dilemmas between free speech and harmful misinformation}.
+\newblock \bibinfo{journal}{\emph{Proceedings of the National Academy of Sciences}} \bibinfo{volume}{120}, \bibinfo{number}{7} (\bibinfo{year}{2023}), \bibinfo{pages}{e2210666120}.
+\newblock
+
+
+\bibitem[Kulshrestha and Mayer(2021)]%
+        {kulshrestha2021identifying}
+\bibfield{author}{\bibinfo{person}{Anunay Kulshrestha} {and} \bibinfo{person}{Jonathan Mayer}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Identifying harmful media in end-to-end encrypted communication: Efficient private membership computation}. In \bibinfo{booktitle}{\emph{USENIX Security Symposium}}. \bibinfo{pages}{893--910}.
+\newblock
+
+
+\bibitem[Leblanc-Albarel and Preneel(2024)]%
+        {neuralHashAttack}
+\bibfield{author}{\bibinfo{person}{Diane Leblanc-Albarel} {and} \bibinfo{person}{Bart Preneel}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{Black-box Collision Attacks on Widely Deployed Perceptual Hash Functions}.
+\newblock \bibinfo{howpublished}{Cryptology {ePrint} Archive, Paper 2024/1869}.
+\newblock
+\urldef\tempurl%
+\url{https://eprint.iacr.org/2024/1869}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Lu et~al\mbox{.}(2017)]%
+        {lu2017deep}
+\bibfield{author}{\bibinfo{person}{Jiwen Lu}, \bibinfo{person}{Venice~Erin Liong}, {and} \bibinfo{person}{Jie Zhou}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Deep hashing for scalable image search}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Image Processing}} \bibinfo{volume}{26}, \bibinfo{number}{5} (\bibinfo{year}{2017}), \bibinfo{pages}{2352--2367}.
+\newblock
+
+
+\bibitem[McKeown and Buchanan(2023)]%
+        {mckeown2023hamming}
+\bibfield{author}{\bibinfo{person}{Sean McKeown} {and} \bibinfo{person}{William~J Buchanan}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Hamming distributions of popular perceptual hashing techniques}.
+\newblock \bibinfo{journal}{\emph{Forensic Science International: Digital Investigation}}  \bibinfo{volume}{44} (\bibinfo{year}{2023}), \bibinfo{pages}{301509}.
+\newblock
+
+
+\bibitem[Morgan(2024)]%
+        {public_storage_vol}
+\bibfield{author}{\bibinfo{person}{S. Morgan}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{The World Will Store 200 Zettabytes Of Data By 2025}.
+\newblock \bibinfo{howpublished}{\url{https://cybersecurityventures.com/the-world-will-store-200-zettabytes-of-data-by-2025/}}.
+\newblock
+
+
+\bibitem[Ning et~al\mbox{.}(2020)]%
+        {ning2020pine}
+\bibfield{author}{\bibinfo{person}{J. Ning}, \bibinfo{person}{X. Huang}, \bibinfo{person}{G.~S. Poh}, \bibinfo{person}{S. Xu}, \bibinfo{person}{J. Loh}, \bibinfo{person}{J. Weng}, {and} \bibinfo{person}{R.~H. Deng}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Pine: Enabling privacy-preserving deep packet inspection on {TLS} with rule-hiding and fast connection establishment}. In \bibinfo{booktitle}{\emph{25\textsuperscript{th} European Symposium on Research in Computer Security}} \emph{(\bibinfo{series}{Lecture Notes in Computer Science}, Vol.~\bibinfo{volume}{12308})}.
+\newblock
+
+
+\bibitem[Ning et~al\mbox{.}(2019)]%
+        {ning2019privdpi}
+\bibfield{author}{\bibinfo{person}{J. Ning}, \bibinfo{person}{G.~S. Poh}, \bibinfo{person}{J. Loh}, \bibinfo{person}{J. Chia}, {and} \bibinfo{person}{E. Chang}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{{PrivDPI}: Privacy-preserving encrypted traffic inspection with reusable obfuscated rules}. In \bibinfo{booktitle}{\emph{ACM Conference on Computer and Communications Security}}.
+\newblock
+
+
+\bibitem[of~Justice(2020)]%
+        {content_mod_e2ee}
+\bibfield{author}{\bibinfo{person}{U.S.~Department of Justice}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{International Statement: End-To-End Encryption and Public Safety}.
+\newblock \bibinfo{howpublished}{\url{https://www.justice.gov/archives/opa/pr/international-statement-end-end-encryption-and-public-safety}}.
+\newblock
+
+
+\bibitem[of~Justice(2023a)]%
+        {csam_example_2}
+\bibfield{author}{\bibinfo{person}{U.S.~Department of Justice}.} \bibinfo{year}{2023}\natexlab{a}.
+\newblock \bibinfo{title}{Independence Man Sentenced for Child Pornography}.
+\newblock \bibinfo{howpublished}{\url{https://www.justice.gov/usao-wdmo/pr/independence-man-sentenced-child-pornography-1}}.
+\newblock
+
+
+\bibitem[of~Justice(2023b)]%
+        {csam_example_1}
+\bibfield{author}{\bibinfo{person}{U.S.~Department of Justice}.} \bibinfo{year}{2023}\natexlab{b}.
+\newblock \bibinfo{title}{Man Stored Child Pornography on Google Account, Sentenced to 14 Years in Federal Prison}.
+\newblock \bibinfo{howpublished}{\url{https://www.justice.gov/usao-wdtx/pr/man-stored-child-pornography-google-account-sentenced-14-years-federal-prison}}.
+\newblock
+
+
+\bibitem[Ong and Kubiatowicz(2005)]%
+        {ong2005optimizing}
+\bibfield{author}{\bibinfo{person}{E Ong} {and} \bibinfo{person}{J Kubiatowicz}.} \bibinfo{year}{2005}\natexlab{}.
+\newblock \showarticletitle{Optimizing robustness while generating shared secret safe primes}. In \bibinfo{booktitle}{\emph{Public Key Cryptography --- PKC}}. \bibinfo{publisher}{Springer}.
+\newblock
+
+
+\bibitem[Raginsky and Lazebnik(2009)]%
+        {raginsky2009locality}
+\bibfield{author}{\bibinfo{person}{Maxim Raginsky} {and} \bibinfo{person}{Svetlana Lazebnik}.} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Locality-sensitive binary codes from shift-invariant kernels}. In \bibinfo{booktitle}{\emph{Advances in Neural Information Processing Systems}}.
+\newblock
+
+
+\bibitem[Scheffler et~al\mbox{.}(2023)]%
+        {scheffler2023public}
+\bibfield{author}{\bibinfo{person}{Sarah Scheffler}, \bibinfo{person}{Anunay Kulshrestha}, {and} \bibinfo{person}{Jonathan Mayer}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Public verification for private hash matching}. In \bibinfo{booktitle}{\emph{IEEE Symposium on Security and Privacy}}. IEEE, \bibinfo{pages}{253--273}.
+\newblock
+
+
+\bibitem[Scheffler and Mayer(2023)]%
+        {scheffler2023sok}
+\bibfield{author}{\bibinfo{person}{Sarah Scheffler} {and} \bibinfo{person}{Jonathan Mayer}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{{SoK}: Content Moderation for End-to-End Encryption}.
+\newblock \bibinfo{journal}{\emph{Proceedings on Privacy Enhancing Technologies}} \bibinfo{volume}{2023}, \bibinfo{number}{2} (\bibinfo{year}{2023}), \bibinfo{pages}{403--429}.
+\newblock
+
+
+\bibitem[Serengil and Ozpinar(2025)]%
+        {serengil2024lightphe}
+\bibfield{author}{\bibinfo{person}{Sefik~Ilkin Serengil} {and} \bibinfo{person}{Alper Ozpinar}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \showarticletitle{LightPHE: Integrating Partially Homomorphic Encryption into Python with Extensive Cloud Environment Evaluations}.
+\newblock \bibinfo{journal}{\emph{arXiv preprint arXiv:2408.05219}} (\bibinfo{year}{2025}).
+\newblock
+\newblock
+\shownote{doi: 10.48550/arXiv.2408.05219. [Online]. Available: \url{https://arxiv.org/abs/2408.05219}}.
+
+
+\bibitem[Shan et~al\mbox{.}(2023)]%
+        {shan2023glaze}
+\bibfield{author}{\bibinfo{person}{Shawn Shan}, \bibinfo{person}{Jenna Cryan}, \bibinfo{person}{Emily Wenger}, \bibinfo{person}{Haitao Zheng}, \bibinfo{person}{Rana Hanocka}, {and} \bibinfo{person}{Ben~Y Zhao}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Glaze: Protecting artists from style mimicry by $\{$Text-to-Image$\}$ models}. In \bibinfo{booktitle}{\emph{32nd USENIX Security Symposium (USENIX Security 23)}}. \bibinfo{pages}{2187--2204}.
+\newblock
+
+
+\bibitem[Sherry et~al\mbox{.}(2015)]%
+        {sherry2015blindbox}
+\bibfield{author}{\bibinfo{person}{J. Sherry}, \bibinfo{person}{C. Lan}, \bibinfo{person}{R. {Ada Popa}}, {and} \bibinfo{person}{S. Ratnasamy}.} \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{{BlindBox}: Deep packet inspection over encrypted traffic}. In \bibinfo{booktitle}{\emph{ACM SIGCOMM}}. \bibinfo{pages}{213--226}.
+\newblock
+
+
+\bibitem[Struppek et~al\mbox{.}(2022)]%
+        {struppek2022learning}
+\bibfield{author}{\bibinfo{person}{Lukas Struppek}, \bibinfo{person}{Dominik Hintersdorf}, \bibinfo{person}{Daniel Neider}, {and} \bibinfo{person}{Kristian Kersting}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{Learning to break deep perceptual hashing: The use case neuralhash}. In \bibinfo{booktitle}{\emph{ACM Conference on Fairness, Accountability, and Transparency}}. \bibinfo{pages}{58--69}.
+\newblock
+
+
+\bibitem[Wen et~al\mbox{.}(2021)]%
+        {wen2021framework}
+\bibfield{author}{\bibinfo{person}{J. Wen}, \bibinfo{person}{J. Liu}, \bibinfo{person}{A. Wu}, {and} \bibinfo{person}{J. Weng}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{A general framework for matching pattern hiding in deep packet inspection}. In \bibinfo{booktitle}{\emph{22\textsuperscript{nd} International Conference on Information Security Applications}} \emph{(\bibinfo{series}{Lecture Notes in Computer Science}, Vol.~\bibinfo{volume}{13009})}.
+\newblock
+
+
+\bibitem[Williams(2022)]%
+        {williams2022csam}
+\bibfield{author}{\bibinfo{person}{R. Williams}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{The US now hosts more child sexual abuse material online than any other country}.
+\newblock \bibinfo{howpublished}{\url{https://www.technologyreview.com/2022/04/26/1051282/the-us-now-hosts-more-child-sexual-abuse-material-online-than-any-other-country/}}.
+\newblock
+
+
+\bibitem[Yang et~al\mbox{.}(2025)]%
+        {yang2025certphash}
+\bibfield{author}{\bibinfo{person}{Yuchen Yang}, \bibinfo{person}{Qichang Liu}, \bibinfo{person}{Christopher Brix}, \bibinfo{person}{Huan Zhang}, {and} \bibinfo{person}{Yinzhi Cao}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \showarticletitle{$\{$CertPHash$\}$: Towards Certified Perceptual Hashing via Robust Training}. In \bibinfo{booktitle}{\emph{USENIX Security Symposium}}. \bibinfo{pages}{7839--7856}.
+\newblock
+
+
+\end{thebibliography}

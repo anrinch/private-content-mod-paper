@@ -1,0 +1,287 @@
+\section{Content Moderation Schemes}
+%
+In this section, we will describe the content moderation schemes realizing \contentModFuncExact and \contentModFuncFuzzy leveraging the blocklist constructions described in \secref{}. 
+
+
+\subsection{Exact Matching}
+%
+We describe our content moderation scheme with exact-matching capabilities in \figref{fig:exact_match}; we assume that the client wants to upload files that are drawn from the universe \universe, and the content hash function $\contentHash: \universe \rightarrow \bin^{\genericVecLen}$ maps any such content to an \genericVecLen-bit string. Two items $\genericUniverseElmt, \genericUniverseElmtAlt$ are similar iff. $\contentHash(\genericUniverseElmt) = \contentHash(\genericUniverseElmtAlt)$.  
+
+
+\myparagraph{Key idea: fast path with hybrid verification}
+%
+We can directly leverage either a Bloom filter based blocklist or a signature based blocklist to realize \contentModFuncExact. In the former, the cost of matching against the blocklist is $\bigO{1}$ but the construction has false positives. On the other hand, the signature based construction does not have false positives (or false negatives) but linear (in the blocklist size) matching costs for the server. This motivates the questions: \emph{can we design a scheme that has sublinear matching costs without incurring false positives?} Our solution is to combine the two aforementioned ACB constructions as follows (). 
+
+
+\noindent\textbf{Creating the Blocklist:}
+\enumListStart
+\item The auditors partition the blocklisted items into \numBlocklistParts disjoint partitions $\blocklistPartition{1}, \dots, \blocklistPartition{\numBlocklistParts}$. 
+\item The auditors invoke $\sigACB.\publishList(\blocklistPartition{1}, \dots, \blocklistPartition{\numBlocklistParts})$ and publish a separate signature-based ACB for each of the blocklist partitions $\sigBlklistToken{1}, \dots, \sigBlklistToken{\numBlocklistParts}$ 
+\item The auditors invoke $\bfACB.\publishList(\blocklist)$ and publish a blinded blocklist \blindedBlocklist
+\item The client and server invoke $\bfACB.\preprocess(\blindedBlocklist)$ and the client learns \bfBlklistToken
+\enumListEnd
+
+\noindent\textbf{Upload:}
+During a file upload with \clientData
+\enumListStart
+\item (\emph{fast path}:) The client derives the content hash $\genericCInputElmt \assign \embed(\clientData)$ and invokes $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. If the search returns 0, then the client and server can abort because this means $\genericCInputElmt \notin \blocklist$. The server will store the encrypted content. 
+\item (\emph{fine-grained check}:) Otherwise, let $\bloomFilter[\bloomFilterIdx]$ be the Bloom filter such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)) \in \bloomFilter[\bloomFilterIdx]$; recall that the server learns $\bloomFilter[\bloomFilterIdx]$ in $\bfACB.\searchBlocklist$. In this case, the server identifies the blocklist partitions where the items included in $\bloomFilter[\bloomFilterIdx]$. More specifically, the server calculates the set of indices $$\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \partition{\partitionIdx}\}$$, and sends it to the client 
+\item Upon receiving $\partitionIDSet$, the client invokes $\sigACB.\searchBlocklist(\genericCInputElmt, \sigBlklistToken{\partitionIdx})$ for all $\partitionIdx \in \partitionIDSet$. If any of these invocations return $\genericCInputElmt$ to the server, then $\genericCInputElmt \in \blocklist$. In this case, the server rejects the encrypted content and aborts. Otherwise, $\genericCInputElmt \notin \blocklist$ and the server accepts the content. 
+\enumListEnd
+
+\myparagraph{Costs}
+%
+
+\itemListStart
+\item The preprocessing for \bfBlklistToken requires a one-time $\bigO(\blocklistSize)$ compute costs and communication for the client and the server. The client also requires $\bigO(\blocklistSize^{1/\bloomFilterEpsilon} +
+ \numBlocklistParts)$ storage. During uploads, the client and server costs are as follows
+ 
+\item $\bigO(1)$ compute cost for the client and server (with high probability) when the client's uploaded file does not match an item in the blocklist, i.e., fast path verification.
+\item $\bigO(\log \blocklistSize)$ compute cost for the client and $\bigO(\blocklistSize)$ server cost when the client's uploaded file matches an item in the blocklist
+\item $\bigO((\blocklistSize/\numBlocklistParts)+ \log \blocklistSize)$ communication cost for sending an encrypted Bloom filter, and $\bigO(\log \blocklistSize)$ content verifications tokens if a fine-grained check is deemed necessary. If $\numBlocklistParts \in \bigO(\blocklistSize)$, then the cost of an upload is $\bigO(\log \blocklistSize)$. 
+\itemListEnd
+
+\myparagraph{Security}
+%
+
+
+\begin{algorithm}[t]
+\caption{\protocolEM: content moderation with exact matching}
+\label{}
+\footnotesize
+\begin{algorithmic}[1]
+
+\Statex\LComment{Distribute blocklist into partitions and publish signature-based ACB}
+\State Auditors distribute \blocklist into \numBlocklistParts disjoint buckets $\blocklistPartition{1}, \dots, \blocklistPartition{\numBlocklistParts}$ 
+
+\For{each $\partitionIdx \in [1, \numBlocklistParts]$} 
+\State Auditors invoke $\sigACB.\publishList(\blocklistPartition{\partitionIdx})$ and publish the signature-based ACB $\sigBlklistToken{\partitionIdx} = \langle \auditorPubKeyOurScheme, \genericSig[\blocklistPartition{\partitionIdx}] \rangle$
+\State Auditors sign and publish $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\sigBlklistToken{\partitionIdx})) \}_{\auditorIdx \in [1, \numAuditors]}$
+\EndFor
+
+\Statex\LComment{Publish blinded blocklist for Bloom filter based ACB}
+\State Auditors invoke $\bfACB.\publishList(\blocklist)$ and publish a blinded blocklist $\blindedBlocklist$ and the signatures $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blindedBlocklist) ) \}_{\auditorIdx \in [1, \numAuditors]}$
+
+\Statex\LComment{Client and server preprocess blinded blocklist}
+
+\State \client downloads $\blindedBlocklist$,  $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blindedBlocklist)) \}_{\auditorIdx \in [1, \numAuditors]}$, $\{\sigBlklistToken{\partitionIdx}\}_{\partitionIdx \in [1, \numBlocklistParts]}$, $\{ \{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\sigBlklistToken{\partitionIdx})) \}_{\auditorIdx \in [1, \numAuditors]}\}_{\partitionIdx \in [1, \numBlocklistParts]}$, and verifies the signatures. If the signatures do not verify, then \client aborts. 
+
+\State \client and \server invoke $\bfACB.\preprocess(\blindedBlocklist)$. \client stores $\bfBlklistToken \assign \{\encrypt{\genericSymmKey}(\bloomFilter[1]), \dots, \encrypt{\genericSymmKey}(\bloomFilter[\numBins])\}$ 
+
+
+\Statex\LComment{Matching against blocklist during uploads}
+
+
+\State \client computes $\genericCInputElmt \assign \contentHash(\clientData)$ and $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. 
+
+
+\If{$\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken) = 0$} \Comment{Fast path}
+\State \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$ and aborts. 
+\Else  \Comment{Fine-grained check}
+\State \server computes $\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \partition{\partitionIdx}\}$ and sends to \client.  
+\For{each $\partitionIdx \in \partitionIDSet$}
+\State \client invokes $\sigACB.\searchBlocklist(\genericCInputElmt,\sigBlklistToken{\partitionIdx})$
+\If{$\sigACB.\searchBlocklist(\genericCInputElmt,\sigBlklistToken{\partitionIdx}) = \genericCInputElmt$}
+\State \server outputs $\langle \genericFileID, \detected = \tru, \genericCInputElmt \rangle$ and aborts
+\Else
+\State \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$. \client adds $\genericCInputElmt$ to $\prevHashList$. 
+\EndIf
+\EndFor
+\EndIf
+
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Fuzzy Matching}
+%
+we will describe a content moderation scheme with fuzzy matching that realizes \contentModFuncFuzzy. We will assume that the set of blocklisted items are embeddings in a metric space with distance \distance that produces a \genericVecLen-dimensional vector, and we will refer to 
+the blocklisted items as vectors henceforth. 
+Our protocol will detect matches of the form $\tupleDefn{\blocklistVec, \clientVec}$ such that 
+$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$. In return, the protocol will have a small number of false negatives -- cases where items are blocked but are not detected. 
+
+
+%\emph{All existing content moderation schemes that perform fuzzy matching suffer from false negatives~\cite{kulshrestha2021identifying}}. The protocol does not have false positives. 
+
+
+
+
+\myparagraph{Key Idea}
+%
+We will use projections of the blocklist vectors to perform a \emph{fast path} check with low false positives, and if required, follow it by performing  a significantly more expensive but perfectly accurate test over the actual vectors. Specifically, if the client's input matches a certain threshold number of projections against the blocklisted items, then the server performs the fine-grained check. Obviously leaking the projections themselves will allow the server to learn information about the encrypted content. Therefore, the fast path only reveals the number of matching projections, and the likely candidates in the blocklist that should be checked against the input. We note that the \contentModFunc functionality allows this leakage, since the server does not learn the content key.  Nonetheless, we select projection functions carefully such that i) the chance of false positives are low, ii) the projection functions are themselves randomly chosen, and iii) the candidate set is reasonably large and can be set as a tunable parameter. A caveat here is that the fine-grained check must be performed over the actual embedding vectors and not just the projections, so the blocklist authentication token and the content verification token must be modified to account for entire vectors. To realize this idea, we will first define the projection functions, and then describe how to modify the tokens. 
+
+
+\subsubsection{Locality-Preserving Fingerprints}
+
+
+\begin{definition}
+	A \projectionPrimitive of an element $\genericMetricSpaceElmt$ in the set $\blocklist \subseteq \metricSpace$ 
+	comprises its projections under uniformly sampled functions $\projFn[1], 
+	\dots, \projFn[\numProjections]: \metricSpace \rightarrow \projectedSpace$, $\fingerprint(\genericMetricSpaceElmt) \assign 
+	\{\hashFn(\projFn[1](\genericMetricSpaceElmt), \projFn[1])$ $\dots, \hashFn(\projFn[\numProjections](\genericMetricSpaceElmt), \projFn[\numProjections])\}$, where $\hashFn: \bin^{\ast} \rightarrow \setDefn{0,1}^{\secParam}$ is a collision-resistant hash function, such that given any 
+$\genericMetricSpaceElmtAlt \in \metricSpace$,
+		
+		\begin{small}
+		\begin{align}
+			& \cprob{}{\not\exists \projIdx \in \nats[1][\numProjections], 
+				\projFn[\projIdx](\genericMetricSpaceElmt) = \projFn[\projIdx](\genericMetricSpaceElmtAlt)}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] \le 
+			\threshold} \le \fnr^{\numProjections} \label{eq:no_false_neg} \\
+			& \cprob{}{\not\exists \projIdx \in \nats[1][\numProjections], 
+				\projFn[\projIdx](\genericMetricSpaceElmt) \neq \projFn[\projIdx](\genericMetricSpaceElmtAlt)}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] > 
+			\threshold} \le \fpr^{\numProjections} \label{eq:no_false_pos}
+		\end{align}
+		\end{small}
+where,  \fpr and \fnr are the false positive rate and false negative rate under each projection function. 
+		%Here, \tpr and \tnr are tunable true positive rate and true negative rate. 
+		
+%		\item For every pair of element, $\genericMetricSpaceElmt, \genericMetricSpaceElmtAlt \in \blocklist$ 
+%		$\setSize{\fingerprint{\genericMetricSpaceElmt} ~\triangle ~\fingerprint{\genericMetricSpaceElmtAlt}} = 0$ with probability  
+%		negligible in some parameter \secParam, where $\triangle$ is the symmetric difference. That is, there is at least one projection such that 
+%		$\projFn[\projIdx](\genericMetricSpaceElmt) \neq \projFn[\projIdx](\genericMetricSpaceElmtAlt)$ with overwhelming probability. 
+
+%		$\genericBlocklistElmt \in \blocklist$, there is at least one function $\projFn[\projIdx]$ where 
+%		$\projFn[\projIdx](\genericBlocklistElmt) \notin 
+%		\setDefn{\projFn[\projIdx](\genericBlocklistElmt[1]'), 
+%			\dots, \projFn[\projIdx](\genericBlocklistElmt[\blocklistSize]')}$ for all 
+%		$\genericBlocklistElmt[1]', 
+%		\dots, \genericBlocklistElmt[\blocklistSize]' \in \blocklist\setminus\genericBlocklistElmt$ (with 
+%		overwhelming probability).
+		
+%	\end{enumerate}
+
+\end{definition}
+
+Intuitively, \eqnref{eq:no_false_neg} ensures that two items close in the metric space agree on at least one of the projections 
+with high probability. \eqnref{eq:no_false_pos} implies that two items far apart in the metric space do not agree on all the projections 
+with high probability. Note that \fpr and \fnr may not be negligible. Also, since the projection functions are selected randomly, the overall false positives and false negatives over the projections are binomially distributed 
+
+
+\begin{corollary}
+ \label{eq:false_pos_bound} 
+Let $\detectionThreshold \in [1, \numProjections]$. Given a dataset $\blocklist$ of $\blocklistSize$ elements, all having unique projections under $\numProjections$ random projection functions $\projFn[1], \dots, \projFn[\numProjections]$, and a  test point $\genericMetricSpaceElmt$. The probability that for a subset of projection functions $I$, where $\setSize{I} \ge \detectionThreshold$, the probability that $\projFn[\projIdx](\genericMetricSpaceElmt) = \projFn[\projIdx](\genericMetricSpaceElmt')$ for some $\genericMetricSpaceElmt' \in \blocklist$ and $\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] > 
+			\threshold$ is bounded by 
+
+
+\[			 \prob{\badFP}
+ \le \sum\limits_{i = \detectionThreshold}^{\blocklistSize \numProjections} \binom{\blocklistSize\numProjections}{i} \fpr^{i} (1 - \fpr)^{\blocklistSize \numProjections - i}
+\]
+, where  \metricSpace is a metric space with distance $\distanceNotation[\distance][\cdot]$, \fpr is the false positive rate under each random projection.
+\end{corollary}
+
+
+\begin{corollary}
+ \label{eq:false_neg_bound}
+Let $\detectionThreshold \in [1, \numProjections]$ and two elements $\genericMetricSpaceElmt, \genericMetricSpaceElmtAlt \in \metricSpace$ such that $\hammingDist{\genericMetricSpaceElmt}{\genericMetricSpaceElmt} \le \threshold$. Then the probability that they do not agree on at least $\numProjections - \detectionThreshold + 1$ projections is bounded by 
+
+\[	
+\prob{\badFN} \le 1 - \sum\limits_{i = 0}^{\numProjections - \detectionThreshold} \binom{\numProjections}{i} \fnr^{i} (1 - \fnr)^{\detectionThreshold - i}
+\]
+, where \fnr is the false negative rate under each random projection.
+
+\end{corollary}
+
+
+\begin{corollary}
+\label{corr:fingerprint_intersection}
+Let $\detectionThreshold \in [1, \numProjections]$. Given two elements $\genericMetricSpaceElmt, \genericMetricSpaceElmtAlt \in \metricSpace$, 
+
+\begin{align*}
+\cprob{}{|\fingerprint{}(\genericMetricSpaceElmt) \cap \fingerprint{}(\genericMetricSpaceElmtAlt)| < \numProjections - \detectionThreshold + 1}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] \le \threshold} 
+\le \prob{\badFN} \\
+\cprob{}{|\fingerprint{}(\genericMetricSpaceElmt) \cap \fingerprint{}(\genericMetricSpaceElmtAlt)| \ge  \detectionThreshold}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] > \threshold} 
+\le \prob{\badFP} \\
+\end{align*}
+
+\end{corollary}
+
+\myparagraph{Locality-preserving fingerprint for the Hamming distance}
+%
+\citet{chongchitmate2024approximate} describe a construction for a locality-preserving fingerprint for the Hamming space using uniformly sampled functions $\projFn[1], \dots, 
+\projFn[\numProjections]$ where $\projFn[\projIdx]: \setDefn{0,1}^{\genericVecLen} \rightarrow 
+\setDefn{0,1}^{\secParam}$. Each function specifies a random subset of bits from the input 
+vector, and injectively maps it to a $\secParam$-bit string. Consider a set
+$\blocklist \subseteq \setDefn{0,1}^{\genericVecLen}$.
+
+\enumListStart
+\item Create \numProjections key-value stores $\projBuckets[1], \dots, \projBuckets[\numProjections]$ where the keys are the vectors in \blocklist.
+\item For each function $\projFn[\projIdx]$ and each element $\blocklistVec \in \blocklist$
+\enumListStart
+\item Evaluate  $\hashFn(\projFn[\projIdx](\blocklistVec), \projIdx)$ where $\hashFn: \bin^{\secParam + \log \numProjections} \rightarrow \bin^{\secParam}$ is a collision-resistant hash function. 
+\item Insert $\hashFn(\projFn[\projIdx](\blocklistVec), \projIdx)$  in the key-value store $\projBuckets[\projIdx]$ at index $\projBuckets[\projIdx][\blocklistVec]$ unless $\projFn[\projIdx](\blocklistVec)$ is already there in $\projBuckets[\projIdx]$. If so, assign a random value from the range $\bin^{\secParam}$
+\enumListEnd
+\enumListEnd
+
+The set $\fingerprint{\blocklistVec} \assign \setDefn{\projBuckets[1][\blocklistVec], \dots, \projBuckets[\numProjections][\blocklistVec]}$ is a locality-preserving 
+fingerprint of $\blocklistVec$ assuming negligible collisions in $\hashFn$. If all the vectors in $\blocklist$ are at least $\lshConst 
+\threshold$ distance apart, then $\numProjections = \bigO\left((\genericSetSize 
+\lshConst)^{\frac{1}{\lshConst - 1}} (\secParam + \log \genericSetSize)\right)$ projections ensure that 
+$\fpr^\numProjections$ and $\fnr^\numProjections$ are both negligible in \secParam; here $\setSize{\blocklist} = \blocklistSize$. Observe that if $\lshConst > 2$, the number of projections are sublinear in 
+$\genericSetSize$. Most embedding functions ensure that similar 
+items are close in the embedded space, while dissimilar items are sufficiently far apart~\cite{kulshrestha2021identifying, mckeown2023hamming}. Alternatively, nearby items can be repeatedly 
+clustered to have an efficient construction~\cite{chongchitmate2024approximate}.
+
+\subsubsection{Protocol design}
+%
+A locality-preserving fingerprint provides a straightforward construction realizing \contentModFuncFuzzy (\algoref{protocol:fuzzy}). 
+
+\enumListStart
+\item The auditors publish an encrypted cuckoo hash table based blocklist by invoking $\chtACB.\publishList$ using the locality-preserving fingerprints of all the blocklist vectors. 
+\item During an upload, 
+\enumListStart
+\item The client computes the content embedding $\clientVec \assign \embed(\clientData)$
+\item The client and server invoke $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold)$ to perform a threshold search such that the search returns a 1 when 
+$|\fingerprint(\clientVec) \cap \chtBlklistToken| \ge \detectionThreshold$. Due to \corrref{corr:fingerprint_intersection} this implies that there is some vector $\blocklistVec \in \blocklist$ such that $\hammingDist{\clientVec}{\blocklistVec} \le \threshold$ with probability at least $1 - \prob{\badFP}$. 
+\item When $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold) = 1$, the server adds the content ID to an \emph{flagged content list} $\flagContentList$. 
+\item If there are already a predefined threshold \revealThreshold number of content IDs in \flagContentList, then the server deletes all the corresponding content and informs the client. Otherwise, the server accepts the encrypted content and stores it. 
+\enumListEnd
+\enumListEnd
+
+We observe that 
+
+
+
+
+
+
+\begin{algorithm}[t]
+\caption{\protocolFM: content moderation with exact matching\label{protocol:fuzzy}}
+\footnotesize
+\begin{algorithmic}[1]
+
+\Statex\LComment{Create a encrypted CHT based blocklist using locality-preserving fingerprints}
+
+
+\For{$\blocklistVec \in \blocklist$}
+\State Auditors compute the the locality-preserving fingerprint $\fingerprint{\blocklistVec}$
+\EndFor
+\State Auditors invoke $\chtACB.\publishList\left(\{ \fingerprint{\blocklistVec} \}_{\blocklistVec \in \blocklist}\right)$ and publish \chtBlklistToken and $\{\signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blklistToken))\}_{\auditorIdx \in [1, \numAuditors]}$.
+
+\Statex\LComment{Threshold matching against blocklist during uploads}
+
+\State \client sends $\langle \genericFileID, \encrypt{\fileKey}(\clientData) \rangle$ to \server
+
+\State \client computes $\clientVec \assign \embed(\clientData)$ and $\fingerprint{\clientVec}$. 
+
+\State \client and \server invoke $\chtACB.\thresholdSearchBlocklist(\fingerprint{\clientVec}, \chtBlklistToken)$. 
+\If{$\chtACB.\thresholdSearchBlocklist(\fingerprint{\clientVec}, \chtBlklistToken) = 1$}
+\State \server adds $\genericFileID$ to $\flagContentList$
+\If{$\setSize{\flagContentList} \ge \flagContentThreshold$}
+\State \server deletes all files with $\genericFileID \in \flagContentList$ 
+\Else 
+\State \server stores the encrypted file.
+\EndIf
+\State \server outputs $\langle \genericFileID, \detected=\tru\rangle$. 
+\Else 
+\State \server outputs $\langle \genericFileID, \detected=\fals\rangle$
+\EndIf
+
+
+
+
+
+
+
+\end{algorithmic}
+\end{algorithm}
+
+

@@ -1,0 +1,353 @@
+\section{Open Science}
+%
+We adhere to the open science policy and our implementation is available (anonymized) at \cite{code}. 
+
+
+\input{distributed_signing.tex}
+\input{authOPRF.tex}
+%\input{sig_experiments.tex}
+\input{secdef.tex}
+\input{proofs_sig.tex}
+\input{proofs_func.tex}
+
+%
+%\section{Table of notations}
+%\label{sec:notations}
+%%
+%
+%
+%\begin{table}
+%\footnotesize
+%\centering
+%\caption{Table of notations for \protocolEM \label{tab:notation}}
+%\vspace{-10pt}
+%\begin{tabular}{@{}cp{0.9\columnwidth}@{}}
+%	\toprule	
+%	$\blocklist$ & the blocklist of $\blocklistSize$ content hashes \\
+%	$\embed$ & a content hash function from $\universe \rightarrow \bin^{\ell}$\\
+%	$\rsaMod, \qrGen$ & public key of the randomizable set homomorphic signature \ourSigSchemeDefn \ \\
+%	$\genericSig[\blocklist]$ & auditor's signature on blocklist $\genericSig[\blocklist] = \genericSigRSA$ \\
+%	$\ro$ & random oracle $\qrGroup \rightarrow \encryptKeySpace$ where \encryptKeySpace is the key space of \encryptionSchemeDefn \\
+%	$\primes$ & set of odd primes less than $\rsaMod$ \\
+%	$\primeRO$ & random oracle from $\universe \rightarrow \primes$ \\
+%	\bottomrule
+%\end{tabular}
+%\end{table}
+%
+%
+%\begin{table}
+%\footnotesize
+%\centering
+%\caption{Table of notations for \protocolFM \label{tab:notation_fuzzy}}
+%\vspace{-10pt}
+%\begin{tabular}{@{}cp{0.9\columnwidth}@{}}
+%	\toprule	
+%	$\dhf$ & a detectable hash function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$ \\
+%	$\secretSharingScheme$ & a $\threshold$-out-of-$\genericVecLen$ secret sharing scheme $\secretSharingScheme: \encryptKeySpace \rightarrow \field $\\
+%	$\genericSig[\blocklist]$ & auditor's signature on blocklist $\genericSig[\blocklist] = \genericSigRSAFuzzy$ \\
+%	& $U \assign \rsaFuzzyAcc$ \\ 
+%	$\ro$ & random oracle from $\qrGroup \rightarrow \bin^{\log \setSize{\dhfRange} + \log \setSize{\field}}$ \\
+%	$\prg$ & pseudorandom generator $\prg: \prgKeySpace \rightarrow \bin^{\log \dhfRange}$ \\
+%	\bottomrule
+%\end{tabular}
+%\end{table}
+
+
+\iffalse 
+\subsection{Security properties of content moderation}
+\label{sec:defn:content_mod}
+\subsubsection{Unforgeability of \blklistToken}
+%
+
+		\begin{center}
+	\begin{minipage}{0.5\columnwidth}
+		\begin{tabbing}
+			*** \= *** \= \kill
+			$\Experiment{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary)$ \\
+			\> $\genericSigAlt \assign \adversary^{\genericOracle_{\setOfAuditorPrivkeys}(\dots)}\left(\setOfAuditorPubkeys, \setOfDishonestAuditorPrivkeys\right)$\\
+			\> $\text{Let} ~\langle\genericSetVar[1], \genericSetVar[2]\rangle ~\text{be the union of all queries to} ~\langle \auditor \rangle_{\auditorIdx \notin \nats[\numDishonestAuditors]}$\\
+	        \> If $\genericSigAlt =  \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist' \right) 
+			\land ~\blocklist' \not \subseteq \genericSetVar[1]$\\
+			\> \> then return 1\\
+            \> \> else return 0
+		\end{tabbing}
+	\end{minipage}
+	\end{center}	
+
+
+The oracle $\genericOracle_{\setOfAuditorPrivkeys}(\dots)$ takes a set $\genericSetVar$ as input, computes $\genericSig[\genericSetVar] \assign \createBlocklist(\setOfAuditorPrivkeys, \genericSetVar)$ and returns the tuple $\langle \genericSetVar, \genericSig[\genericSetVar] \rangle$. 
+The adversary's advantage is defined as the following 
+\begin{align*}
+	& \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary)= \\ 
+	& ~~\qquad \prob{\Experiment{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary) = 
+		1} \\
+	& \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\timeBound, \oracleQueries) = \\
+	& ~~\qquad \max_{\indcpaAdversary} \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\indcpaAdversary)
+\end{align*}
+where the maximum is taken over all adversaries \adversary that run in time \timeBound and oracle queries \numOracleQueries.
+
+
+
+
+
+\subsection{Security properties of content moderation}
+\label{sec:defn:content_mod}
+\subsubsection{Unforgeability of \blklistToken}
+%
+
+		\begin{center}
+	\begin{minipage}{0.5\columnwidth}
+		\begin{tabbing}
+			*** \= *** \= \kill
+			$\Experiment{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary)$ \\
+			\> $\genericSigAlt \assign \adversary^{\genericOracle_{\setOfAuditorPrivkeys}(\dots)}\left(\setOfAuditorPubkeys, \setOfDishonestAuditorPrivkeys\right)$\\
+			\> $\text{Let} ~\langle\genericSetVar[1], \genericSetVar[2]\rangle ~\text{be the union of all queries to} ~\langle \auditor \rangle_{\auditorIdx \notin \nats[\numDishonestAuditors]}$\\
+	        \> If $\genericSigAlt =  \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist' \right) 
+			\land ~\blocklist' \not \subseteq \genericSetVar[1]$\\
+			\> \> then return 1\\
+            \> \> else return 0
+		\end{tabbing}
+	\end{minipage}
+	\end{center}	
+
+
+The oracle $\genericOracle_{\setOfAuditorPrivkeys}(\dots)$ takes a set $\genericSetVar$ as input, computes $\genericSig[\genericSetVar] \assign \createBlocklist(\setOfAuditorPrivkeys, \genericSetVar)$ and returns the tuple $\langle \genericSetVar, \genericSig[\genericSetVar] \rangle$. 
+The adversary's advantage is defined as the following 
+\begin{align*}
+	& \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary)= \\ 
+	& ~~\qquad \prob{\Experiment{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\adversary) = 
+		1} \\
+	& \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\timeBound, \oracleQueries) = \\
+	& ~~\qquad \max_{\indcpaAdversary} \Advantage{\unforgeBlocklistLabel}{\contentModSchemeDefn}(\indcpaAdversary)
+\end{align*}
+where the maximum is taken over all adversaries \adversary that run in time \timeBound and oracle queries \numOracleQueries.
+
+
+
+
+\subsubsection{Hiding property of \contentToken}
+%
+
+	\begin{minipage}{0.5\columnwidth}
+		\begin{tabbing}
+			*** \= *** \= *** \= \kill
+			$\Experiment{\hidingContentLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])$ \\
+			\> $(\clientData[0], \clientData[1], \genericCInputElmt{0}, \genericCInputElmt{1},\adversaryState{1}) \assign \adversary[1](\genericSig[\blocklist], \blocklist, 
+	\setOfDishonestAuditorPrivkeys)$\\
+			\> If $\genericCInputElmt{0} \neq \contentHash(\clientData[0]) \lor \genericCInputElmt{1} \neq \contentHash(\clientData[1])$ \\
+			\> \> $\lor \genericCInputElmt{0} \in \blocklist \lor \genericCInputElmt{1} \in \blocklist$\\
+			\> \> \> then return 0 \\
+	        \> $\indBit \sample \bin$ \\
+			\> $(\cOutputFile, \cOutputMeta) \assign \uploadFile(\clientData[\indBit], \genericCInputElmt{\indBit}, 
+		\genericSig[\blocklist])$ \\
+			\> $\advBit \assign \adversary[2]\left(\blocklist, \cOutputFile, \cOutputMeta, 
+				\genericSig[\blocklist], \setOfAuditorPubkeys,
+				\setOfDishonestAuditorPrivkeys, \adversaryState{1}\right)$\\
+			\> return $\indBit = \advBit$
+		\end{tabbing}
+	\end{minipage}
+
+	The adversary's advantage is defined as the following 
+	\begin{align*}
+	& \Advantage{\hidingContentLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])= \\ 
+	& ~~\qquad \prob{\Experiment{\hidingContentLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2]) = 
+		1} \\
+	& \Advantage{\hidingContentLabel}{\contentModSchemeDefn}(\timeBound, \oracleQueries) = \\
+	& ~~\qquad \max_{\adversary[1], \adversary[2]} \Advantage{\hidingContentLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])
+	\end{align*}
+where the maximum is taken over all adversaries (\adversary[1], \adversary[2]) that run in time \timeBound. 
+
+	
+
+
+\subsubsection{Confidentiality of \blklistToken}
+%
+
+					\begin{minipage}{0.5\columnwidth}
+		\begin{tabbing}
+			*** \= *** \= *** \= \kill
+			$\Experiment{\hidingBlocklistLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])$ \\
+			\> $(\blocklist_0, \blocklist_1, \adversaryState{1}) \assign 
+				\adversary[1]\left(\setOfAuditorPubkeys\right)$\\
+			\> $\indBit \sample \bin$ \\
+	        \> $\genericSig_\indBit \assign  \createBlocklist\left(\setOfAuditorPrivkeys, \blocklist_\indBit\right)$ \\
+			\> $\advBit \assign \adversary[2]\left(\genericSig_\indBit,  \setOfAuditorPubkeys, \adversaryState{1}\right)$ \\
+			\> return $\indBit = \advBit$
+		\end{tabbing}
+	\end{minipage}
+
+
+The adversary's advantage is defined as the following 
+\begin{align*}
+	& \Advantage{\hidingBlocklistLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])= \\ 
+	& ~~\qquad \prob{\Experiment{\hidingBlocklistLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2]) = 
+		1} \\
+	& \Advantage{\hidingBlocklistLabel}{\contentModSchemeDefn}(\timeBound, \oracleQueries) = \\
+	& ~~\qquad \max_{\adversary[1], \adversary[2]} \Advantage{\hidingBlocklistLabel}{\contentModSchemeDefn}(\adversary[1], \adversary[2])
+\end{align*}
+where the maximum is taken over all adversaries (\adversary[1], \adversary[2]) that run in time \timeBound. 	   
+
+
+\subsection{Indistinguishable signatures under randomization (IND-SR)}
+\label{sec:defn:indsr}
+%
+This property implies that
+given a set $\genericSetVar$, the signature $\genericSig$ on the set, 
+and access to the signing oracle, an
+adversary \adversary cannot distinguish between $\randomize[\pubKey](\genericSig[\genericSetVar] 
+\sigMinus[\pubKey] 
+\genericCInputElmt{0})$ and  $\randomize[\pubKey](\genericSig[\genericSetVar] \sigMinus[\pubKey] 
+\genericCInputElmt{1})$. Here, $\genericCInputElmt{0}$ and $\genericCInputElmt{1}$ are
+chosen by $\adversary$ who has access to the signing oracle,
+\textit{but cannot query on (any set
+	containing) $\genericCInputElmt{0}$
+	or $\genericCInputElmt{1}$}. 
+
+\begin{center}
+	\begin{minipage}[t]{0.95\columnwidth}
+		\begin{tabbing}
+			** \= ** \= ** \=\kill
+			Experiment $\Experiment{\indsrLabel[\indBit]}{\sigScheme}(\indsrAdversaryCombDefn)$ \\
+			\> $\langle \pubKey, \privKey \rangle \gets \keyGen(1^{\secParam})$ \\
+			\> $\tupleDefn{\genericSetVar, \adversaryState{1}} \gets 
+			\indsrAdversary{1}^{\signingAlg[\privKey](\cdot)}(\pubKey)$  \\
+			\> $\genericSig[\genericSetVar]  \gets \signingAlg[\privKey](\genericSetVar)$ \\
+			\> $\tupleDefn{\genericCInputElmt{0}, \genericCInputElmt{1}, 
+			\adversaryState{2} } 
+			\gets  
+			\indsrAdversary{2}^{\signingAlg[\privKey](\cdot)}(\genericSig, \adversaryState{1})$  \\
+			\> If $\genericCInputElmt{0} \in \queriedSets \cup \genericSetVar ~\lor~
+			\genericCInputElmt{1} \in \queriedSets \cup \genericSetVar$\\
+			\> \> $\mbox{where $\queriedSets$ is the 
+				union of all the sets queried to $\signingAlg[\privKey](\cdot)$ }$ \\
+			\> \> \> then abort \\
+			\> $\genericSigAlt \gets \genericSig[\genericSetVar] \sigMinus[\pubKey] 
+			\{\genericCInputElmt{\indBit}\}$ \\
+			\> $\advBit \gets 
+			\indsrAdversary{3}(\randomize[\pubKey](\genericSigAlt), \adversaryState{2})$ \\
+			
+			\> If $\advBit = \indBit$ \\
+			\> \> then output 1 \\
+			\> \> else output 0
+		\end{tabbing}
+	\end{minipage}
+\end{center}
+
+
+%                \> \mkr{\parbox[t]{0.75\columnwidth}{In the previous line, I think \indsrAdversary{2} 
+		%should also receive state output by \indsrAdversary{1}.}} \\
+%                \> \mkr{Same in the line above, but from \indsrAdversary{2}.} \\
+
+We define
+
+\begin{eqnarray*}
+	& \Advantage{\indsrLabel}{\sigScheme}(\indsrAdversaryComb) = \\
+	&  \left|	\prob{\Experiment{\indsrLabel[0]}{\sigScheme}(\indsrAdversaryComb) = 1} - 
+	\prob{\Experiment{\indsrLabel[1]}{\sigScheme}(\indsrAdversaryComb) = 1} \right| \\
+	& \Advantage{\indsrLabel}{\sigScheme}(\timeBound, \oracleQueries) = 
+	\max_{\indsrAdversaryComb} 
+	\Advantage{\indsrLabel}{\sigScheme}(\indsrAdversaryComb) 
+\end{eqnarray*}
+
+
+
+%\begin{align*}
+%	\Advantage{\indsrLabel}{\sigScheme}(\indsrAdversary) & = 
+%	\prob{\Experiment{\indsrLabel}{\sigScheme}(\indsrAdversary) = 1} \\
+%	\Advantage{\indsrLabel}{\sigScheme}(\timeBound, \oracleQueries) & = \max_{\indsrAdversary} 
+%	\Advantage{\indsrLabel}{\sigScheme}(\indsrAdversary) 
+%\end{align*}
+
+\noindent
+where the maximum is taken over all adversary algorithms
+\indsrAdversaryComb that runs in total time \timeBound and makes
+\oracleQueries oracle queries
+\fi 
+
+\iffalse 
+\subsection{Analyzing False Positives and False Negatives}
+\label{sec:fpr_analysis}
+
+\begin{theorem}
+Let $\detectionThreshold$ be the threshold for revealing the voucher key to the server. Then, 
+
+		
+		\begin{small}
+		\begin{align}
+			& \cprob{}{\exists I \subseteq \nats[\numProjections], \setSize{I} \ge \threshold: \forall \projIdx \in I, 
+				\projFn[\projIdx](\genericMetricSpaceElmt) = \projFn[\projIdx](\genericMetricSpaceElmtAlt)}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] > 
+			\threshold} \nonumber \\ 
+& \le 1 - \sum\limits_{i \in \nats[\threshold - 1]} \binom{\numProjections}{i} \fpr^{i} (1 - \fpr)^{i}
+ \\
+			& \cprob{}{\exists I \subseteq \nats[\numProjections], \setSize{I} \ge \numProjections - \threshold + 1: \forall \projIdx \in I, 
+				\projFn[\projIdx](\genericMetricSpaceElmt) \neq \projFn[\projIdx](\genericMetricSpaceElmtAlt)}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] \le 
+			\threshold} \nonumber \\ 
+& \le 1 - \sum\limits_{i \in \nats[\numProjections - \threshold]} \binom{\numProjections}{i} \fnr^{i} (1 - \fnr)^{i}
+ \\
+		\end{align}
+		\end{small}
+where \fpr and \fnr are the false positive rate and false negative rate under each projection function.
+
+\end{theorem}
+
+\begin{proof}
+The results follow from the fact that all of the projections are selected independently. Thus, the false positives and false negatives are binomially distributed with success probability \fpr and \fnr respectively. \eqref{eq:false_pos_bound} bounds the probability of getting at least $\threshold$ successes (false positives). 
+Similarly, \eqref{eq:false_neg_bound} defines the probability of getting at least $\numProjections - \threshold + 1$ successes where a success is a false negative. 
+
+\end{proof}
+
+\fi 
+
+
+\iffalse
+\section{Hiding correlations between queries}
+\label{app:hiding_corr}
+%
+
+
+We will first make an assumption about the embedding function \embed, that is satisfied by most constructions of interest for content moderation~\cite{mckeown2023hamming,kulshrestha2021identifying}. The assumption roughly translates to the following: \embed embeds dissimilar items in the universe \universe to items in the metric space that are at least twice as far apart from each other, as the distance between the embeddings of similar items. 
+More formally, 
+
+\begin{assumption}
+\label{assumption1}
+The embedding function \embed embedding elements from \universe into metric space ensures that if two items $\genericUniverseElmt, \genericUniverseElmtAlt \in \universe$ are similar, then $\distanceNotation[\distance][\embed(\genericUniverseElmt) - \embed(\genericUniverseElmtAlt)] \le \threshold$. Otherwise, 
+$\distanceNotation[\distance][\embed(\genericUniverseElmt) - \embed(\genericUniverseElmtAlt)] > \lshConst\threshold$ where $\lshConst > 2$ 
+\end{assumption}
+
+\begin{prop}
+\label{thm:prob_match}
+Let $\setNotation{A}, \setNotation{B} \subseteq \metricSpace$ be two sets such that $\setSize{A} = \setSize{B} = \blocklistSize$, and for every pair $\vec{a}, \vec{a'} \in \setNotation{A} \times \setNotation{A}$ (resp. $\vec{b}, \vec{b'} \in \setNotation{B} \times \setNotation{B}$), $\distanceNotation[\distance][\vec{a} - \vec{a'}] > t$ 
+. Initialize \numProjections key-value stores $\projBuckets[1], \dots, \projBuckets[\numProjections]$. For each element $\vec{a} \in \setNotation{A}$, set $\projBuckets[\projIdx][\vec{a}] \assign \hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx])$ if some $\projBuckets[\projIdx][\vec{a'}] \assign \hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx])$, $\vec{a'} \in \setNotation{A}, \vec{a} \neq \vec{a'}$ does not already exist. Otherwise set $\projBuckets[\projIdx][\vec{a}] \assign \genericRand$ where $\genericRand \getsr \setDefn{0,1}^{\secParam}$. Create a fingerprint $\fingerprint{\vec{a}} \gets \setDefn{\projBuckets[\projIdx][\vec{a}]}_{\projIdx \in \nats[\numProjections]}$. Repeat the same process for the vectors in $\setNotation{B}$ after re-initializing the key-value stores. Then, 
+
+\[
+\cprob{}{\setSize{\fingerprint{\vec{a}} ~\cap \fingerprint{\vec{b}}} = \emptyset}{\distanceNotation[\distance][\vec{a} - \vec{b}] \le \threshold} \le (1 - \fnr + 2\blocklistSize \fpr)^{\numProjections}
+\]
+\end{prop}
+
+\begin{proof}
+Consider some projection function $\projFn[\projIdx]$. When $\distanceNotation[\distance][\vec{a} - \vec{b}] \le \threshold$, $\prob{\hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx])} \neq \prob{\hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx])} \le 1 - \fnr$. Also, $\hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx]) \notin \fingerprint{\vec{a}}$ if there exists some $\vec{a'} \in \setNotation{A}$ such that $\hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx]) = \hashFn(\projFn[\projIdx](\vec{a'}), \projFn[\projIdx])$ but $\distanceNotation[\distance][\vec{a} - \vec{a}] > \threshold$. This happens with probability at most $\fpr$. Summing over all vectors in $\setNotation{A}$, $\prob{\hashFn(\projFn[\projIdx](\vec{a}), \projFn[\projIdx]) \notin \fingerprint{\vec{a}}} \le \blocklistSize \fpr$. A similar argument holds for $\prob{\hashFn(\projFn[\projIdx](\vec{b}), \projFn[\projIdx]) \notin \fingerprint{\vec{b}}} \le \blocklistSize \fpr$. Thus, from a union bound, we have $\cprob{}{\setDefn{\projFn[\projIdx](\vec{a}) \cup \projFn[\projIdx](\vec{b})} \not\subseteq \fingerprint{\vec{b}} ~\cap \fingerprint{\vec{b}}}{\distanceNotation[\distance][\vec{a} - \vec{b}] \le \threshold} \le (1 - \fnr + 2\blocklistSize \fpr)$. The fact that the projections are independent gives the result. 
+\end{proof}
+
+
+\begin{theorem}
+\label{thm:fnr}
+Under Assumption~\ref{assumption1}, the strategy described to ensure the query invariant will ensure that the server will learn $\clientVec$ if there is some $\blocklistVec \in \blocklist$ such that $\hammingDist{\clientVec}{\blocklistVec} \le \threshold$ with probability at least $1 - (1 - \fnr + 2\blocklistSize \fpr)^{\numProjections}$ assuming that there are no false negatives in the cuckoo hash table. 
+\end{theorem}
+
+
+
+
+\begin{proof}
+There are two conditions under which the input $\clientVec$'s projection may collide with the projection of an already uploaded content $\genericVec$ under the projection function $\projFn[\projIdx]$, which was not flagged by the server. The first case is where $\hammingDist{\clientVec}{\genericVec} > \threshold$. In this case, not querying on $\projFn[\projIdx](\clientVec)$ implies $\projFn[\projIdx](\genericVec) \in \fingerprint{\clientVec}$ and $\projFn[\projIdx](\clientVec) \notin \fingerprint{\clientVec}$. Due to \eqnref{eq:no_false_neg}, there is at least one function $\projFn[\projIdx'], \projIdx \neq \projIdx'$ such that $\projFn[\projIdx'](\clientVec) \neq \projFn[\projIdx'](\genericVec)$ with probability $1 - \fpr^{\numProjections}$. Also, due to \propref{thm:prob_match}, the probability that the server will find a matching element in the blocklist even when $\projFn[\projIdx](\clientVec) \notin \fingerprint{\clientVec}$ is not in the query is at least  $1 - (1 - \fnr + 2\blocklistSize \fpr)^{\numProjections}$. 
+
+The second case is when $\hammingDist{\clientVec}{\genericVec} \le \threshold$. In this case, assume that $\blocklistVec$ is the vector (without the bit-mask) stored at the slot $\cuckooTable[\hashFn{1}(\prf{\prfKey}(\blindingScheme(\fingerprint{\blocklistVec}[\projIdx])))]$. Since, $\blocklistVec$ and $\genericVec$ did not match (as otherwise the server would have raised a flag), under Assumption~\ref{assumption1}, $\hammingDist{\blocklistVec}{\genericVec} \ge \lshConst \threshold$. Due to the triangle inequality, we have $\hammingDist{\blocklistVec}{\clientVec} + \hammingDist{\genericVec}{\clientVec} \ge \hammingDist{\genericVec}{\blocklistVec}$. From the above inequalities, this implies $\hammingDist{\blocklistVec}{\clientVec} \ge (\lshConst - 1) \cdot \threshold$. Now assuming that $\lshConst > 2$, $\hammingDist{\blocklistVec}{\clientVec} > \threshold$, which implies that the server will not learn $\clientVec$ despite the comparison $\blocklistVec$. A similar argument holds for the vector stored at $\cuckooTable[\hashFn{2}(\prf{\prfKey}(\blindingScheme(\fingerprint{\blocklistVec}[\projIdx])))]$. Thus, the projection can be dropped from the query without affecting the result. 
+\end{proof}
+\fi
+
+
+%\myparagraph{Putting it all together}
+%%
+%More specifically with 30 projections, the false negative rate according to \thmref{thm:fnr} (and experimentally verified) is 1\%. In comparison, the false negative rate achieved by previous work with pHash is roughly 17\%. Assuming an Elgamal encryption in an elliptic curve subgroup, the total communication cost during query is roughly 500KB which matches the cost of the PHM scheme (see \tblref{tab:related}), but under significantly lower false negatives (lower by at least 15\%) and under a weaker threat model. 
+
+
+

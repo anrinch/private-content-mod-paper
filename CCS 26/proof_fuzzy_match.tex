@@ -1,0 +1,153 @@
+\begin{theorem}
+Assuming that there are protocols securely realizing \distSigningFunc and \authOPRFFunc, \protocolFM securely realizes \contentModFunc \end{theorem}
+
+
+\begin{proof}
+
+We show that there is a polynomial time simulator that can simulate \client's and \server's views in \protocolEM
+
+\myparagraph{Simulating \client's view}
+%
+Simulating \client's view is straightforward in our model since \client is semi-honest and does not receive any messages from the protocol. The simulator simply responds to queries to \primeRO and \ro. \client also receives the encrypted ciphertexts corresponding to the $\blocklistSize \numProjections (1 + \cuckooTableParam)$ entries in the padded cuckoo hash table, as well as the auditor' signatures on the buckets. Due to IND-CPA security, the ciphertexts can be simulated by sending the encryptions of $\blocklistSize \numProjections (1 + \cuckooTableParam)$ of \groupIdentity instead. 
+
+
+
+
+
+
+\myparagraph{Simulating \server's view}
+%
+\server is malicious in our model and the simulation proceeds and its only input into the protocol is \blocklist. The simulator extracts \blocklist from the random oracle queries sent by the auditors in the publish phase. 
+
+
+In the simulation, the simulator gets the set of \server's outputs from a polynomial number of uploads that have three types. Type 1: $\langle \detected = \tru, \genericFileID, \clientData \rangle$, Type 2: $\langle \detected = \fals, \emptyset \rangle$ and Type 3: Type 2: $\langle \detected = \fals, \emptyset \rangle$
+
+
+\smallskip\underline{For every output of Type 1 $\langle \genericFileID, \detected = \tru, \clientData \rangle$}
+\begin{enumerate}
+\item The simulator selects a random key $\voucherKey \sample \encryptKeySpace$ and secret shares it $\secretShare{1}, \dots, \secretShare{\numProjections}$
+
+\item The simulator computes $\clientVec \assign \embed(\clientVec)$ and $\projFn[\projIdx](\clientVec)$ for $\projIdx \in [1, \numProjections]$. 
+
+\item The simulator sends $\langle \checkContentFuzzy, \genericFileID, \clientVec$ to \contentModFunc and receives $\fileKey$. The simulation aborts if \contentModFunc aborts. 
+
+\item For each $\projIdx \in [1, \numProjections]$, if the simulator has responded a \primeRO query for $\langle \projIdx, \cdot, \cdot, \projFn[\projIdx](\clientVec) \rangle$ before, then the simulator sets $\hat{\secretShareEncryption{1, \projIdx}} \assign  \secretShareEncryption{1, \projIdx}$, $\hat{\secretShareEncryption{2, \projIdx}} \assign  \secretShareEncryption{2, \projIdx}$, 
+$\hat{\partitionEncryption{1, \projIdx}} \assign \partitionEncryption{1, \projIdx}$ and $\hat{\partitionEncryption{2, \projIdx}} \assign \partitionEncryption{2, \projIdx}$ as computed in the real protocol 
+
+\item For each $\projIdx \in [1, \numProjections]$, if the simulator has not responded a \primeRO query for $\langle \projIdx, \cdot, \cdot, \projFn[\projIdx](\clientVec) \rangle$ before then the simulator sets $\hat{\secretShareEncryption{1, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 1})$, $\hat{\secretShareEncryption{2, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 2})$, 
+$\hat{\partitionEncryption{1, \projIdx}}\pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 3})$ and $\hat{\partitionEncryption{2, \projIdx}} \assign \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 4})$, where $\plaintext_{\projIdx, 1}$, $\plaintext_{\projIdx, 2}$, $\plaintext_{\projIdx, 3}$, $\plaintext_{\projIdx, 4} \sample \plaintextSpace$ 
+
+
+\item The simulation follows the steps of the protocol to generate content verification tokens $\contentToken{2, \projIdx, \vecIdx}$ and $\contentToken{1, \projIdx, \vecIdx}$
+
+\item The simulation sets the obfuscated secret shares $\secretShare{1, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ and $\secretShare{2, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ for all $\projIdx \in [1, \numProjections]$, $\vecIdx \in [1, \genericVecLen]$
+
+\item The simulator secret shares the key $\fileKey$ for each $\projIdx \in [1, \numProjections]$ similar to the protocol: $\{ \secretShare{1, \projIdx, 1}, \dots, \secretShare{1, \projIdx, \genericVecLen} \} \assign \dssProtocol(\fileKey).\SSShare$ and 
+$\{ \secretShare{2, \projIdx, 1}, \dots, \secretShare{2, \projIdx, \genericVecLen} \} \assign \dssProtocol(\fileKey).\SSShare$
+
+\item Simulator stores two lists $L_1$ and $L_2$ of the random coins used in the above steps containing $\langle \genericRand_{1, \projIdx, \vecIdx}, \secretShare{1, \projIdx, \vecIdx}'\rangle$ and  $\langle \genericRand_{2, \projIdx, \vecIdx}, \secretShare{2, \projIdx, \vecIdx}'\rangle$ for all $\projIdx \in [1, \numProjections]$, $\vecIdx \in [1, \genericVecLen]$
+
+\item After sending all the information computed to \server, the simulator waits for queries to \primeRO and \ro. 
+
+\item If there is a query to \ro for some $\qrGen^{\genericRand_{i, \projIdx, \vecIdx}}$ such that  $\langle \genericRand_{i, \projIdx, \vecIdx}, \secretShare{i, \projIdx, \vecIdx} \rangle \in L_i$, then the simulator responds with $\secretShare{i, \projIdx, \vecIdx}' \oplus \secretShare{i, \projIdx, \vecIdx}$. Otherwise, it responds with a random value $\bin^{\secParam}$ and stores in the random oracle. 
+\item The simulator outputs whatever \server outputs
+\end{enumerate}
+
+
+\smallskip\underline{For every output of Type 2 $\langle \genericFileID, \detected = \fals, \bucketIDSet \rangle$}
+
+\begin{enumerate}
+
+
+\item The simulator selects a random key $\voucherKey \sample \encryptKeySpace$ and secret shares it with a $\detectionThreshold$-out-of-$\numProjections$ secret sharing scheme $\secretShare{1}, \dots, \secretShare{\numProjections}$
+
+
+\item For each $\projIdx \in [1, \numProjections]$,
+
+\begin{enumerate}
+\item The simulator sets $\hat{\secretShareEncryption{1, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\secretShare{\projIdx})$ and $\hat{\secretShareEncryption{2, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 2})$  where $\plaintext_{\projIdx, 2} \sample \plaintextSpace$ 
+
+
+
+\item If $\bucketIDSet \neq \emptyset$, then the simulator sets $\hat{\partitionEncryption{1, \projIdx}} \assign \pkencrypt[\encryptPubKey](t_k)$ where $t_k \in \bucketIDSet$. Otherwise, it sets $\hat{\partitionEncryption{1, \projIdx}} \assign \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 2})$ where $\plaintext_{\projIdx, 3} \sample \plaintextSpace$. The simulator removes $t_k$ from \bucketIDSet. 
+
+%and  where $t_k$ is an entry in $\bucketIDSet$
+
+\item The simulator sets $\hat{\secretShareEncryption{2, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 4})$  where $\plaintext_{\projIdx, 4} \sample \plaintextSpace$
+
+\end{enumerate}
+\item The simulation selects some $\clientVec' \notin \blocklist$ and follows the steps of the protocol to generate the content verification tokens $\contentToken{2, \projIdx, \vecIdx}$ and $\contentToken{1, \projIdx, \vecIdx}$ for $\projIdx \in [1, \numProjections]$ and $\vecIdx \in [1, \genericVecLen]$.  
+
+\item The simulation sets the obfuscated secret shares $\secretShare{1, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ and $\secretShare{2, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ for all $\projIdx \in [1, \numProjections]$, $\vecIdx \in [1, \genericVecLen]$
+
+
+
+\item After sending all the information computed to \server, the simulator waits for queries to \primeRO and \ro. 
+
+
+\item For each query to \ro, the simulator responds with a random value $\bin^{\secParam}$ unless it has been responded to before. The simulator stores the response. 
+
+
+\item The simulator outputs whatever \server outputs
+\end{enumerate}
+
+
+
+\smallskip\underline{For every output of type 3 $\langle \genericFileID, \detected = \fals, \emptyset \rangle$}
+\begin{enumerate}
+
+
+\item For each $\projIdx \in [1, \numProjections]$, the simulator sets $\hat{\secretShareEncryption{1, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 1})$, $\hat{\secretShareEncryption{2, \projIdx}} \assign  \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 2})$, 
+$\hat{\partitionEncryption{1, \projIdx}}\pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 3})$ and $\hat{\partitionEncryption{2, \projIdx}} \assign \pkencrypt[\encryptPubKey](\plaintext_{\projIdx, 4})$, where $\plaintext_{\projIdx, 1}$, $\plaintext_{\projIdx, 2}$, $\plaintext_{\projIdx, 3}$, $\plaintext_{\projIdx, 4} \sample \plaintextSpace$ 
+
+
+\item The simulation selects some $\clientVec' \notin \blocklist$ and follows the steps of the protocol to generate the content verification tokens $\contentToken{2, \projIdx, \vecIdx}$ and $\contentToken{1, \projIdx, \vecIdx}$ for $\projIdx \in [1, \numProjections]$ and $\vecIdx \in [1, \genericVecLen]$.  
+
+\item The simulation sets the obfuscated secret shares $\secretShare{1, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ and $\secretShare{2, \projIdx, \vecIdx}' \assign \bin^{\secParam}$ for all $\projIdx \in [1, \numProjections]$, $\vecIdx \in [1, \genericVecLen]$
+
+
+\item After sending all the information computed to \server, the simulator waits for queries to \primeRO and \ro. 
+
+\item For each query to \ro, the simulator responds with a random value $\bin^{\secParam}$ unless it has been responded to before. The simulator stores the response. 
+
+
+\item The simulator outputs whatever \server outputs
+\end{enumerate}
+ 
+
+
+
+The simulations for all three cases are indistinguishable from the protocol execution due to IND-CPA guarantees of the additively homomorphic encryption scheme, and IND-SR guarantees of the signature scheme. 
+
+
+
+
+
+
+%\client does not receives messages from the protocol. 
+
+
+\iffalse 
+The client is semi-honest in our model. The simulator implements the random oracles \primeRO and \ro and the simulation proceeds as follows: 
+
+\begin{enumerate}
+\item During an upload, the simulator gets \genericFileID from the message sent by \client to \server with the file.  
+\item When \client queries the random oracle \primeRO on some $\genericSetElmt = \langle \langle \projIdx, \clientVec[\vecIdx], \vecIdx, \projFn[\projIdx](\clientVec[\vecIdx] \rangle$, 
+return a random value $\genericRand \sample \bin^{\secParam}$ as the output of $\primeRO(\genericCInputElmt)$ and stores $\langle \genericSetElmt, \genericRand \rangle$.
+
+\item  The simulator sends $\langle \uploadFile, \genericFileID, \genericCInputElmt \rangle$ and obtain the key
+$\genericSymmKey$ from the \contentModFunc. 
+\item When the client queries the random oracle \ro on $\qrGen^{\genericRand}$, then return the key $\genericSymmKey$ as the output of $\ro(\qrGen^{\genericRand})$. 
+\item If \client's output tape has $\langle \genericFileID, \detected = \tru \rangle$, then the simulator simulates the the fine-grained check by sending a random set of indices $\hat{\bucketIDSet} \sample [1, \numBuckets]$ to \client. 
+\item If \client's output tape has $\langle \genericFileID, \detected = \fals \rangle$, then the simulator simulate the fine-grained by sending a set of indices $\hat{\bucketIDSet} \sample [1, \numBuckets]$ to \client with probability $\bloomFilterEpsilon$. 
+\end{enumerate}
+
+
+
+The simulation is indistinguishable from the real protocol execution because \client's messages in the simulation include the $\genericRand,\genericSymmKey$ when $\detected = \fals$. Due to the random oracle assumption, these messages are statistically indistinguishable from the messages received in the protocol from the random oracle. When $\detected = \tru$, \client receives a random set of indices from the simulation. This is indistinguishable from the actual set of indices \bucketIDSet received by \client in the real protocol execution. This is because the items in the Bloom filter $\bloomFilter[\bucketIdx]$ sent by \client are the items $\genericBlocklistElmt \in \blocklist$ such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt) \equiv \bloomFilterIdx \bmod \numBins$. Since $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt)$ is a pseudorandom value, the distribution of $\genericBlocklistElmt$ in $\bloomFilter[\bucketIdx]$ is uniformly random. Thus, their corresponding mappings to buckets are also uniformly random. 
+
+The simulator simulates false positives by requesting a fine-grained check with probability $\bloomFilterEpsilon$. A fine-grained check is necessary, in case of a false positive, when there is a collision in the Bloom filter $\bloomFilter[\bucketIdx]$ between 
+$\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericBlocklistElmt))$ and $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)$ for some $\genericBlocklistElmt \in \blocklist$.  Again, since these are pseudorandom values, the probability of collision does not depend on \client's input $\genericCInputElmt$ and $\genericBlocklistElmt$. Therefore, the simulation only needs \bloomFilterEpsilon to simulate a false positive without information about $\genericBlocklistElmt$. 
+\fi 
+
+\end{proof}

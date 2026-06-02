@@ -1,0 +1,137 @@
+
+
+\begin{figure*}[h]
+\fbox{
+\begin{minipage}[t]{0.45\textwidth}
+\footnotesize
+
+\underline{$\contentModFuncExact$: Auditable Content Moderation with Exact Matching}		
+		
+		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a server $\server$ and a client $\client$. A signature scheme $\sigSchemeDefn$. False negative rate $\fnr \in (0,1)$ and false positive rate $\fpr \in (0,1)$. 
+		
+		\smallskip\noindent\textbf{Creating blocklist:} 
+		\enumListStart
+		
+%		\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from auditor $\auditor[\auditorIdx]$, store the blocklist and the auditor's share of a private key $\langle \privKey \rangle_{\auditorIdx}$
+
+		\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
+
+
+		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output an authenticated and confidential blocklist $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ . Store $\blocklist$
+
+		\enumListEnd
+		
+		\smallskip\noindent\textbf{Verifying uploads:} 
+		
+	
+	%	\smallskip\noindent\textbf{Inputs:} \server has the blocklist \blocklist. The client has the \blklistToken \genericBlocklistToken, a file $\clientData$ and a \contentToken \clientMeta derived from \genericBlocklistToken and \clientData. 
+	
+
+
+		
+		\enumListStartResume
+		\item Initialize a list $\retList$ 
+		\item Upon receiving $(\uploadFile, \genericFileID, \clientMeta)$ from \client, store $\langle \genericFileID, \clientMeta \rangle$ in $\retList$
+
+		
+		\item Upon receiving $(\checkContent,  \genericFileID, \clientMeta')$ from \server, 
+		\enumListStartResume
+
+		\item If there is no entry $\langle \genericFileID, \_ \rangle$ in \keyList, then abort. 
+		
+		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$, and $\clientMeta' \in \blocklist$, then return 1 with probability at least $1 - \fnr$. 
+
+		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$, and $\clientMeta' \in \blocklist$, then return 0 with probability at least $1 - \fnr$.  
+
+
+	
+%	\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, 
+%	\itemListStart
+%	\item Check if $\clientMeta' \in \blocklist$. If so, return the key $\genericSymmKey$ and add  $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ to \retList
+%		\item If $\clientMeta' \notin \blocklist$, return $	\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ in $\retList$.
+
+%	\itemListEndd
+		\enumListEnd
+
+			\enumListEnd
+
+
+\end{minipage}
+\hspace{5pt}
+\vrule
+\hspace{5pt}
+
+
+%%%%% Fuzzy content moderation functionality %%%%%%%%%
+\begin{minipage}[t]{0.45\textwidth}
+\footnotesize
+
+\noindent\underline{$\contentModFuncFuzzy$: Auditable Content Moderation with Fuzzy Matching}		
+		
+
+		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a server $\server$ and a client $\client$. A signature algorithm $\sigSchemeDefn$. 
+Threshold $\threshold$ for a metric distance $\distanceNotation[\distance][\cdot]$. A false positive rate $\fpr \in (0, 1)$ and false negative rate $\fnr \in (0,1)$. 
+		
+		\smallskip\noindent\textbf{Creating blocklist:} 
+		\enumListStart
+		
+	\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
+
+
+		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output an authenticated and confidential blocklist $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ . Store $\blocklist$
+
+		\enumListEnd
+		
+		\smallskip\noindent\textbf{Verifying uploads:} 
+		
+	
+	%	\smallskip\noindent\textbf{Inputs:} \server has the blocklist \blocklist. The client has the \blklistToken \genericBlocklistToken, a file $\clientData$ and a \contentToken \clientMeta derived from \genericBlocklistToken and \clientData. 
+	
+
+
+		
+		\enumListStartResume
+		\item Initialize a list $\retList$ 
+		\item Upon receiving $(\uploadFile, \genericFileID, \clientMeta)$ from \client, store $\langle \genericFileID, \clientMeta \rangle$ in $\retList$  
+
+	
+	\item Upon receiving $(\checkContentFuzzy,  \genericFileID, \clientMeta')$ from \server, 
+		\enumListStart
+		\item If there is no entry $\langle \genericFileID, \_ \rangle$ in \retList, then abort. 
+		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$
+
+				\itemListStart
+		\item Check if there is some entry $\genericBlocklistElmt \in \blocklist$ such that $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] \le \threshold$. If so, return 1 with probability $\ge 1 - \fnr$. Otherwise return 0. 
+
+
+%the key $\genericSymmKey$ and add $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle$ to \retList. Otherwise, return $\genericSymmKey' \sample \encryptKeySpace$ and add $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ to \retList.
+
+
+\item If for all $\genericBlocklistElmt \in \blocklist$, $\distanceNotation[\distance][\genericBlocklistElmt][\clientMeta'] > \threshold$,  return 0 with probability $\ge 1 - \fpr$. Otherwise return 1. 
+
+
+%check whether there is some entry $\langle \genericFileID, \clientMeta' \genericSymmKey' \rangle \in \retList$. If so, return $\genericSymmKey'$. Otherwise, return $\genericSymmKey' \getsr \encryptKeySpace$ and store $\langle \genericFileID, \clientMeta', \genericSymmKey' \rangle$ in $\retList$
+
+		
+		\itemListEnd
+		
+
+
+
+
+%		\item If there is no entry $\langle \genericFileID, \clientMeta', \genericSymmKey \rangle \in \retList$, 
+
+
+
+		\enumListEnd
+
+
+
+
+		\enumListEnd
+
+
+\end{minipage}
+}
+\caption{Ideal functionality for auditable content moderation with exact and fuzzy matching\label{fig:ideal_func}}
+\end{figure*}

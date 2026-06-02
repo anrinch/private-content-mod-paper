@@ -1,0 +1,1095 @@
+
+%%%%%%%%%%%%%%%%%%% CROSS REFS %%%%%%%%%%%%%%%%
+\newcommand{\refs}[2]{\mbox{\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\secref}[1]{\mbox{Sec.~\ref{#1}}\xspace}
+\newcommand{\Lineref}[1]{\mbox{Line~\ref{#1}}\xspace}
+\newcommand{\lineref}[1]{\mbox{line~\ref{#1}}\xspace}
+\newcommand{\linesref}[2]{\mbox{lines~\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\secsref}[2]{\mbox{Secs.~\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\secrefstatic}[1]{\mbox{Section~{#1}}}
+\newcommand{\figref}[1]{\mbox{Fig.~\ref{#1}}\xspace}
+\newcommand{\figsref}[2]{\mbox{Figs.~\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\subfigsref}[2]{\mbox{Figs.~\ref{#1}--\subref{#2}}\xspace}
+\newcommand{\figrefstatic}[1]{\mbox{Fig.~{#1}}\xspace}
+\newcommand{\tblref}[1]{\mbox{Table~\ref{#1}}\xspace}
+\newcommand{\tblrefstatic}[1]{\mbox{Table~{#1}}\xspace}
+\newcommand{\tblsrefstatic}[2]{\mbox{Tables~{#1}--{#2}}\xspace}
+\newcommand{\appref}[1]{\mbox{App.~\ref{#1}}\xspace}
+\newcommand{\eqnref}[1]{Eq. (\ref{#1})\xspace}
+\newcommand{\eqnsref}[2]{Eq. (\ref{#1})--(\ref{#2})\xspace}
+\newcommand{\propref}[1]{\mbox{Prop.~\ref{#1}}\xspace}
+\newcommand{\corrref}[1]{\mbox{Corollary.~\ref{#1}}\xspace}
+\newcommand{\propsref}[2]{\mbox{Props.~\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\msgref}[1]{\mbox{message~\ref{#1}}\xspace}
+\newcommand{\dfnrefstatic}[1]{\mbox{Definition~{#1}}\xspace}
+\newcommand{\dfnref}[1]{\mbox{Definition~\ref{#1}}\xspace}
+\newcommand{\enumref}[1]{\mbox{step~(\ref{#1})}\xspace} 
+\newcommand{\lemmaref}[1]{\mbox{Lemma~\ref{#1}}\xspace}
+\newcommand{\thmref}[1]{\mbox{Theorem~\ref{#1}}\xspace}
+\newcommand{\stepref}[1]{\mbox{Step~\ref{#1}}\xspace}
+\newcommand{\stepsref}[2]{\mbox{Steps~\ref{#1}--\ref{#2}}\xspace}
+\newcommand{\algoref}[1]{\mbox{Algorithm.~\ref{#1}}\xspace}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%% PRF PROTOCOLS %%%%%%%%%%%%%%%%%%%%%%
+\NewDocumentCommand{\prf}{g}{\ensuremath{\algNotation{PRF}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\prfKeySpace}{\ensuremath{\mathcal{K}_{\mathsf{PRF}}}\xspace}
+\newcommand{\prfRange}{\ensuremath{\bin^{\secParam}}\xspace}
+\NewDocumentCommand{\prp}{g}{\ensuremath{\algNotation{PRP}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\prpKeySpace}{\ensuremath{\mathcal{K}_{\mathsf{PRP}}}\xspace}
+\newcommand{\prpRange}{\ensuremath{\bin^{\secParam}}\xspace}
+\NewDocumentCommand{\prg}{g}{\ensuremath{\algNotation{PRG}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\prgKeySpace}{\ensuremath{\mathcal{K}_{\mathsf{PRG}}}\xspace}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%% KEYS %%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\fileKey}{\ensuremath{\kappa_{f}}}
+\newcommand{\clientPubKey}{\ensuremath{pk_c}\xspace}
+\newcommand{\clientPrivKey}{\ensuremath{sk_c}\xspace}
+\newcommand{\serverPubKey}{\ensuremath{pk_s}\xspace}
+\newcommand{\serverPrivKey}{\ensuremath{sk_s}\xspace}
+\newcommand{\prfKey}{\ensuremath{\kappa_{\mathsf{PRF}}}\xspace}
+\newcommand{\prpKeyServer}{\ensuremath{\kappa_{\mathsf{PRP}}^{S}}\xspace}
+\newcommand{\prfKeyClient}{\ensuremath{\kappa_{\mathsf{PRF}}^{C}}\xspace}
+\newcommand{\prgKey}{\ensuremath{\kappa_{PRG}}\xspace}
+\newcommand{\dhfKey}{\ensuremath{k_{dhf}}\xspace}
+\NewDocumentCommand{\pubKey}{o}{\IfNoValueTF{#1}{\ensuremath{pk}\xspace}{\ensuremath{pk_{#1}}\xspace}}
+\NewDocumentCommand{\privKey}{o}{\IfNoValueTF{#1}{\ensuremath{sk}\xspace}{\ensuremath{sk_{#1}}\xspace}}
+
+
+\NewDocumentCommand{\auditorPubKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{pk^{(r)}}\xspace}{\ensuremath{pk_{#1}^{(r)}}\xspace}}
+\NewDocumentCommand{\auditorPrivKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{sk^{(r)}}\xspace}{\ensuremath{sk^{(r)}_{#1}}\xspace}}
+\NewDocumentCommand{\auditorPubKeyGenericScheme}{o}{\IfNoValueTF{#1}{\ensuremath{pk}\xspace}{\ensuremath{pk_{#1}}\xspace}}
+\NewDocumentCommand{\auditorPrivKeyGenericScheme}{o}{\IfNoValueTF{#1}{\ensuremath{sk}\xspace}{\ensuremath{sk_{#1}}\xspace}}
+\newcommand{\encryptPubKey}{\ensuremath{\pubKey_{e}}\xspace}
+\newcommand{\encryptPrivKey}{\ensuremath{\privKey_{e}}\xspace}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%% IDEAL FUNC %%%%%%%%%%%%%%%%%
+\newcommand{\createBlocklist}{\ensuremath{\mathsf{CreateBlocklist}}\xspace}
+\newcommand{\verifyToken}{\ensuremath{\mathsf{VerifyToken}}\xspace}
+\newcommand{\uploadFile}{\textsc{UploadFile}\xspace}
+\newcommand{\genericFileMetadata}{\ensuremath{m}\xspace}
+\newcommand{\checkContent}{\textsc{CheckFile}\xspace}
+\newcommand{\checkContentFuzzy}{\textsc{CheckFileFuzzy}\xspace}
+\newcommand{\funcFNR}{\ensuremath{FNR}\xspace}
+\newcommand{\dssFunc}{\ensuremath{\mathcal{F}_{dss}}\xspace}
+\newcommand{\distSign}{\textsc{DSign}\xspace}
+\newcommand{\distAdd}{\textsc{DAdd}\xspace}
+\newcommand{\distDel}{\textsc{DDel}\xspace}
+\def\distSigningFunc{\ensuremath{\mathcal{F}_{\mathsf{dsign}}}\xspace}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%% SIG SCHEME NAMES/DEFINITIONS %%%%%%%%%%%%%%%%
+
+\newcommand{\sigScheme}{\ensuremath{\protocolNotation{\mathsf{Sig}}}\xspace}
+
+\newcommand{\sigSchemeDefn}{\ensuremath{\sigScheme= \langle \keygenGenSig, \signGenSig, \verifyGenSig \rangle}\xspace}
+\NewDocumentCommand{\signGenSig}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{ssign}}\xspace}{\ensuremath{\algNotation{ssign}_{#1}}\xspace}}
+\NewDocumentCommand{\verifyGenSig}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{sVrfy}}\xspace}{\ensuremath{\algNotation{sVrfy}_{#1}}\xspace}}
+\newcommand{\keygenGenSig}{\ensuremath{\algNotation{SGen}}\xspace}
+
+
+\newcommand{\bfACB}{\ensuremath{\protocolNotation{bf}}\xspace}
+\newcommand{\sigACB}{\ensuremath{\protocolNotation{sig}}\xspace}
+\newcommand{\chtACB}{\ensuremath{\protocolNotation{cht}}\xspace}
+
+\newcommand{\ourSigScheme}{\ensuremath{\protocolNotation{\mathsf{RH-Sig}}}\xspace}
+\NewDocumentCommand{\sign}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{sign}}\xspace}{\ensuremath{\algNotation{sign}_{#1}}\xspace}}
+\NewDocumentCommand{\verify}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Vrfy}}\xspace}{\ensuremath{\algNotation{Vrfy}_{#1}}\xspace}}
+\NewDocumentCommand{\randomize}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Rand}}}{\ensuremath{\algNotation{Rand}_{#1}}}}
+\NewDocumentCommand{\verifyRand}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Auth}}}{\ensuremath{\algNotation{Auth}_{#1}}}}
+\newcommand{\keyGen}{\ensuremath{\algNotation{Gen}}\xspace}
+\newcommand{\ourSigSchemeDefn}{\ensuremath{\ourSigScheme = \langle  \keyGen, \sign, \verify, 
+\randomize, \verifyRand\rangle}\xspace}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\newcommand{\numBins}{\ensuremath{\zeta}\xspace}
+\newcommand{\binIdx}{\ensuremath{k}\xspace}
+\newcommand{\binn}[1]{\ensuremath{\mathsf{Bin}_{#1}}\xspace}
+\newcommand{\bloomFilterKey}{\ensuremath{\genericSymmKey_{S}}\xspace}
+
+%% general %%
+
+\newcommand{\algComment}[1]{\textit{/* #1 */}\xspace}
+\newcommand{\myparagraph}[1]{\smallskip\noindent\textbf{#1}:\xspace}
+%\newcommand{\myparagraph}{\paragraph}
+%\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{prop}[theorem]{Proposition}
+\newenvironment{myquote}%
+{\list{}{\leftmargin=0.1in\rightmargin=0.2in}\item[] \em}%
+{\endlist}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+\newcommand{\listLeftMargin}{1.5em}
+
+\newcommand{\enumListStart}{\begin{enumerate}[leftmargin=\listLeftMargin]}
+\newcommand{\enumListStartResume}{\begin{enumerate}[leftmargin=\listLeftMargin, resume]}
+\newcommand{\enumListEnd}{\end{enumerate}}
+\newcommand{\itemListStart}{\begin{itemize}[leftmargin=\listLeftMargin]}
+\newcommand{\itemListEnd}{\end{itemize}}
+
+\NewDocumentCommand{\protocolStepListStart}{g}
+{
+\IfNoValueTF{#1}
+{\begin{enumerate}[leftmargin=\listLeftMargin]}
+{\begin{enumerate}[label=\textbf{#1{\arabic*}}, leftmargin=\listLeftMargin]}
+}
+
+\newcommand{\protocolStepListEnd}{\end{enumerate}}
+
+
+\newenvironment{sproof}{%
+	\renewcommand{\proofname}{Proof Sketch}\proof}{\endproof}
+\newenvironment{proofsketch}{\par\noindent\textsl{Proof (sketch):}\kern1ex}%
+{\hfil\hskip2em\penalty250\parfillskip=0pt\finalhyphendemerits=0$\qed$%
+	\par\smallskip\par}
+	
+%%%%%
+% Comments
+%%%%%
+\newcounter{note}[section]
+\newcommand{\fixmecolor}{red}
+\newcommand{\notecolor}{blue}
+\renewcommand{\thenote}{\thesection.\arabic{note}}
+\newcommand{\mkr}[1]{\refstepcounter{note}{\bf \textcolor{\fixmecolor}{$\ll$MKR~\thenote: {\sf 
+#1}$\gg$}}}
+\newcommand{\ac}[1]{\refstepcounter{note}{\bf \textcolor{\notecolor}{$\ll$AC~\thenote: {\sf 
+#1}$\gg$}}}
+\newcommand{\todo}[1]{\refstepcounter{note}{\bf \textcolor{\fixmecolor}{$\ll$TODO:~\thenote: {\sf 
+#1}$\gg$}}}
+\newcommand{\assign}{\ensuremath{\gets}\xspace}
+
+\NewDocumentCommand{\nats}{o o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\mathbb{N}}\xspace}
+	{\IfNoValueTF{#2}%
+		{\ensuremath{[{#1}]}\xspace}
+		{\ensuremath{[{#1},{#2}]}\xspace}
+	}
+}
+%\newcommand{\bigO}{\ensuremath{O}\xspace}
+\newcommand{\ints}{\ensuremath{\mathbb{Z}}\xspace}
+\newcommand{\reals}{\ensuremath{\mathbb{R}}\xspace}
+\newcommand{\nonnegativeReals}{\ensuremath{\reals_{\ge 0}}\xspace}
+\newcommand{\nonnegativeIntegers}{\ensuremath{\ints_{\ge 0}}\xspace}
+\newcommand{\setSize}[1]{\ensuremath{\left|{#1}\right|}\xspace}
+\newcommand{\vecSize}[1]{\ensuremath{\left|{#1}\right|}\xspace}
+\newcommand{\valNotation}[1]{\ensuremath{\expandafter\MakeLowercase{#1}}\xspace}
+\newcommand{\setNotation}[1]{\ensuremath{\expandafter\mathcal{#1}}\xspace}
+\newcommand{\rvNotation}[1]{\ensuremath{\expandafter\varmathbb{#1}}\xspace}
+\newcommand{\fnNotation}[1]{\ensuremath{\expandafter\MakeLowercase{#1}}\xspace}
+\newcommand{\algNotation}[1]{\ensuremath{\expandafter\mathtt{\MakeUppercase{#1}}}\xspace}
+\newcommand{\constNotation}[1]{\ensuremath{\expandafter\mathsf{#1}}\xspace}
+\newcommand{\polyNotation}[1]{\ensuremath{\expandafter\MakeLowercase{#1}}\xspace}
+\newcommand{\vecNotation}[1]{\ensuremath{\expandafter\vec{#1}}\xspace}
+\newcommand{\primes}{\ensuremath{\mathcal{P}}\xspace}
+\newcommand{\secParam}{\ensuremath{\lambda}\xspace}
+\def\bigO{\mathbb{O}}
+
+%\newcommand{\getsr}{\ensuremath{\stackrel{\scriptsize\$}{\leftarrow}}\xspace}
+\newcommand{\getsr}{\ensuremath{\sample}\xspace}
+\newcommand{\defeq}{\ensuremath{~\stackrel{\mathclap{\scriptsize\mbox{def}}}{=}~}\xspace}
+
+%% Probability notations$$ 
+
+\newcommand{\prob}[1]{\ensuremath{\mathbb{P}\mathopen{}\left({#1}\right)\mathclose{}}\xspace}
+\newcommand{\cprob}[3]{\ensuremath{\mathbb{P}\left({#2} \; \middle| \; 
+{#3}\right)}\xspace}
+\newcommand{\cset}[2]{\ensuremath{\left\{{#1} \; \middle| \; {#2}\right\}}\xspace}
+
+
+%%%% Mathematical Notations
+
+
+\NewDocumentCommand{\genericFnFamily}{ o }{\ensuremath{\fnNotation{G}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\genericFnKeyspace}{\ensuremath{\setNotation{K}}\xspace}
+\newcommand{\genericFnKey}{\ensuremath{k}\xspace}
+\newcommand{\genericFnDomain}{\ensuremath{\setNotation{D}}\xspace}
+\newcommand{\genericFnDomainElmt}{\ensuremath{d}\xspace}
+\newcommand{\genericFnRange}{\ensuremath{\setNotation{R}}\xspace}
+\newcommand{\genericFn}{\ensuremath{\fnNotation{H}}\xspace}
+
+
+\newcommand{\rsaExponent}{\ensuremath{e}\xspace}
+\newcommand{\rsaExponentInv}{\ensuremath{d}\xspace}
+\NewDocumentCommand{\genericFnInput}{o}{\ensuremath{x\IfValueT{#1}{_{#1}}}\xspace}
+%\NewDocumentCommand{\genericVal}{o}{\ensuremath{v\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\genericFnInputAlt}{o}{\ensuremath{x'\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\genericFnOutput}{o}{\ensuremath{y\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\genericFnOutputAlt}{o}{\ensuremath{y'\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\simFnOutput}{\ensuremath{z}\xspace}
+
+\newcommand{\kdf}{\ensuremath{\mathsf{KDF}}\xspace}
+\newcommand{\genericVal}{\ensuremath{v}\xspace}
+\newcommand{\genericQuotient}{\ensuremath{k}\xspace}
+\newcommand{\genericQuotientAlt}{\ensuremath{k'}\xspace}
+
+\newcommand{\flagContentList}{\ensuremath{\mathcal{D}}\xspace}
+\newcommand{\universe}{\ensuremath{\mathcal{U}}\xspace}
+\newcommand{\genericSetSize}{\ensuremath{n}\xspace}
+
+\NewDocumentCommand{\genericSetVar}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\setNotation{S}}\xspace}
+	{\ensuremath{\setNotation{S}_{#1}}\xspace}
+}
+\NewDocumentCommand{\oprfRO}{o}{\ensuremath{H\IfValueT{#1}{_#1}}\xspace}
+\NewDocumentCommand{\genericSetVarAlt}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\setNotation{S'}}\xspace}
+	{\ensuremath{\setNotation{S'}_{#1}}\xspace}
+}
+
+
+\NewDocumentCommand{\genericRand}{o}
+{\IfNoValueTF{#1}
+	{\ensuremath{r}\xspace}
+	{\ensuremath{r_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\genericRandAlt}{o}
+{\IfNoValueTF{#1}
+	{\ensuremath{r'}\xspace}
+	{\ensuremath{r'_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\genericRandAltAlt}{o}
+{\IfNoValueTF{#1}
+	{\ensuremath{r''}\xspace}
+	{\ensuremath{r''_{#1}}\xspace}
+}
+
+
+\newcommand{\dhfSet}{\ensuremath{D}\xspace}
+\newcommand{\dhfSetElmt}[1]{\ensuremath{d_{#1}}\xspace}
+\newcommand{\ssSet}{\ensuremath{SS}\xspace}
+
+\NewDocumentCommand{\genericSetElmt}{o o}%
+{%
+	\IfNoValueTF{#2}%
+	{\ensuremath{x\IfValueT{#1}{_{#1}}}\xspace}
+	{\ensuremath{x_{#1,#2}}\xspace}
+}
+
+
+\newcommand{\setIdx}{\ensuremath{i}\xspace}
+\newcommand{\randIdx}{\ensuremath{j}\xspace}
+\newcommand{\setDefn}[1]{\ensuremath{\left\{ #1 \right\}}\xspace}
+
+
+\NewDocumentCommand{\tupleDefn}{g g}{\ensuremath{\left\langle #1 
+\right\rangle\IfValueT{#2}{_{#2}}}\xspace}
+
+
+\newcommand{\lcm}{\ensuremath{\mathsf{LCM}}\xspace}
+\renewcommand{\gcd}{\ensuremath{\mathsf{GCD}}\xspace}
+
+\NewDocumentCommand{\euclideanConst}{o}
+{
+\ifstrequal{#1}{1}
+{\ensuremath{a}\xspace}
+{\ensuremath{b}\xspace}
+}
+
+%% Signature scheme %%
+
+\NewDocumentCommand{\signingAlg}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\algNotation{sign}}\xspace}%
+	{\ensuremath{\algNotation{sign}_{#1}}\xspace}%
+}
+
+\newcommand{\auditorSig}[1]{\ensuremath{\Sigma_{#1}}\xspace}
+
+
+
+
+
+\NewDocumentCommand{\genericSig}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\sigma}\xspace}
+	{\ensuremath{\sigma_{#1}}\xspace}
+}
+
+\newcommand{\genericOracle}{\ensuremath{\mathcal{O}}\xspace}
+
+
+
+\NewDocumentCommand{\genericSigPair}{o}
+{
+\IfNoValueTF{#1}{\ensuremath{\tupleDefn{\genericRSAElmt, \genericRSAElmtAlt}}\xspace}
+{\ifstrequal{#1}{1}{\ensuremath{\genericRSAElmt}\xspace}{\ensuremath{\genericRSAElmtAlt}\xspace}}
+}
+
+
+\NewDocumentCommand{\sigPair}{o o}
+{
+	\IfNoValueTF{#2}{\ensuremath{\tupleDefn{\genericRSAElmt_{#1}, 
+	\genericRSAElmtAlt_{#1}}}\xspace}
+	{\ifstrequal{#2}{1}{\ensuremath{\genericRSAElmt_{#1}}\xspace}{\ensuremath{\genericRSAElmtAlt_{#1}}\xspace}}
+}
+
+
+\NewDocumentCommand{\genericSigPairAlt}{o}
+{
+	\IfNoValueTF{#1}{\ensuremath{\tupleDefn{\genericRSAElmt', \genericRSAElmtAlt'}}\xspace}
+{\ifstrequal{#1}{1}{\ensuremath{\genericRSAElmt'}\xspace}{\ensuremath{\genericRSAElmtAlt'}\xspace}}
+}
+
+\NewDocumentCommand{\genericSigAlt}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\sigma'}\xspace}
+	{\ensuremath{\sigma'_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\sigHomomorphism}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\odot}\xspace}
+	{\ensuremath{\odot_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\sigMinus}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\ominus}\xspace}
+	{\ensuremath{\ominus_{#1}}\xspace}
+}
+
+
+\NewDocumentCommand{\keyPair}{o}{\ensuremath{\langle pk\IfValueT{#1}{_{#1}}, 
+sk\IfValueT{#1}{_{#1}}\rangle}\xspace}
+
+
+
+
+
+
+
+\newcommand{\sigMsgSpace}{\ensuremath{\universe}\xspace}
+\newcommand{\sigKeySpace}{\ensuremath{\mathcal{K}}\xspace}
+\newcommand{\sigOutputSpace}{\ensuremath{\genericFnRange}\xspace}
+\newcommand{\numberOfSetsQueried}{\ensuremath{n_s}\xspace}
+\newcommand{\queriedSets}{\ensuremath{\phi}\xspace}
+\newcommand{\indcpaBit}{\ensuremath{\valNotation{b}}\xspace}
+\newcommand{\indcpaGuess}{\ensuremath{\hat{\valNotation{b}}}\xspace}
+\newcommand{\indcpaAdversary}{\ensuremath{\algNotation{A}}\xspace}
+\NewDocumentCommand{\indcpaOracle}{g g g g}{%
+	\ensuremath{\algNotation{O}\IfNoValueF{#1}{_{#1}({#2},{#3},{#4})}}\xspace}
+\NewDocumentCommand{\indcpaLabel}{o}{%
+	\textsf{ind-cpa\IfNoValueF{#1}{-{#1}}}\xspace}
+
+\NewDocumentCommand{\plaintext}{o}{%
+	\ensuremath{\valNotation{m}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\plaintextVec}{o}{%
+	\ensuremath{\vecNotation{m}\IfNoValueF{#1}{_{#1}}}\xspace}
+
+
+\NewDocumentCommand{\ciphertext}{o}{%
+	\ensuremath{\valNotation{c}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\ciphertextAlt}{o}{%
+	\ensuremath{\valNotation{c}'\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\encryptionSpace}{\ensuremath{\setNotation{U}}\xspace}
+\NewDocumentCommand{\plaintextSpace}{o}{%
+	\ensuremath{\setNotation{P}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\ciphertextSpace}{o}{%
+	\ensuremath{\setNotation{C}\IfNoValueF{#1}{_{#1}}}\xspace}
+
+\NewDocumentCommand{\genericElmtSigMsgSpace}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{u}\xspace}
+	{\ensuremath{u_{#1}}\xspace}
+}
+
+
+\NewDocumentCommand{\accSet}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{U}\xspace}
+	{\ensuremath{U}_{#1}\xspace}
+}
+
+\newcommand{\accSetDefn}{\ensuremath{\prod\limits_{\genericCInputElmt \in 
+\genericSetVar}\primeRO(\genericCInputElmt)}\xspace}
+
+\newcommand{\genericSigRSA}{\ensuremath{\qrGen^{\left(\prod\limits_{\genericBlocklistElmt \in 
+\blocklist}\frac{1}{\primeRO(\genericBlocklistElmt)}\right)} \bmod \rsaMod}\xspace}
+
+\newcommand{\rsaFuzzyAcc}{\ensuremath{\left(\prod_{\substack{\blocklistVec \in 
+\blocklist\\ \projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}}\frac{1}{\primeRO(\projFn[\projIdx], \blocklistVec[\vecIdx], \vecIdx, 
+\projFn[\projIdx](\blocklistVec))} \bmod \sgPrime[1] \sgPrime[2] \right)}\xspace}
+
+\newcommand{\genericSigRSAFuzzy}{\ensuremath{\qrGen^{U} \bmod \rsaMod}\xspace}
+
+
+%%% Group notations 
+\newcommand{\genericGroup}{\ensuremath{\mathcal{G}}\xspace}
+\newcommand{\genericGrpOrd}{\ensuremath{q}\xspace}
+
+\NewDocumentCommand{\genericGrpElmt}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{g}\xspace}
+	{\ensuremath{g_{#1}}\xspace}
+}
+
+
+\NewDocumentCommand{\safePrime}{o}
+{
+\ifstrequal{#1}{1}
+{\ensuremath{p}\xspace}
+{\ensuremath{q}\xspace}
+}
+
+\NewDocumentCommand{\sgPrime}{o}
+{
+\ifstrequal{#1}{1}
+{\ensuremath{p'}\xspace}
+{\ensuremath{q'}\xspace}
+}
+
+
+\newcommand{\integers}{\ensuremath{\mathbb{Z}}\xspace}
+\newcommand{\integersModN}{\ensuremath{\mathbb{Z}_N}\xspace}
+\newcommand{\integersModArg}[1]{\ensuremath{\mathbb{Z}_{#1}}\xspace}
+\newcommand{\integersModNInv}{\ensuremath{\mathbb{Z}^{*}_N}\xspace}
+\newcommand{\integersModNInvPrime}{\ensuremath{\mathbb{Z}^{*}_p}\xspace}
+\newcommand{\integersModOrder}{\ensuremath{\mathbb{Z}_q}\xspace}
+\newcommand{\rsaMod}{\ensuremath{N}\xspace}
+\newcommand{\qrGroup}{\ensuremath{QR_{\rsaMod}}\xspace}
+\newcommand{\qrGen}{\ensuremath{g}\xspace}
+\newcommand{\orderFn}{\ensuremath{\phi}\xspace}
+\newcommand{\genGrp}{\ensuremath{\mathcal{G}}\xspace}
+\newcommand{\genGrpOrder}{\ensuremath{q}\xspace}
+
+\NewDocumentCommand{\genericRSAElmt}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{v}\xspace}
+	{\ensuremath{v_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\genericRSAElmtAlt}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{w}\xspace}
+	{\ensuremath{w_{#1}}\xspace}
+}
+
+
+
+
+
+%%%%%
+% Embedding
+%%%%%
+
+\NewDocumentCommand{\metricSpace}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\setNotation{M}}\xspace}%
+	{\ensuremath{\setNotation{M}_{#1}}\xspace}
+}
+\NewDocumentCommand{\distance}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\fnNotation{d}}\xspace}
+	{\ensuremath{\fnNotation{d}_{#1}}\xspace}
+}
+\NewDocumentCommand{\distanceNotation}{o o o}
+{
+	\IfNoValueTF{#2}
+	{\ensuremath{\left\Vert . \right\Vert_{\mathsf{#1}}}\xspace}
+	{
+		\IfNoValueTF{#3}
+		{\ensuremath{\left\Vert #2 \right\Vert_{#1}}\xspace}
+		{\ensuremath{\left\Vert #2 - #3 \right\Vert_{#1}}\xspace}
+	}
+}
+
+\NewDocumentCommand{\hammingDist}{ g g }{\distanceNotation[H][#1][#2]}
+
+
+\NewDocumentCommand{\embed}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\fnNotation{embed}}\xspace}
+	{\ensuremath{\fnNotation{embed}_{#1}}\xspace}
+}
+
+\newcommand{\threshold}{\ensuremath{t}\xspace}
+\newcommand{\tpr}{\ensuremath{\epsilon_\mathsf{tpr}}\xspace}
+\newcommand{\tnr}{\ensuremath{\epsilon_\mathsf{tnr}}\xspace}
+\newcommand{\fpr}{\ensuremath{\epsilon_\mathsf{fpr}}\xspace}
+\newcommand{\fnr}{\ensuremath{\epsilon_\mathsf{fnr}}\xspace}
+
+\newcommand{\flagContentThreshold}{\ensuremath{\threshold_{R}}\xspace}
+
+%%% Naming conventions 
+
+\newcommand{\dPSIPrimitive}{delegated fuzzy private set intersection with associated data\xspace}
+\newcommand{\dPSI}{\textit{df}-PSI-AD\xspace}
+\newcommand{\DPSIPrimitive}{Delegated fuzzy private set intersection with associated data\xspace}
+\NewDocumentCommand{\auditor}{o}{\ensuremath{\textsc{A}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\numAuditors}{\ensuremath{\eta}\xspace}
+\newcommand{\numDishonestAuditors}{\ensuremath{\eta'}\xspace}
+\newcommand{\client}{\textsc{Client}\xspace}
+\newcommand{\server}{\textsc{Server}\xspace}
+\newcommand{\blocklist}{\ensuremath{\setNotation{B}}\xspace}
+\newcommand{\blocklistPartition}[1]{\ensuremath{\setNotation{B}^{(#1)}}\xspace}
+\newcommand{\blocklistEmbedded}{\ensuremath{\setNotation{B}_{H}}\xspace}
+\newcommand{\cInputSetEmbedded}{\ensuremath{\cInputSet_{H}}\xspace}
+\NewDocumentCommand{\cInputSetAugmented}{o}{\ensuremath{\mathcal{\cInputSet}\IfValueT{#1}{_{#1}^{'}}}\xspace}
+\newcommand{\cInputSet}{\ensuremath{\setNotation{X}}\xspace}
+\NewDocumentCommand{\genericBlocklistElmt}{o}{\ensuremath{b\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\genericCInputElmt}{g}{\ensuremath{y\IfValueTF{#1}{_{#1}}{_{}}}\xspace}
+\newcommand{\keyLabel}{\ensuremath{\mathsf{key}}\xspace}
+\newcommand{\valueLabel}{\ensuremath{\mathsf{val}}\xspace}
+\newcommand{\keySetLabel}{\ensuremath{\cInputSet_{K}}\xspace}
+\newcommand{\valSetLabel}{\ensuremath{\cInputSet_{V}}\xspace}
+\newcommand{\cInputKeySet}{\ensuremath{\keySetLabel}\xspace}
+\newcommand{\cInputValSet}{\ensuremath{\valSetLabel}\xspace}
+%%% Security definition notations 
+\newcommand{\protocolNotation}[1]{\ensuremath{\Pi}_{#1}\xspace}
+\newcommand{\timeBound}{\ensuremath{t}\xspace}
+\newcommand{\numOracleQueries}{\ensuremath{q}\xspace}
+\newcommand{\oracleQueries}{\ensuremath{q_H}\xspace}
+\newcommand{\neglProb}{\ensuremath{\fnNotation{negl}(\secParam)}\xspace}
+\newcommand{\polyFn}{\ensuremath{\fnNotation{poly}}\xspace}
+\newcommand{\Experiment}[2]{\ensuremath{\textsc{Expt}^{#1}_{#2}}\xspace}
+\newcommand{\Advantage}[2]{\ensuremath{\mathbf{Adv}^{#1}_{#2}}\xspace}
+\NewDocumentCommand{\adversary}{o}{\ensuremath{\algNotation{A}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\ufcmaAdversary}{\ensuremath{\algNotation{A}_{\mathsf{ufcma}}}\xspace}
+\newcommand{\ufcmaLabel}{\scriptsize\textsf{uf-cma}\xspace}
+\newcommand{\ufcmaExp}{\ensuremath{\Experiment{\ufcmaLabel}{\sigScheme}(\ufcmaAdversary)}\xspace}
+\newcommand{\ufcmaAdv}{\ensuremath{\Advantage{\ufcmaLabel}{\sigScheme }(\timeBound, 
+\oracleQueries)}\xspace}
+\NewDocumentCommand{\indsrLabel}{o}{\scriptsize\textsf{ind-sr}\IfValueT{#1}{[#1]}\xspace}
+\newcommand{\indsrAdversary}[1]{\ensuremath{\algNotation{A}_{\mathsf{indsr}}[#1]}\xspace}
+\newcommand{\indsrAdversaryComb}{\ensuremath{\algNotation{A}_{\mathsf{indsr}}^{\ast}}\xspace}
+\newcommand{\indsrAdversaryCombDefn}{\ensuremath{\indsrAdversaryComb = 
+(\algNotation{A}_{\mathsf{indsr}}[1], 
+\algNotation{A}_{\mathsf{indsr}}[2], \algNotation{A}_{\mathsf{indsr}}[3])}\xspace}
+\newcommand{\indsrAdv}{\ensuremath{ \Advantage{\indsrLabel}{\sigScheme}(\timeBound, 
+\oracleQueries)}\xspace}
+\newcommand{\indsrHybExp}[1]{\ensuremath{\hybridExpt{\indsrLabel[#1]}{\sigScheme}(\indsrAdversary)}\xspace}
+\newcommand{\indBit}{\ensuremath{b}\xspace}
+\newcommand{\advBit}{\ensuremath{b'}\xspace}
+\newcommand{\adversaryState}[1]{\ensuremath{\phi_{#1}}\xspace}
+
+\newcommand{\recoverAdversary}[1]{\ensuremath{\algNotation{A}_{\mathsf{rec}}[#1]}\xspace}
+\newcommand{\recoverLabel}{\scriptsize\textsf{rec}\xspace}
+\newcommand{\recoverExp}{\ensuremath{\Experiment{\recoverLabel}{\sigScheme}(\recoverAdversary)}\xspace}
+\newcommand{\recoverAdv}{\ensuremath{\Advantage{\recoverLabel}{\sigScheme }(\timeBound, 
+\oracleQueries)}\xspace}
+
+
+
+
+%%% DDH
+\newcommand{\ddhLabel}{\ensuremath{DDH}\xspace}
+\newcommand{\ddhAdversary}{\ensuremath{\adversary_{\mathsf{ddh}}}\xspace}
+\newcommand{\generateGroup}{\ensuremath{\genGrp, \qrGen,\genGrpOrder}\xspace}
+\newcommand{\ddhAdv}{\ensuremath{\Advantage{\ddhLabel}{\generateGroup}(\timeBound)}\xspace}
+\newcommand{\qrGroupOrder}{\ensuremath{p'q'}\xspace}
+\newcommand{\qrGroupGenerator}{\ensuremath{g}\xspace}
+\newcommand{\dhTupleQR}{\ensuremath{\langle 
+\dhVar[1], 
+\dhVar[2], \dhVar[3]}\rangle \xspace}
+
+
+%%%% RSA 
+\newcommand{\rsaAdversary}{\ensuremath{\adversary_{\rsaLabel}}\xspace}
+\newcommand{\rsaLabel}{\textsf{QR-RSA}\xspace}
+\newcommand{\rsaAdv}{\ensuremath{\Advantage{\rsaLabel}{\rsaMod}(\timeBound)}\xspace}
+
+\newcommand{\genericQuerySet}{\ensuremath{T}\xspace}
+\newcommand{\genericQuerySetSize}{\ensuremath{k}\xspace}
+
+\NewDocumentCommand{\dhVar}{o}
+{
+\ifstrequal{#1}{1}
+{\ensuremath{X}\xspace}
+{
+	\ifstrequal{#1}{2}
+		{\ensuremath{Y}\xspace}
+		{\ensuremath{Z}\xspace}
+	}
+}
+
+\NewDocumentCommand{\indsrExp}{g}{
+	\ensuremath{\Experiment{\indsrLabel\IfValueT{#1}{[#1]}}{\sigScheme}(\indsrAdversaryComb)}\xspace}
+
+\newcommand{\challengeSetAcc}{\ensuremath{\prod\limits_{\genericSetElmt 	\in \genericSetVar} 
+\primeRO(\genericSetElmt)}\xspace}
+
+\NewDocumentCommand{\ddhExperiment}{o}
+{
+{\ensuremath{\Experiment{\ddhLabel\IfValueT{#1}{[#1]}}{\generateGroup}(\ddhAdversary)}\xspace}
+}
+
+
+\NewDocumentCommand{\randPrimes}{o}{\ensuremath{p\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\randPrimeAlt}{o}{\ensuremath{p'\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\randPrimeAccSet}{\ensuremath{P}\xspace}
+\newcommand{\randPrimeAccSetDefn}{\ensuremath{\prod\limits_{\setIdx \in 
+			\nats[\oracleQueries]}\randPrimes[\setIdx]}\xspace}
+
+%%% RSA Signature Scheme 
+\newcommand{\primeRO}{\ensuremath{H_{\primes}}\xspace}
+\newcommand{\ro}{\ensuremath{H}\xspace}
+\NewDocumentCommand{\oneWayFn}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\fnNotation{h}}\xspace}
+	{\ensuremath{\fnNotation{h}_{#1}}\xspace}
+}
+
+
+
+\NewDocumentCommand{\sigBlklistToken}{g}{\ensuremath{\mathcal{T}_{\mathsf{Sig}}\IfValueT{#1}{^{(#1)}}}\xspace}
+\newcommand{\bfBlklistToken}{\ensuremath{\mathcal{T}_{\mathsf{BF}}}\xspace}
+\newcommand{\chtBlklistToken}{\ensuremath{\mathcal{T}_{\mathsf{CHT}}}\xspace}
+
+\NewDocumentCommand{\randomizeFn}{o}
+{
+	\IfNoValueTF{#1}
+	{\ensuremath{\fnNotation{f}}\xspace}
+	{\ensuremath{\fnNotation{f}_{#1}}\xspace}
+}
+
+\newcommand{\encryptKeyGen}{\ensuremath{\algNotation{KeyGen}}\xspace}
+\NewDocumentCommand{\encrypt}{o}{%
+	\ensuremath{\algNotation{Enc}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\encryptVec}{o}{%
+	\ensuremath{\algNotation{\tilde{Enc}}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\encryptionScheme}{\ensuremath{\protocolNotation{\mathsf{enc}}}}
+\NewDocumentCommand{\decrypt}{o}{%
+	\ensuremath{\algNotation{Dec}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\decryptVec}{o}{%
+	\ensuremath{\algNotation{\tilde{Dec}}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\encryptionSchemeDefn}{\ensuremath{\encryptionScheme = \tupleDefn{\encryptKeyGen, \encrypt, 
+\decrypt}}\xspace}
+\newcommand{\encryptKeySpace}{\ensuremath{K}\xspace}
+\newcommand{\genericSymmKey}{\ensuremath{\kappa}\xspace}
+
+
+
+\newcommand{\ahencryptKeyGen}{\ensuremath{\algNotation{AH\_KeyGen}}\xspace}
+\NewDocumentCommand{\ahencrypt}{o}{%
+	\ensuremath{\algNotation{AH\_Enc}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\ahencryptionScheme}{\ensuremath{\protocolNotation{\mathsf{ahe}}}}
+\NewDocumentCommand{\ahdecrypt}{o}{%
+	\ensuremath{\algNotation{AH\_Dec}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\ahencryptionSchemeDefn}{\ensuremath{\ahencryptionScheme = \tupleDefn{\ahencryptKeyGen, \ahencrypt, 
+\ahdecrypt}}\xspace}
+
+
+
+
+
+
+\newcommand{\partitionIDSet}{\ensuremath{\mathcal{I}}\xspace}
+\newcommand{\checkBucket}{\ensuremath{\mathsf{BucketID}}\xspace}
+
+\NewDocumentCommand{\clientVecProj}{o}{\ensuremath{p_{#1}}\xspace}
+
+
+
+
+
+\newcommand{\genericRandSpace}{\ensuremath{\setNotation{R}}\xspace}
+\newcommand{\fieldAdd}{\ensuremath{+}\xspace}
+\newcommand{\fieldMult}{\ensuremath{\cdot}\xspace}
+\newcommand{\groupExp}{\ensuremath{\ast}\xspace}
+\newcommand{\modQuotient}{\ensuremath{a}\xspace}
+\newcommand{\modRemainder}{\ensuremath{b}\xspace}
+
+%%%% Proof
+\newcommand{\hybridExpt}[2]{\ensuremath{\textsc{Hyb}^{#1}_{#2}}\xspace}
+
+
+\NewDocumentCommand{\projFn}{o}{\ensuremath{\pi\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\projectedSpace}{\ensuremath{\mathcal{S}}\xspace}
+\newcommand{\numProjections}{\ensuremath{\gamma}\xspace}
+\newcommand{\projRange}{\ensuremath{\setNotation{R}_{\mathsf{proj}}}\xspace}
+\newcommand{\projIdx}{\ensuremath{j}\xspace}
+\NewDocumentCommand{\genericMetricSpaceElmt}{o}{\ensuremath{m\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\genericMetricSpaceElmtAlt}{o}{\ensuremath{m'\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\blocklistSize}{\ensuremath{n}\xspace}
+\NewDocumentCommand{\projBuckets}{o}{\ensuremath{\mathcal{S}\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\projBucketsAugmented}{o}{\ensuremath{\mathcal{B}\IfValueT{#1}{_{#1}^{'}}}\xspace}
+\newcommand{\thresholdUpper}{\ensuremath{T}\xspace}
+\NewDocumentCommand{\localitySensitiveHash}{o}{\ensuremath{h\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\lshConst}{\ensuremath{c}\xspace}
+
+\newcommand{\setOfAuditorPrivkeys}{\ensuremath{\setDefn{\privKey[\auditorIdx]}_{\auditorIdx \in 
+\nats[\numAuditors]}}\xspace}
+\newcommand{\setOfDishonestAuditorPrivkeys}{\ensuremath{\setDefn{\privKey[\auditorIdx]}_{\auditorIdx
+ \in \nats[\numDishonestAuditors]}}\xspace}
+\newcommand{\setOfAuditorPubkeys}{\ensuremath{\setDefn{\pubKey[\auditorIdx]}_{\auditorIdx \in 
+\nats[\numAuditors]}}\xspace}
+
+\newcommand{\powerset}{\ensuremath{\Phi}\xspace}
+
+\newcommand{\contentHash}{\ensuremath{\fnNotation{Embed}}\xspace}
+\NewDocumentCommand{\hashFn}{g}{\ensuremath{\fnNotation{h}\IfValueT{#1}{_{#1}}}\xspace}
+
+\newcommand{\projectionPrimitive}{locality-preserving fingerprint\xspace}
+\newcommand{\ProjectionPrimitive}{Locality-preserving fingerprint\xspace}
+\newcommand{\projectionPrimitiveIt}{\textit{locality-preserving fingerprint}\xspace}
+
+\newcommand{\blocklistAccSet}{\ensuremath{\prod\limits_{\genericBlocklistElmt \in 
+			\blocklist} \primeRO(\genericBlocklistElmt)}\xspace}
+\newcommand{\blocklistAccSetMinusElmt}[1]{\ensuremath{\prod\limits_{\genericBlocklistElmt \in 
+			\blocklist\setminus\{\genericBlocklistElmt_{#1}\}} \primeRO(\genericBlocklistElmt)}\xspace}
+
+\newcommand{\itemHeading}[1]{\textbf{#1}\xspace}
+\newcommand{\genericFileID}{\ensuremath{\mathsf{ID}}\xspace}
+\newcommand{\keyList}{\ensuremath{\mathsf{KeyList}}\xspace}
+\newcommand{\retList}{\ensuremath{\mathsf{RetList}}\xspace}
+
+\newcommand{\blindingFactor}{\ensuremath{\beta}\xspace}
+
+\newcommand{\blindedBlocklistAccSet}{\ensuremath{\blindingFactor 
+\prod\limits_{\genericBlocklistElmt \in 
+			\blocklist}\primeRO(\genericBlocklistElmt)}\xspace}
+
+\newcommand{\blindedBlocklistAccSetFuzzy}[1]{\ensuremath{\blindingFactor_{#1} 
+		\prod\limits_{\genericBlocklistElmt \in 
+			\projBucketsAugmented[#1]} \genericBlocklistElmt}\xspace}
+
+
+\newcounter{clientLineNmbr}
+\renewcommand{\theclientLineNmbr}{\small\ensuremath{\mathsf{\client\arabic{clientLineNmbr}}}}
+\newcommand{\clientLabel}[1]{\refstepcounter{clientLineNmbr}\label{#1}\theclientLineNmbr.}
+\newcommand{\clientNoLabel}{\refstepcounter{clientLineNmbr}\theclientLineNmbr.}
+
+\newcounter{serverLineNmbr}
+\renewcommand{\theserverLineNmbr}{\small\ensuremath{\mathsf{\server\arabic{serverLineNmbr}}}}
+\newcommand{\serverLabel}[1]{\refstepcounter{serverLineNmbr}\label{#1}\theserverLineNmbr.}
+\newcommand{\serverNoLabel}{\refstepcounter{serverLineNmbr}\theserverLineNmbr.}
+
+\newcounter{auditorLineNmbr}
+\renewcommand{\theauditorLineNmbr}{\small\ensuremath{\mathsf{\auditor\arabic{auditorLineNmbr}}}}
+\newcommand{\auditorLabel}[1]{\refstepcounter{auditorLineNmbr}\label{#1}\theauditorLineNmbr.}
+\newcommand{\auditorNoLabel}{\refstepcounter{auditorLineNmbr}\theauditorLineNmbr.}
+
+
+\NewDocumentCommand{\clientData}{o}
+{\ensuremath{\textsc{data}\IfValueT{#1}{_{#1}}}\xspace}
+
+
+\NewDocumentCommand{\clientMeta}{o}
+{\ensuremath{\contentToken{\clientData}}\xspace}
+
+
+
+
+\newcommand{\auditorIdx}{\ensuremath{k}\xspace}
+\newcommand{\genericVecLen}{\ensuremath{\ell}\xspace}
+\newcommand{\scalingFn}{\ensuremath{\fnNotation{s}}}
+
+\NewDocumentCommand{\genericVec}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{z}}\xspace}
+	{\ensuremath{z_{#1}}\xspace}
+}
+
+
+\NewDocumentCommand{\genericVecAlt}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{z'}}\xspace}
+	{\ensuremath{z'_{#1}}\xspace}
+}
+
+
+\newcommand{\badFP}{\ensuremath{\mathsf{BAD}_{FP}}\xspace}
+\newcommand{\badFN}{\ensuremath{\mathsf{BAD}_{FN}}\xspace}
+
+
+\NewDocumentCommand{\blocklistVec}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{b}}\xspace}
+	{\ensuremath{b_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\blocklistVecAlt}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{b'}}\xspace}
+	{\ensuremath{b'_{#1}}\xspace}
+}
+
+
+
+\NewDocumentCommand{\clientVec}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{y}}\xspace}
+	{\ensuremath{y_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\clientVecAlt}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{y'}}\xspace}
+	{\ensuremath{y'_{#1}}\xspace}
+}
+
+\NewDocumentCommand{\mask}{o}%
+{%
+	\IfNoValueTF{#1}%
+	{\ensuremath{\vecNotation{m}}\xspace}
+	{\ensuremath{m_{#1}}\xspace}
+}
+
+\newcommand{\vecIdx}{\ensuremath{k}\xspace}	
+
+\newcommand{\similarityMetric}{\ensuremath{\mathsf{sim}}\xspace}
+\newcommand{\genericUniverseElmt}{\ensuremath{u}\xspace}
+\newcommand{\genericUniverseElmtAlt}{\ensuremath{u'}\xspace}
+\NewDocumentCommand{\genericSetDiff}{o o}
+{\ensuremath{#1\setminus\setDefn{#2}}\xspace}
+
+\NewDocumentCommand{\dhf}{o}{\ensuremath{\mathsf{DHF\IfValueT{#1}{_{#1}}}}\xspace}
+\newcommand{\dhfKeySpace}{\ensuremath{K_{dhf}}}
+\newcommand{\dhfDomain}{\ensuremath{\mathcal{D}}\xspace}
+\newcommand{\dhfRange}{\ensuremath{\mathcal{R}}\xspace}
+\newcommand{\dhfDetect}{\ensuremath{\textsc{Detect}}\xspace}
+\newcommand{\matchedIndexSet}{\ensuremath{\setNotation{I}}\xspace}
+\newcommand{\dhfParamMatchThreshold}{\ensuremath{t_{dhf}}\xspace}
+\newcommand{\dhfParamRandThreshold}{\ensuremath{s_{dhf}}\xspace}
+\newcommand{\dhfFail}{\ensuremath{\mathsf{Fail}}\xspace}
+\newcommand{\dhfOutput}[1]{\ensuremath{d_{#1}}\xspace}
+
+\NewDocumentCommand{\cOutputSig}{o 
+o}{\ensuremath{c\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
+\NewDocumentCommand{\cOutputEnc}{o 
+	o}{\ensuremath{C'\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
+\newcommand{\cOutputVal}{\ensuremath{c''}\xspace}
+
+ \newcommand{\secretShare}[1]{\ensuremath{ss_{#1}}\xspace}
+\newcommand{\secretSharingScheme}{\ensuremath{\mathsf{sshare}}\xspace}
+\newcommand{\detectableSecretSharingScheme}{\ensuremath{\mathsf{dsshare}}\xspace}
+\newcommand{\secretShareOutputSpace}{\ensuremath{F}\xspace}
+\newcommand{\SSShare}{\ensuremath{\textsc{SHARE}}\xspace}
+\newcommand{\SSCombine}{\ensuremath{\textsc{COMBINE}}\xspace}
+\newcommand{\DSShare}{\ensuremath{\textsc{DSHARE}}\xspace}
+\newcommand{\DSCombine}{\ensuremath{\textsc{DCOMBINE}}\xspace}
+\newcommand{\ssIdx}{\ensuremath{m}\xspace}
+
+\NewDocumentCommand{\cOutputFile}{g}{\ensuremath{\mathsf{F}\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\cOutputMeta}{g}{\ensuremath{\mathsf{M}\IfValueT{#1}{_{#1}}}\xspace}
+
+
+
+
+\NewDocumentCommand{\genericCT}{o}
+{
+	\IfNoValueTF{#1}{\ensuremath{X}\xspace}{\ensuremath{X_{#1}}\xspace}	
+}
+
+\NewDocumentCommand{\genericEphemeral}{o}
+{
+	\IfNoValueTF{#1}{\ensuremath{Y}\xspace}{\ensuremath{Y_{#1}}\xspace}	
+}
+
+\newcommand{\protocolEM}{\ensuremath{\protocolNotation{\mathsf{EM}}}\xspace}
+\newcommand{\protocolEMP}{\ensuremath{\protocolNotation{\mathsf{EM}}^{\ast}}\xspace}
+\newcommand{\protocolFM}{\ensuremath{\protocolNotation{\mathsf{FM}}}\xspace}
+\newcommand{\protocolFMP}{\ensuremath{\protocolNotation{\mathsf{FM}}^{\ast}}\xspace}
+\newcommand{\dssProtocol}{\ensuremath{\protocolNotation{dss}}\xspace}
+
+
+\NewDocumentCommand{\fieldSum}{ g g
+}{\ensuremath{\sum\limits_{\IfNoValueF{#1}{_{#1}}}^{\IfNoValueF{#2}{^{#2}}}
+}\xspace}
+
+\newcommand{\intsMod}[1]{\ensuremath{\mathbb{Z}_{#1}}\xspace}
+\newcommand{\intsModStar}[1]{\ensuremath{\mathbb{Z}_{#1}^{\ast}}\xspace}
+
+\newcommand{\bloomFilterEpsilon}{\ensuremath{\epsilon_{bf}}\xspace}
+
+\newcommand{\partition}[1]{\ensuremath{\mathsf{Part}_{#1}}\xspace}
+\newcommand{\numBlocklistParts}{\ensuremath{\tau}\xspace}
+\newcommand{\partitionIdx}{\ensuremath{m}\xspace}
+
+
+
+\newcommand{\numBloomFilterHashFn}{\ensuremath{\eta}\xspace}
+\NewDocumentCommand{\bloomFilterCompOutput}{o}{\ensuremath{v\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\bloomFilter}{o o}{\ensuremath{bf_{#1\IfValueT{#2}{,#2}}}\xspace}
+
+\NewDocumentCommand{\clientBloomFilter}{o}{\ensuremath{bf'\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\bloomFilterIdx}{\ensuremath{k}\xspace}
+\newcommand{\numBloomFilterBits}{\ensuremath{\ell}\xspace}
+
+
+
+
+
+\newcommand{\group}{\ensuremath{G}\xspace}
+\NewDocumentCommand{\grpGen}{o}{\ensuremath{g\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\groupOrder}{\ensuremath{q}\xspace}
+\newcommand{\groupIdentity}{\ensuremath{\mathbf{0}}\xspace}
+\newcommand{\groupOp}{\ensuremath{+}\xspace}
+\newcommand{\homomorphicSubtract}[1]{\ensuremath{-_{#1}}\xspace}
+\newcommand{\homomorphicAdd}[1]{\ensuremath{+_{#1}}\xspace}
+\newcommand{\homomorphicMul}[1]{\ensuremath{\times_{#1}}\xspace}
+\newcommand{\homomorphicMulVec}[1]{\ensuremath{\tilde{\times}_{#1}}\xspace}
+\newcommand{\homomorphicScalerMult}[1]{\ensuremath{\odot_{#1}}\xspace}
+\NewDocumentCommand{\homomorphicSummation}{ g g g }{\ensuremath{\displaystyle\operatorname*{\textstyle\sum_{\mathrlap{#1}}}\IfNoValueF{#2}{_{#2}}\IfNoValueF{#3}{^{#3}}\hphantom{_{#1}}}\xspace}
+\NewDocumentCommand{\homomorphicProd}{ g g g }{\ensuremath{\displaystyle\operatorname*{\textstyle\prod_{\mathrlap{#1}}}\IfNoValueF{#2}{_{#2}}\IfNoValueF{#3}{^{#3}}\hphantom{_{#1}}}\xspace}
+\newcommand{\field}{\ensuremath{\mathbb{F}}\xspace}
+\NewDocumentCommand{\pubKeyComp}{o o}
+{
+\ifstrequal{#1}{1}{{\IfNoValueTF{#2}{\ensuremath{g}\xspace}{\ensuremath{g_{#2}
+}\xspace}}}{{\IfNoValueTF{#2}{\ensuremath{h}\xspace}{\ensuremath{h_{#2}}\xspace
+}}}
+}
+\newcommand{\blindingScheme}{\ensuremath{B}\xspace}
+
+\newcommand{\kvs}{\ensuremath{\mathsf{KV}}\xspace}
+\newcommand{\randVec}{\ensuremath{\vec{r}}\xspace}
+\newcommand{\homomorphicXORVec}[1]{\ensuremath{\tilde{\oplus}_{#1}}\xspace}
+\newcommand{\createCHT}{\ensuremath{\mathsf{createCHT}}\xspace}
+\newcommand{\blindedHD}{\ensuremath{\mathsf{BlindHamming}}\xspace}
+
+\newcommand{\pkKeyGen}{\ensuremath{\mathsf{KeyGen}}\xspace}
+\NewDocumentCommand{\pkencrypt}{o}{%
+	\ensuremath{\mathsf{Enc}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\pkencryptVec}{o}{%
+	\ensuremath{\tilde{\mathsf{Enc}}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\pkdecrypt}{o}{%
+	\ensuremath{\mathsf{Dec}\IfNoValueF{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\pkdecryptVec}{o}{%
+	\ensuremath{\tilde{\mathsf{Dec}}\IfNoValueF{#1}{_{#1}}}\xspace}
+\newcommand{\pkencryptionSchemeDefn}{\ensuremath{\tupleDefn{\pkKeyGen, \pkencrypt, 
+\pkdecrypt}}\xspace}
+
+
+
+\newcommand{\protocolEVA}{\ensuremath{\protocolNotation{\mathsf{eva}}}\xspace}
+\newcommand{\evaTag}{\ensuremath{\textsc{GenTag}}\xspace}
+\newcommand{\evaAuth}{\ensuremath{\textsc{Auth}}\xspace}
+
+\newcommand{\oprfFunc}{\ensuremath{\mathcal{F}_{\mathsf{oprf}}}\xspace}
+
+
+\newcommand{\arpmtFunc}{\ensuremath{\mathcal{F}_{arpmt}}\xspace}
+
+
+
+
+\newcommand{\arpmtProtocol}{\ensuremath{\protocolNotation{aprmt}}\xspace}
+\newcommand{\perm}{\ensuremath{\pi}\xspace}
+\newcommand{\cuckooTable}{\ensuremath{T}\xspace}
+\newcommand{\cuckooTableParam}{\ensuremath{\epsilon_{\mathsf{CHT}}}\xspace}
+\newcommand{\permutedTable}{\ensuremath{T'}\xspace}
+\NewDocumentCommand{\cuckooHashFn}{g}{\ensuremath{\hashFn'\IfValueT{#1}{_#1}}\xspace}
+\newcommand{\blockCipher}{\ensuremath{C}\xspace}
+\newcommand{\blockSize}{\ensuremath{B}\xspace}
+\newcommand{\aesEncrypt}[1]{\ensuremath{C_{#1}}\xspace}
+\newcommand{\aesDecrypt}[1]{\ensuremath{C^{-1}_{#1}}\xspace}
+\newcommand{\blockIdx}{\ensuremath{j}\xspace}
+\newcommand{\numBloomFilterBitsPerBlock}{\ensuremath{\alpha}\xspace}
+\newcommand{\block}{\ensuremath{\beta}\xspace}
+
+\newcommand{\tblIdx}{\ensuremath{i}\xspace}
+\newcommand{\cipherExpFactor}{\ensuremath{\zeta}}
+\newcommand{\primeNum}{\ensuremath{p}\xspace}
+\newcommand{\vectorFP}[1]{\ensuremath{m_{#1}}\xspace}
+
+\NewDocumentCommand{\secretShareVec}{g}{\ensuremath{\vec{ss}\IfValueT{#1}{_#1}}\xspace}
+\newcommand{\hadamardProd}{\ensuremath{\times}\xspace}
+
+\newcommand{\evaFunc}{\ensuremath{\mathcal{F}_{\mathsf{eva}}}\xspace}
+
+
+\newcommand{\universalHashFn}{\ensuremath{\hashFn_{u}}\xspace}
+\newcommand{\vectorHash}{\ensuremath{u}\xspace}
+\newcommand{\primeField}{\ensuremath{F_{\primeNum}}\xspace}
+\newcommand{\roGroup}{\ensuremath{\hashFn_{\group}}\xspace}
+\newcommand{\genericContentID}{\ensuremath{\mathsf{ID}}\xspace}
+
+\newcommand{\blklistTokenAlt}{\ensuremath{\mathcal{T_{\blocklist'}}}\xspace}
+
+\NewDocumentCommand{\blklistToken}{g g}{\IfNoValueTF{#1}
+{\ensuremath{\mathcal{T_{\blocklist}\IfValueT{#2}{^{(#2)}}}}\xspace}
+{\ensuremath{\mathcal{T_{#1}\IfValueT{#2}{^{(#2)}}}}\xspace}
+}
+
+
+\NewDocumentCommand{\contentToken}{g}{\IfNoValueTF{#1}{\ensuremath{C}\xspace}{\ensuremath{C_{#1}}\xspace}}
+
+\newcommand{\unforgeBlocklistLabel}{\ensuremath{\mathsf{UnforgeBlk}}\xspace}
+\newcommand{\hidingBlocklistLabel}{\ensuremath{\mathsf{HideBlk}}\xspace}
+\newcommand{\hidingContentLabel}{\ensuremath{\mathsf{HideContent}}\xspace}
+\newcommand{\contentModSchemeDefn}{\ensuremath{\langle \createBlocklist, \uploadFile, \checkContent \rangle}\xspace}
+\newcommand{\unforgeBlocklistExp}{\ensuremath{\Experiment{\unforgeBlocklistLabel}{\contentModSchemeDefn}}\xspace}
+\newcommand{\hidingBlocklistExp}{\ensuremath{\Experiment{\hidingBlocklistLabel}{\contentModSchemeDefn}}\xspace}
+\newcommand{\hidingContentExp}{\ensuremath{\Experiment{\hidingContentLabel}{\contentModSchemeDefn}}\xspace}
+
+\newcommand{\augmentedBlocklist}{\ensuremath{\blocklist_{\mathsf{Aug}}}\xspace}
+\newcommand{\otFunc}{\ensuremath{\mathcal{F}_{OT}}\xspace}
+\newcommand{\genericCInputElmtPRFEval}{\ensuremath{z}\xspace}
+\newcommand{\detected}{\ensuremath{\mathsf{detected}}\xspace}
+\newcommand{\tru}{\ensuremath{\mathsf{TRUE}}\xspace}
+\newcommand{\fals}{\ensuremath{\mathsf{FALSE}}\xspace}
+
+
+\newcommand{\detectionThreshold}{\ensuremath{\threshold_{D}}\xspace}
+\newcommand{\revealThreshold}{\ensuremath{\threshold_{R}}\xspace}
+\newcommand{\uploadThreshold}{\ensuremath{U_{\mathsf{max}}}\xspace}
+\newcommand{\voucher}{\ensuremath{V}\xspace}
+\NewDocumentCommand{\secretShareEncryption}{g}{\ensuremath{u\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\dhfEncryption}{g}{\ensuremath{w\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\partitionEncryption}{g}{\ensuremath{v\IfValueT{#1}{_{#1}}}\xspace}
+\NewDocumentCommand{\dhfComponent}{g}{\ensuremath{d\IfValueT{#1}{_{#1}}}\xspace}
+
+\newcommand{\contentModFunc}{\ensuremath{\mathcal{F}_{\mathsf{Mod}}}\xspace}
+\newcommand{\contentModFuncExact}{\ensuremath{\mathcal{F}_{\mathsf{ExactMod}}}\xspace}
+\newcommand{\contentModFuncFuzzy}{\ensuremath{\mathcal{F}_{\mathsf{FuzzyMod}}}\xspace}
+\newcommand{\blocklistCreateFunc}{\ensuremath{\mathcal{F}_{\mathsf{create}}}\xspace}
+\newcommand{\genericBlocklistToken}{\ensuremath{\genericSig[\blocklist]}\xspace}
+
+
+\NewDocumentCommand{\fingerprint}{g}{\ensuremath{\mathit{FP}\IfValueT{#1}{_{#1}}}\xspace}
+\newcommand{\voucherKey}{\ensuremath{\genericSymmKey_{V}}\xspace}
+
+
+\newcommand{\authOPRFFunc}{\ensuremath{\mathcal{F}_{\mathsf{authOPRF}}}\xspace}
+\newcommand{\protocolAuthOPRF}{\ensuremath{\protocolNotation{\mathsf{authOPRF}}}\xspace}
+\newcommand{\evaluate}{\ensuremath{\mathsf{Eval}}\xspace}
+\newcommand{\prevHashList}{\ensuremath{\mathcal{L}}\xspace}
+
+

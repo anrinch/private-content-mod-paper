@@ -1,0 +1,114 @@
+\section{Related Work}
+
+\begin{table*}[t]
+% \fontsize{5.6}{5.6} \selectfont
+\footnotesize
+% \tiny
+\setlength{\tabcolsep}{2pt}
+\caption{\centering \small Encrypted content moderation systems for CSAM detection. 
+ $\blocklistSize$: blocklist size, $\epsilon \in (0,1/2)$, $\genericVecLen$: vector length, SH: semi-honest, M: malicious, FP: false positive rate, FN: false negative rate, Avg: average case cos, WC: worst case cost}
+  \label{tab:related}
+\begin{tabular}{| c | c | c | c | c | c | c | c | c | c | c |}
+\noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
+\multirow{2}{*}{Type of Matching} & \multirow{2}{*}{System Name} & \multirow{2}{*}{Audibility} & \multicolumn{2}{c|}{Threat model} & \multicolumn{4}{c|}{Asymptotic Costs}  & \multicolumn{2}{c|}{Accuracy}\\
+\cline{4 - 11} 
+  & & & Server & Client & Client Comp. & Comm. Volume & Client Storage  & Server Comp. & FP & FN  \\
+\cline{1-11}
+ & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize)$ & 0 & 0 \\
+\cline{2-11}
+Exact & Apple PSI~\cite{bhowmick2021apple} + Agg. Signature~\cite{scheffler2023public} & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(\blocklistSize)$ & $\bigO(1)$  & 0 & $ > 0$ \\ 
+\cline{2-11}
+%& {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(1)$ & $\bigO(\blocklistSize \log \blocklistSize)$  \\ 
+%\cline{2-9}
+& {\bf This work} & \checkmark & M & SH & Avg: $\bigO(1)$, WC: $\bigO(\log \blocklistSize)$   & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{\epsilon})$ &  Avg: $\bigO(1)$, WC: $\bigO(\blocklistSize)$ & 0 & 0  \\ 
+\cline{1-11}
+ & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize} \genericVecLen)$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize  \genericVecLen)$  & 0 & $ > 0$  \\
+%\cline{2-9}
+%Fuzzy & {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$ & $\bigO(1)$ & $\bigO(\blocklistSize^{1 + \epsilon} \genericVecLen \log \blocklistSize \genericVecLen)$  \\ 
+\cline{2 - 11}
+Fuzzy & {\bf This work} & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$ & $\bigO(\blocklistSize^{1 + \epsilon})$ & Avg: $\bigO(\blocklistSize^{\epsilon})$, WC: $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & 0 & $ > 0$  \\ 
+\cline{1-11}
+\end{tabular}
+\vspace{0.2em}
+\end{table*}
+
+
+
+%Content moderation in end-to-end encrypted system can be broadly
+%classified into two categories: i) identifying harmful content in
+%encrypted data, and ii) reporting evidence of harmful content to a
+%moderator. The latter can be achieved through \emph{message franking}
+%mechanisms~\cite{grubbs2017franking, chen2018houses,
+%  dodis2018salamanders, tyagi2019afm,
+%  huguenin-dumittan2021franking}. 
+
+
+In this work, we are interested in content moderation schemes for encrypted file stores that use blocklists. Content moderation has been studied generally for network communication and encrypted traffic streams, but these solutions cannot be immediately applied to file stores without
+incurring high costs or leaking matching
+patterns~\cite{sherry2015blindbox, ning2019privdpi, ning2020pine,
+  wen2021framework}. We refer the interested reader to an
+excellent survey \cite{scheffler2023sok} on content moderation for further details
+
+
+%However, .  In most cases, content moderation is performed using blocklists, e.g.,
+%identifying CSAM material by comparing against databases of previously
+%identified CSAM content (e.g.,~\cite{jasper2022csam}). One concern
+%with blocklisted content moderation is that if the blocklist is
+%private, the systems can be misused for unwarranted oversight by the
+%service provider. Naturally, in many cases the blocklist needs to be
+%kept private to preserve anonymity of victims. Therefore, the
+%blocklist must be audited by a group of trusted auditors
+%(see~\cite{safer2025csam,scheffler2023public,applePSICriticBU}). . 
+
+\tblref{tab:related} compares the
+state of the art schemes with our work. We exclude preprocessing and 
+blocklist creation costs for all the schemes since they are linear in the size of the 
+blocklist. Instead we focus on the online costs during file uploads. Auditability refers to whether the scheme allows a set of independent auditors to create and verify the blocklist. Our protocols support a \emph{fast path} for verification assuming that most of the uploaded content will not be blocked; we present the average case and worst case costs. 
+
+%We provide two variants of our protocols, one with constant client storage costs, 
+%and the other with reduced server compute costs leveraging additional client storage. 
+
+
+
+%Content moderation in encrypted file stores has primarily focused on CSAM detection using perceptual hashing~\cite{}. Perceptual hashes map similar images to identical strings, and so a blocklist of hashes can be used to detect content that is similar to other harmful content. Beyond perceptual hashes, blocklists can be created by embedding objets into a metric space such that similar objects map to items close in a metric space. In this case, similar objects are detected by computing a metric distance between their corresponding metric space vectors and comparing against a threshold set for ``nearness''. 
+
+ 
+%\myparagraph{Private hash matching}
+%
+\citet{kulshrestha2021identifying} introduced a system with a
+blocklist of perceptual hashes of CSAM content. The protocol leverages a 
+single server PIR scheme, and supports both exact and approximate matching 
+against the blocklist. \emph{The protocol only
+supports a semi-honest service provider, and cannot be trivially
+extended to provide malicious security without incurring large client costs,
+e.g., by using an authenticated PIR~\cite{colombo2023authpir}}. The
+scheme also does not allow independent auditors to verify that the
+blocklist has been created honestly. In contrast, we do 
+not assume any trust on the service provider. Finally, the approximate match scheme 
+only works for a specific type of content embedding with empirically determined parameters and high false negatives (> 17\%). 
+The scheme cannot be trivially extended to other types of embeddings. 
+
+
+
+%The blocklist is partitioned into buckets using a locality
+%sensitive hash function. When a client uploads its file, it privately
+%retrieves all the perceptual hashes in a specific bucket using a computational PIR scheme. 
+%The client then compares its hash value with all the retrieved values
+%using an additively homomorphic encryption scheme when exact
+%matches are required. If the matching is approximate, a fully
+%homomorphic encryption scheme is used instead. 
+
+
+%\myparagraph{The Apple PSI system}
+%
+Apple developed a mechanism to detect CSAM content in encrypted files
+uploaded to iCloud~\cite{apple2021csam} using the NeuralHash model~\cite{bhowmick2021apple}. 
+A core criticism of this work is that the blocklist is created solely by
+Apple. This criticism was addressed by \citet{scheffler2023public} by
+leveraging an aggregated signature scheme. \emph{Nonetheless, the mechanism does not generalize to other types of content hashes, including ones that require fuzzy matching}. This is a drawback because NeuralHash without fuzzy matching is easy to circumvent, and also suffers from false positives~\cite{struppek2022learning, neuralHashAttack}. 
+
+%We design protocols for exact and fuzzy matching independent of the content hashing technology. 
+
+\noindent\textbf{Gap in research.}
+%
+\emph{We observe from \tblref{tab:related} that there is no scheme that provides auditability, supports both exact and fuzzy matching, and protects against a malicious server, while also ensuring that the client compute and communication costs remain sublinear in the blocklist size. Our work addresses these requirements.} 

@@ -1,0 +1,292 @@
+
+
+\section{Proofs for Signature Scheme in \secref{sec:sig_scheme}}
+\label{sec:proof:sig_scheme}
+\subsection{Proof of Unforgeability}
+\label{app:proof_unforge}
+ 
+\begin{theorem}
+	\label{thm:unforge}
+	The signature scheme \sigScheme is unforgeable under chosen message attacks, that is assuming that 
+	strong QR-RSA problem is hard to solve in group \qrGroup. 		
+
+	\[
+	\ufcmaAdv \le \frac{\oracleQueries^2 \log \rsaMod}{\rsaMod} + \oracleQueries \rsaAdv 
+	\]
+	
+        Here \oracleQueries is the number of distinct queries to $\signingAlg[\privKey](\cdot)$
+        %\mkr{It should be the number of queries to the sign oracle.
+         % BTW, has the notation \sigScheme been defined?}
+	
+\end{theorem}
+
+\begin{proof}
+We will show that if there is an adversary \ufcmaAdversary that can forge a signature in time 
+\timeBound, then there is an adversary \rsaAdversary that solves the strong QR-RSA problem with 
+with probability \rsaAdv in time \timeBound.
+The reduction works as follows. Consider that 
+\rsaAdversary simulates \ufcmaAdversary's queries to the 
+signing oracle, and the random oracle \primeRO. Let $\genericSetVar[1], \dots, 
+\genericSetVar[\numberOfSetsQueried]$  be all the sets that are queried by \ufcmaAdversary 
+to the signing oracle. Assume that \oracleQueries is the total number of queries to the random 
+oracle that includes queries by the signing oracle when responding to \ufcmaAdversary, and 
+queries directly by \ufcmaAdversary. Now assume that \ufcmaAdversary forges a signature on 
+some value \genericFnOutput that is not in any of the sets $\genericSetVar[1], \dots, 
+\genericSetVar[\numberOfSetsQueried]$. This happens under two conditions.
+
+
+\enumListStart
+	\item There is some $\genericFnOutputAlt \in \bigcup\limits_{\setIdx \in \nats[i]} \genericSetVar[i]$ such that $\primeRO(\genericFnOutputAlt) = 
+	\primeRO(\genericFnOutput)$.
+	
+	\item For all  $\genericFnOutputAlt \in \genericSetVar[1], \dots, 
+	\genericSetVar[\numberOfSetsQueried]$  $\primeRO(\genericFnOutputAlt) \neq
+	\primeRO(\genericFnOutput)$.
+\enumListEnd
+
+The first case happens with probability at most $\frac{\oracleQueries^2 \log \rsaMod}{\rsaMod}$ 
+because \primeRO maps to prime numbers in $[1, \rsaMod]$ and there are roughly 
+ $\frac{\rsaMod}{\log \rsaMod}$ prime numbers less than $\rsaMod$. 
+%\mkr{Should the result be stated using $\lesssim$?}
+
+For the second case, consider the following simulation
+
+%  {\color{violet}[Arpad: corrected the value found the the QR-RSA adversary and called the programmed oracle $\primeRO'$ so it's not mistaken for the real world oracle.]}
+\enumListStart
+%	\item Upon getting the tuple $(\rsaMod, \genericFnOutput)$ where 
+%	$\genericFnOutput \in \qrGroup$, \rsaAdversary first checks that $\genericFnOutput$ is 
+%	a generator of $\qrGroup$ by verifying that $\gcd(\rsaMod, \genericFnOutput - 1)  = 
+%	1$~\cite{micciancio2005rsa}. Otherwise, \rsaAdversary aborts. 
+	
+	
+	\item \rsaAdversary selects \oracleQueries random prime numbers less than $\rsaMod$, 
+	$\randPrimes[1], \dots, 
+	\randPrimes[\oracleQueries]$ and computes $\randPrimeAccSet \gets 
+	\prod\limits_{\setIdx \in 
+	[1, \oracleQueries]} \randPrimes[\setIdx]$. Then, it computes 	$\simFnOutput \gets 
+	\genericFnOutput^{\randPrimeAccSet} \bmod \rsaMod$. \rsaAdversary publishes 
+	$\simFnOutput$ as part of the public key. 
+	
+	\item\rsaAdversary selects a random index $\randIdx \in [1, \oracleQueries]$ and programs the 
+	random oracle $\primeRO$ such for the $\setIdx$-th oracle query for all $\setIdx \neq \randIdx$, the random 
+	oracle returns $\randPrimes[\setIdx]$. For the $\randIdx$-th query, the random oracle returns a 
+	random prime number $\rsaExponent \notin \randPrimes[1], \dots, 
+	\randPrimes[\oracleQueries]$
+	
+	%, for $\setIdx \neq \randIdx$ and returns \rsaExponent for the $\randIdx$-th  query. 
+	
+	\item \rsaAdversary answers the signing oracle queries from \ufcmaAdversary for the sets 
+	$\genericSetVar[1], \dots, \genericSetVar[\numberOfSetsQueried]$. Specifically, given some set 
+	$\genericSetVar$, \rsaAdversary signs \genericSetVar by computing $\randPrimeAccSet' \gets \{ \randPrimes[i]:\randPrimes[i] \in \randPrimes[1], \dots, \randPrimes[\oracleQueries],  \forall \genericSetElmt \in \genericSetVar, \primeRO(\genericSetElmt)   \neq \randPrimes[i] \}$ 
+and returning $\dhVar[1] \gets \genericFnOutput^{P'} = 
+	\simFnOutput^{ \left(\frac{1}{\challengeSetAcc}\right)}$
+
+%and sends the challenge 
+%	$\tupleDefn{\dhVar[1], \genericRandAltAlt}$ to \indsrAdversary{3} where $\genericRandAltAlt \sample 
+%		\setDefn{0,1}^{\secParam}$. 
+
+
+
+
+%\rsaAdversary returns $\simFnOutput^{\left(\frac{1}{\challengeSetAcc}\right)} 
+%	\bmod \rsaMod$
+	
+	
+	\item  If \ufcmaAdversary forges a signature on $\genericSetVar'$ such that there is some 
+	$\genericSetElmt \in \genericSetVar'$ but $\genericSetElmt \notin \genericSetVar[1] \cup \dots  
+	\cup \genericSetVar[\numberOfSetsQueried]$ and $\primeRO'(\genericSetElmt) = \rsaExponent$, 
+	then  \rsaAdversary learns some value 
+	$\genericVal$ such that 
+	$\genericVal^{\rsaExponent}  = 	
+	\genericFnOutput^{\randPrimeAccSet} \bmod \rsaMod$. Since, $\rsaExponent$ is co-prime to 
+	\randPrimeAccSet, we can find the values of $\euclideanConst[1], \euclideanConst[2]$ using the 
+	extended Euclid algorithm such that 
+	$\euclideanConst[1] \rsaExponent + \euclideanConst[2] \randPrimeAccSet = 1$. Then, we have 
+	$(\genericVal^{\euclideanConst[2]} \genericFnOutput^{\euclideanConst[1]})^{\rsaExponent} 
+	= \genericFnOutput$. \rsaAdversary outputs $\genericVal^{\euclideanConst[2]} 
+	\genericFnOutput^{\euclideanConst[1]}$ as the $\rsaExponent$-th root of $\genericFnOutput$ 
+	
+%	\item If \ufcmaAdversary forges a signature on $\genericSetVar'$ such that there is some 
+%	$\genericSetElmt \in \genericSetVar'$ such that $\primeRO(\genericSetElmt) = \rsaExponent$, 
+%	then \rsaAdversary learns some value $\genericFnInput$ such that 
+%	$\genericFnInput^{\rsaExponent} = \simFnOutput = 	
+%	\genericFnOutput^{\randPrimeAccSet} \bmod \rsaMod$. Since, \rsaExponent 
+	
+\enumListEnd
+
+To see that this simulation is indistinguishable first note that in the real 
+experiment when \ufcmaAdversary queries the set 
+\genericSetVar, its view includes $\qrGen^{1/\accSet_{\setIdx}}$ 
+where $\accSet[\setIdx] \gets \prod\limits_{\genericSetElmt \in \genericSetVar[\setIdx]} 
+\primeRO(\genericSetElmt)$ and \qrGen is a generator of \qrGroup. In the simulation, 
+\ufcmaAdversary's view includes $\simFnOutput^{\left(\frac{1}{\challengeSetAcc}\right)}$. 
+Since $\genericFnOutput$ is selected randomly from 
+\qrGroup, the probability that it is not a generator is negligible in $\secParam$. Consequently, $\simFnOutput 
+\gets \genericFnOutput^{\randPrimeAccSet}$ is also a generator with overwhelming 
+probability, i.e., as long as \randPrimeAccSet is co-prime to $\sgPrime[1]$ and $\sgPrime[2]$. From 
+the above, we have that the signature in the simulation is valid and 
+indistinguishable to \ufcmaAdversary. Finally, $\rsaAdversary$ solves the strong QR-RSA problem 
+using the simulation when it programs the random oracle such that $\primeRO(\genericSetElmt) = 
+\rsaExponent$, this happens with probability at least 
+$1/\oracleQueries$. Thus, if $\ufcmaAdversary$ is successful 
+in the forging a signature in the simulation with probability \ufcmaAdv, then \rsaAdversary solves the 
+strong QR-RSA problem also with probability at least $\rsaAdv/\oracleQueries$. 
+\end{proof}
+
+
+\subsection{Proof of Indistinguishable Signature under Randomization (IND-SR)}
+\label{app:proof_indsr}
+
+%{\color{violet}[Arpad: made similar corrections to the ones in the uf proof]}
+\begin{theorem}
+\label{thm:indsr}
+	The signature scheme \sigScheme produces indistinguishable signatures under randomization, that is 
+	assuming the strong QR-RSA problem is hard to solve in \qrGroup where $\rsaMod$ is the product of safe primes.
+	
+	\[
+	\Advantage{\indsrLabel}{\sigScheme}(\timeBound, 
+	\oracleQueries, \oracleQueries') \le   \frac{\oracleQueries' }{\setSize{\qrGroup}}  + \oracleQueries 
+	\rsaAdv
+	\]
+Here \oracleQueries is the number of distinct queries to the random oracle \primeRO and 
+$\oracleQueries'$ is the number of distinct queries to the random oracle \ro.
+
+
+\end{theorem}
+
+
+\begin{proof}
+
+
+Consider that \indsrAdversary{3} gets a challenge $\langle \qrGen^{\left(\frac{\genericRand \primeRO(\genericSetElmt[\indBit])}{\accSet}\right)} \bmod \rsaMod, \ro(\qrGen^{\genericRand} \bmod \rsaMod)\rangle$ where $\qrGen^{\frac{ 
+	1}{\accSet}} \bmod \rsaMod$ is a signature on the set $\genericSetVar$. 
+Since $\ro$ is a random oracle and $\qrGen^{\genericRand} \bmod \rsaMod$ is uniformly distributed in 
+\qrGroup \cite{cramer2000signature}, \indsrAdversary{3} gets $\qrGen^{\genericRand} \bmod 
+\rsaMod$ from 
+$\ro(\qrGen^{\genericRand} \bmod \rsaMod)$ only if it is able to compute it from the challenge, or if it has correctly guessed it in $\oracleQueries'$ 
+queries. The latter happens with probability at most $\oracleQueries' 
+/\setSize{\qrGroup}$. 
+
+If \indsrAdversary{3} can distinguish between $\qrGen^{\left(\frac{\genericRand 		
+\primeRO(\genericSetElmt[0])}{\accSet}\right)} \bmod \rsaMod$ and $\qrGen^{\left(\frac{\genericRand 
+\primeRO(\genericSetElmt[1])}{\accSet}\right)} \bmod \rsaMod$ then it can also distinguish between 
+$\qrGen^{\genericRand \primeRO(\genericSetElmt[0])} \bmod \rsaMod$ and $\qrGen^{\genericRand 
+\primeRO(\genericSetElmt[1])} \bmod \rsaMod$ because $\indsrAdversary{3}$ knows $\accSet$.
+Let $\genericRand = \modQuotient \qrGroupOrder + 
+\modRemainder$. It is known that \modRemainder is uniformly distributed in 
+$\integersModArg{\qrGroupOrder}$ when $\genericRand \sample \nats[1][\rsaMod^2]$~\cite{cramer2000signature}. Thus, $\genericRand 
+\primeRO(\genericSetElmt[\indBit]) \bmod \qrGroupOrder$ is uniformly distributed in 
+$\integersModArg{\qrGroupOrder}$ 
+and $\qrGen^{\genericRand \primeRO(\genericSetElmt[0])} \bmod \rsaMod$ is statistically 
+indistinguishable from $\qrGen^{\genericRand \primeRO(\genericSetElmt[1])} \bmod \rsaMod$ since
+$\qrGen$ is a generator of \qrGroup. 
+
+
+Finally, if $\indsrAdversary{3}$ queries the random oracle for $\qrGen^{\genericRand} \bmod 
+\rsaMod$ without guessing, then it has computed $\qrGen^{\genericRand 
+	\primeRO(\genericSetElmt[\indBit])^{\primeRO(\genericSetElmt[\indBit])^{-1} \bmod 
+\qrGroupOrder}} \bmod \rsaMod$.  In this case, \rsaAdversary can solve the strong QR-RSA problem 
+with the help of \indsrAdversaryComb. Consider the following simulation where $\rsaAdversary$ 
+programs the random oracles $\ro, \primeRO'$. 
+
+\enumListStart
+%	\item Upon getting the tuple $(\rsaMod, \genericFnOutput)$ where 
+%	$\genericFnOutput \in \qrGroup$, \rsaAdversary first checks that $\genericFnOutput$ is 
+%	a generator of $\qrGroup$ by verifying that $\gcd(\rsaMod, \genericFnOutput - 1)  = 
+%	1$~\cite{micciancio2005rsa}. Otherwise, \rsaAdversary aborts. 
+%	
+		\item \rsaAdversary selects \oracleQueries random prime numbers less than $\rsaMod$, 
+	$\randPrimes[1], \dots, 
+	\randPrimes[\oracleQueries]$ and computes $\randPrimeAccSet \gets \prod\limits_{\setIdx \in 
+		[1, \oracleQueries]} \randPrimes[\setIdx]$. Then, it computes 	$\simFnOutput \gets 
+	\genericFnOutput^{\randPrimeAccSet} \bmod \rsaMod$. \rsaAdversary publishes 
+	$\simFnOutput$ as part of the public key. 
+	
+	\item\rsaAdversary selects a random index $\randIdx \in [1, \oracleQueries]$ and programs the 
+	random oracle $\primeRO$ such for the $\setIdx$-th oracle query for all $\setIdx \neq \randIdx$, the random 
+	oracle returns $\randPrimes[\setIdx]$. For the $\randIdx$-th query, the random oracle returns a 
+	random prime number $\rsaExponent \notin \randPrimes[1], \dots, 
+	\randPrimes[\oracleQueries]$
+	
+	%, for $\setIdx \neq \randIdx$ and returns \rsaExponent for the $\randIdx$-th  query. 
+	
+	\item \rsaAdversary answers the signing oracle queries from \indsrAdversary{1} and 
+	\indsrAdversary{2} for the sets $\genericSetVar[1], \dots, 
+	\genericSetVar[\numberOfSetsQueried]$. Specifically, upon receiving 
+	$\genericSetVar$ from \indsrAdversary{1}, \rsaAdversary returns 
+	$\simFnOutput^{\left(\frac{1}{\challengeSetAcc}\right)} \bmod \rsaMod$ (see the proof of \thmref{thm:unforge} to see how this is computed). If 
+	$\primeRO(\genericSetElmt) = \rsaExponent$ for some $\genericSetElmt \in \genericSetVar$, then 
+	the simulation aborts. 
+
+	\item Upon receiving $\genericSetElmt[0], \genericSetElmt[1]$ from $\indsrAdversary{2}$, 
+	\rsaAdversary checks that these elements are not in of any of the sets queried by  
+	\indsrAdversary{1} and \indsrAdversary{2}. Note that the values of 
+	$\primeRO(\genericSetElmt[0])$ and $\primeRO(\genericSetElmt[1])$ are 
+	in $\randPrimes[1],\dots, \randPrimes[\randIdx-1], \rsaExponent, 
+	\randPrimes[\randIdx +1], \dots, \randPrimes[\oracleQueries]$. 
+	
+	\item \rsaAdversary computes $\randPrimeAccSet' \gets \{ \randPrimes[i]:\randPrimes[i] \in \randPrimes[1], \dots, \randPrimes[\oracleQueries],  \forall \genericSetElmt \in \genericSetVar, \primeRO(\genericSetElmt)   \neq \randPrimes[i] \}$. 
+
+\item \rsaAdversary computes $\dhVar[1] \gets \genericFnOutput^{\genericRandAlt P'} = 
+	\simFnOutput^{ \left(\frac{\genericRandAlt}{\challengeSetAcc}\right)}$ where 
+	$\genericRandAlt \sample [1, \rsaMod^2]$ and sends the challenge 
+	$\tupleDefn{\dhVar[1], \genericRandAltAlt}$ to \indsrAdversary{3} where $\genericRandAltAlt \sample 
+		\setDefn{0,1}^{\secParam}$. 
+	
+	
+	\item If $\indsrAdversary{3}$ queries \ro on some value $\genericVal$ such that 
+	$\genericVal^{\rsaExponent} = \simFnOutput^{\genericRandAlt} = 
+	\genericFnOutput^{\genericRandAlt 
+	\randPrimeAccSet'}$, then \rsaAdversary computes the values of $\euclideanConst[1], 
+	\euclideanConst[2]$ using the 
+	extended Euclid algorithm such that 
+	$\euclideanConst[1] \rsaExponent + \euclideanConst[2] \genericRandAlt \randPrimeAccSet' = 1$. 
+	Note that $\rsaExponent$ is co-prime to $\genericRandAlt \randPrimeAccSet'$ with overwhelming 
+	probability. Then, we have 
+	$(\genericVal^{\euclideanConst[2]} (\genericFnOutput)^{\euclideanConst[1]})^{\rsaExponent} 
+	= \genericFnOutput$. \rsaAdversary outputs $\genericVal^{\euclideanConst[2]} 
+	(\genericFnOutput)^{\euclideanConst[1]}$ as the $\rsaExponent$-th root of $\genericFnOutput$ 
+	
+\enumListEnd
+
+
+To see that the simulation is indistinguishable, observe that 
+$\simFnOutput^{\left(\frac{1}{\challengeSetAcc}\right)} \bmod \rsaMod$ is a valid and an 
+indistinguishable signature 
+(see the proof of \thmref{thm:unforge} for details). Also, as discussed before $ 	
+\simFnOutput^{\left(\frac{\genericRandAlt}{\challengeSetAcc}\right)} \bmod \rsaMod$ is a uniformly 
+sampled element 
+in \qrGroup 
+and is indistinguishable from $\simFnOutput^{\left(\frac{\genericRand 
+\genericSetElmt[\indBit]}{\challengeSetAcc}\right)} \bmod \rsaMod$ because 
+$\simFnOutput^{\left(\frac{
+\genericSetElmt[\indBit]}{\challengeSetAcc}\right)} \bmod \rsaMod$ is a generator of \qrGroup with 
+overwhelming probability. Thus, the simulation succeeds and \rsaAdversary wins when it programs 
+either of the challenges $\genericSetElmt[0]$ and $\genericSetElmt[1]$ as  
+$\primeRO(\genericSetElmt[0]) = \rsaExponent$ or 
+$\primeRO(\genericSetElmt[1]) = \rsaExponent$, which happens with probability at least 
+$1/\oracleQueries$. 
+
+
+\end{proof}
+
+\subsection{Proof of robustness to key recovery}
+
+\begin{theorem}
+\label{thm:robustness}
+	The signature scheme \ourSigScheme is robust against key recovery, that is 
+	assuming the strong QR-RSA problem is hard to solve in \qrGroup where $\rsaMod$ is the product of safe primes.
+	
+	\[
+	\recoverAdv \le   \frac{\oracleQueries' }{\setSize{\qrGroup}}  + 2 \Advantage{\indsrLabel}{\sigScheme}(\timeBound, 
+	\oracleQueries, \oracleQueries')
+	\]
+Here \oracleQueries is the number of distinct queries to the random oracle \primeRO and 
+$\oracleQueries'$ is the number of distinct queries to the random oracle \ro.
+
+
+\end{theorem}
+
+\begin{proof}
+The proof straightforwardly reduces to the IND-SR security of the signature scheme. Since $\genericSigPair[2]$ is the output of a random oracle, \recoverAdversary{2} has either randomly guessed $\qrGen^{\genericRand}$ or computed it from $\langle \genericSetVar, \genericCInputElmt, \genericSig[\genericSetVar], \genericSig[\genericSetVar \setminus \{\genericCInputElmt\}],  \genericSigPair[1], \pubKey, \adversaryState{1} \rangle$. The former case happens with probability at most $\frac{\oracleQueries' }{\setSize{\qrGroup}} $. In the latter case, if \recoverAdversary{2} produces $\qrGen^{\genericRand}$ with probability \recoverAdv, then this adversary can be used as a subroutine by \indsrAdversary{3} to win $\Experiment{\indsrLabel[\indBit]}{\sigScheme}$ with advantage  at least $1/2 \recoverAdv$. 
+\end{proof}

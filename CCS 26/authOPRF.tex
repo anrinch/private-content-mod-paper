@@ -1,0 +1,54 @@
+%\newcommand{\newcommand}{}
+\section{Authenticated OPRF}
+
+We describe the protocol realizing \authOPRFFunc in \figref{fig:authOPRF}. The security of the protocol reduces to the secure of the 2HashDH OPRF construction~\cite{jarecki2014round} and the unforgeability of the randomizable set homomorphic scheme, proven in \thmref{thm:unforge}
+
+
+\label{app:authOPRF}
+\begin{figure*}[h]
+\fbox{
+\begin{minipage}[t]{\textwidth}
+\small
+
+\underline{\protocolAuthOPRF: Protocol realizing \authOPRFFunc}
+
+\smallskip\noindent\textbf{Parameters:} A group \genGrp with order $\genericGrpOrd$ where the OM-gap Diffie Hellman problem is hard, 
+a distributed randomizable set homomorphic signature \ourSigSchemeDefn, and two random oracle $\oprfRO[1]: \universe \rightarrow \genGrp$ and $\oprfRO[2] \bin^{\setSize{\universe} + \setSize{\genGrp}} \rightarrow \bin^{\secParam}$ and a collision-resistant hash function $\hashFn: \bin^{\secParam} \rightarrow \sigOutputSpace$ 
+
+\smallskip\noindent\textbf{Auditor:}
+
+\enumListStart
+\item\label{authOPRF:auditor:share_random_vals} $\auditor[\auditorIdx]$ samples $\blocklistSize$ random values $\genericRand[1], \dots, \genericRand[\blocklistSize] \getsr \integersModArg{\genericGrpOrd}$ and shares with the other auditors. $\auditor[\auditorIdx]$ receives from each auditor $\auditor[j], \auditorIdx \neq j$, $\genericRand[j, 1], \dots, \genericRand [j, \blocklistSize]$ 
+
+\item\label{authOPRF:auditor:compute_blinding} For each $\genericBlocklistElmt[\setIdx] \in \blocklist$, $\auditor[\auditorIdx]$ computes $\genericRand[\setIdx]' \assign \prod\limits_{j \in [1, \numAuditors]} \genericRand[j, \setIdx]$, and computes the sets $\blocklist' = \{ \langle \setIdx, \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'} \rangle\}_{\setIdx \in \nats[\blocklistSize]}$ and $\genericSetVar \assign \{ \langle \setIdx, \genericBlocklistElmt[\setIdx], \genericRand[\setIdx] \rangle \}_{\setIdx \in \nats[\blocklistSize]}$
+
+\item\label{authOPRF:auditor:sign_blinding} Auditors invoke $\dssFunc$ to sign $\genericSig[\blocklist'] \assign \sign[\privKey](\hashFn(\blocklist'))$ and publish $\blocklist'$ and $\genericSig[\blocklist']$.
+
+\item Auditors invoke $\dssFunc$ to sign $\genericSig[\genericSetVar] \assign \sign[\privKey](\hashFn(\genericSetVar))$ and provide it to \server. 
+
+%$\auditor[\auditorIdx]$ signs and provides $\sign[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\genericSetVar))$ to \server 
+
+
+%\item\label{authOPRF:auditor:sign_and_publish} $\auditor[\auditorIdx]$ signs and publishes $\genericSig[\blocklist']^{(\auditorIdx)} \assign \sign[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blocklist'))$ 
+
+\enumListEnd
+
+\smallskip\noindent\textbf{Client:}
+
+\enumListStartResume
+\item\label{authOPRF:client:verify_sigs}  After obtaining $\blocklist'$ and $\genericSig[\blocklist'] \assign \sign[\privKey](\hashFn(\blocklist'))$, abort if $\verify[\pubKey](\blocklist', \genericSig[\blocklist']) \neq 1$.
+
+\item\label{authOPRF:client:prf} For each $\langle \setIdx, \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'} \rangle$ in $\blocklist'$, compute and add $\langle \setIdx,  (\oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'})^{\prfKey} \rangle$ to set $\genericSetVar'$. Send $\genericSetVar'$ to \server
+
+\enumListEnd
+
+\smallskip\noindent\textbf{Server:}
+
+\enumListStartResume
+\item\label{authOPRF:serverdeblind} For every $\langle \setIdx,  (\oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'})^{\prfKey} \rangle \in \genericSetVar'$, let  $\langle \setIdx, \genericBlocklistElmt[\setIdx], \genericRand[\setIdx] \rangle \in \genericSetVar$. Compute $((\oprfRO[1](\genericBlocklistElmt[\setIdx])^{\genericRand[\setIdx]'})^{\prfKey})^{\genericRand[\setIdx]'^{-1}} = \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\prfKey}$ and output $\langle \genericBlocklistElmt[\setIdx], \oprfRO[2](\genericBlocklistElmt[\setIdx], \oprfRO[1](\genericBlocklistElmt[\setIdx])^{\prfKey}) \rangle$. 
+
+\enumListEnd
+\end{minipage}
+}
+\caption{Protocol for authenticated OPRF realizing \authOPRFFunc \label{fig:authOPRF}}
+\end{figure*}

@@ -1,0 +1,283 @@
+
+
+\subsection{Reducing server costs}
+%
+Similar to the exact matching protocol, we will reduce the server costs by partitioning the blocklist and augmenting with a coarse-grained check. 
+We will leverage the projections in the locality-preserving fingerprint of the client's input to determine when it should be checked against the blocklist. 
+Specifically,  our idea is to randomly partition the blocklist, and store an encrypted cuckoo hash table, indexed by the projections of the blocklist vectors, as a lookup table on the client. Each index corresponds to two values: i) the projection and ii) the partition number of the corresponding vector. The values are encrypted under the server's public key with an additively homomorphic encryption scheme (see \stepsref{fuzzy:pre:cht1}{fuzzy:pre:cht3} of \protocolFMP). During an upload, the client computes the projections of its content, and then compares with the encrypted projection in the corresponding location in the hash table, by homomorphically subtracting one from the other. The client homomorphically adds the encryption of the partition identifier to the subtracted value, so that if the projections match then the ciphertext decrypts to the identifier (\stepref{fuzzy:pre:match_cht}). 
+
+%Intuitively speaking, suppose that the blocklist is partitioned into \numBuckets disjoint partitions, and there is a lookup table stored on the client that with the locality-preserving fingerprint of each blocklist vector, and the partition identifier for that vector. During an upload, the client uses the look up table to  identify the blocklist vectors that have at least one (or more) matching projection, and informs the server the partitions they belong to. Then, the server can simply check the content verification token against the items in those partitions.
+
+%We need to address two challenges here. First, the lookup table must be obfuscated so that the client does not learn when there is a matching projection; otherwise the client can learn information about the blocklist. Second, a matching projection may also result from a false positive. In that case, we want to 
+%prevent the server from decrypting the content. 
+
+
+Additionally, we define a \emph{detection threshold} \detectionThreshold such that if there are less that $\detectionThreshold$ matching projections, then the server does not learn any information; otherwise we reveal the partitions the server should check against. This idea is realized  by introducing a \emph{voucher} that contains for every matching projection the corresponding partition identifier. The voucher is encrypted under a symmetric key chosen by the client, and can be decrypted by the server only if \detectionThreshold is met. For this, the client secret-shares the symmetric key using a $\detectionThreshold$-out-of-$\numProjections$ scheme, and the server obtains enough shares only when there $\detectionThreshold$ matching projections (\stepsref{fuzzy:pre:dhf1}{fuzzy:pre:dhf2}). 
+
+
+The detection threshold is tuned to ensure a low false positive rate. Additionally, the number of partitions \numBuckets can be adjusted according to how much information we are willing to reveal to the server on a false matching projection. For example, when $\numBuckets = 1$, the server only learns if \detectionThreshold is met but nothing else. So, a fine-grained check must compare against all the blocklist item. Alternatively, when $\numBuckets = \blocklistSize$, the server only needs to a compare against $\bigO(\numProjections)$ blocklist items, but at the cost of revealing information about the vectors in the blocklist that have falsely matched to the server. 
+
+\myparagraph{Cost \& Security}
+%
+The client's cost during uploads is $\bigO(\numProjections)$ to compute the ciphertexts in \stepref{fuzzy:pre:match_cht} and the PRG evaluations in \stepref{fuzzy:pre:prg}. The DHF computations require $\bigO(\numProjections \threshold)$ compute costs. The communication volume scales in $\bigO(\numProjections^2)$ with the blinded DHF set dominating the costs.  
+The server's compute cost is dominated by the $\bigO(\numProjections^2)$ cost of $\dhf.\dhfDetect$. 
+
+We analyze the impact of the detection threshold on the false positive rate and false negative rate of the coarse-grained check in \appref{sec:fpr_analysis}. The security of the scheme reduces to the security \protocolFM, the IND-CPA guarantees of the encryption scheme, the indistinguishability property of the PRG and the statistical security of the secret sharing and DHF schemes. We formally prove security in \appref{sec:proof:fmp}
+
+
+\iffalse
+\subsection{Protocol with Preprocessing}
+\label{sec:fm:pre}
+%
+The server-side costs of \protocolFM do not scale to large blocklists due to the multiplicative overhead from the blocklist size, number of projections and the vector length. We will describe a protocol that leverages locality-preserving fingerprints and preprocesses the data such that the online query costs are independent of the blocklist size, for \emph{both the client and the server}. At a high level, we will use the projections to index into a data structure, i.e., a cuckoo hash table, that stores the actual blocklist vectors in an obfuscated fashion, e.g., encrypted under the client's key. This process is essentially a generalization of the Apple PSI mechanism, where instead of using a NeuralHash, we will use projections. 
+However, since the hash table can be quite large (linear in the size of the blocklist), we will store the table server-side after preprocessing by the client. The client storage costs will be trivial. The disadvantage of this approach is that the server will need additional per-client storage, but assuming that the file server has enough resources, the cost will likely not be prohibitive.
+
+
+Before describing the protocol, we make a detour to describe a building block that we will use later.  
+
+\newcommand{\clientKVS}{\ensuremath{S}\xspace}
+\newcommand{\blindingRand}{\ensuremath{r_{b}}\xspace}
+
+\subsubsection{Building Block: Encrypted Vector Authentication}
+%
+We describe a primitive that allows a signer to generate an authentication tag for an encrypted vector. This vector can
+be re-encrypted later but the authentication tag allows a verifier to verify that the re-encryption corresponds to the same vector \emph{without decrypting}. 
+We define this functionality. 
+
+\begin{mdframed}[frametitle={\evaFunc: Encrypted Vector Authentication Functionality}, 
+frametitlealignment=\centering, 
+font=\small]
+
+\noindent\textbf{Parameters:} An IND-CPA secure public-key encryption scheme \pkencryptionSchemeDefn, a collision resistant vector hash function 
+$\universalHashFn: \bin^{\genericVecLen} \rightarrow \bin^{\secParam}$
+
+\noindent\textbf{Outputs:} 
+
+\enumListStart
+\item Upon receiving $(\evaTag,\genericVec, \encryptPubKey, \encryptPrivKey)$ where $\genericVec \in \bin^{\genericVecLen}$,  output $\vectorHash_{\genericVec} \assign \encrypt[\encryptPubKey](\universalHashFn(\genericVec))$. Store $\langle \encryptPrivKey \rangle$.
+
+\item Upon receiving $(\evaAuth, \genericVecAlt, \vectorHash_{\genericVec}, \encryptPubKey)$, return $\encrypt[\encryptPubKey](\groupIdentity)$ if $\universalHashFn(\genericVecAlt) = \decrypt[\encryptPrivKey](\vectorHash_{\genericVec})$. Otherwise return $\encrypt[\encryptPubKey](\genericRandAlt)$ for random $\genericRandAlt \in \group$.  
+\enumListEnd
+
+
+\end{mdframed}
+
+
+\figref{fig:eva_protocol} describes a protocol realizing \evaFunc.
+%\mkr{The inputs and outputs in \figref{fig:eva_protocol} are not consistent with the functionality.}
+The idea is to combine the vector hash function \universalHashFn described in \secref{sec:def} with a multiplicatively homomorphic encryption scheme over \group. Then, the authentication tag $\vectorHash_{\genericVec}$ is simply an encryption of the hash of the input $\genericVec$. The protocol outputs $\pkencrypt[\encryptPubKey](\groupIdentity)$ only if $\genericVec = \genericVecAlt$ unless there is a collision in \universalHashFn. 
+
+%. An example of such a universal hash function is $\universalHashFn(\langle \genericVec[1], \dots, \genericVec[\genericVecLen]\rangle; \genericRand[1], \dots, \genericRand[\genericVecLen]) = \sum\limits_{\vecIdx \in \nats[\genericVecLen]} \genericRand[\vecIdx] \cdot \genericVec[\vecIdx] \bmod \groupOrder$ where $\genericVec[1], \dots, \genericVec[\genericVecLen] \in \integersModArg{\groupOrder}$ and $\genericRand[1], \dots, \genericRand[\genericVecLen] \sample \integersModArg{\groupOrder}$. We can support additions over \integersModArg{\groupOrder} by using a multiplicatively homomorphic encryption scheme in a prime order group \group with order \groupOrder. Then, the components of \genericVec can be encrypted ``in the exponents'' using $\pkencryptVec(\genericVec)$. Consequently, performing a homomorphic multiplication over two ciphertexts results in an addition over the corresponding exponents in $\integersModArg{\groupOrder}$.  Also, scalar multiplication with $\genericRand[1], \dots, \genericRand[\genericVecLen]$ are simply exponentiations of the ciphertexts. We show in \appref{} that \protocolEVA realizes \evaFunc. 
+
+%We will describe a protocol that The ``$\cdot$'' operation here represents a multiplication in the field. This is a universal hash function because if $\universalHashFn(\langle \genericVec[1], \dots, \genericVec[\genericVecLen]\rangle; \genericRand[1], \dots, \genericRand[\genericVecLen]) = \universalHashFn(\langle \clientVec[1], \dots, \clientVec[\genericVecLen]\rangle; \genericRand[1], \dots, \genericRand[\genericVecLen])$, where $\clientVec \neq \genericVec$, 
+%it must be that there is some $\vecIdx \in \nats[\genericVecLen]$ such that $\genericRand[\vecIdx](\genericVec[\vecIdx] - \clientVec[\vecIdx]) \equiv \sum\limits_{\vecIdx' \in \nats[\genericVecLen]\setminus\vecIdx} \genericRand[\vecIdx'] (\genericVec[\vecIdx'] - \clientVec[\vecIdx']) \bmod \groupOrder$. 
+%Now, there is only one value of $\genericRand[\vecIdx]$ in \integersModArg{\groupOrder} that would satisfy the equation. The probability that this value is chosen is $1/\groupOrder$. 
+
+
+
+
+
+
+
+
+
+%To realize \evaFunc, the signer computes 
+%$\vectorHash_{\genericVec} \assign \encrypt[\encryptPubKey](\universalHashFn(\genericVec; \genericRand[1], \dots, \genericRand[\genericVecLen]))$, signs the ciphertext and outputs $\langle \vectorHash_{\genericVec}, \genericSig[\genericVec]\rangle$. 
+%Now, given some ciphertext \ciphertext, potentially encrypting a vector \genericVecAlt, and $\langle \vectorHash_{\genericVec}, \genericSig[\genericVec]\rangle$, the verifier computes $\encrypt[\encryptPubKey](\universalHashFn(\genericVecAlt; \genericRand[1], \dots, \genericRand[\genericVecLen]))$. Then, the verifier compares the ciphertext with this value: $\ciphertext' =\encrypt[\encryptPubKey](\universalHashFn(\genericVecAlt; \genericRand[1], \dots, \genericRand[\genericVecLen]) - \vectorHash_{\genericVec}$ which is equal to the encryption of the group identity $\groupIdentity$ in \group if $\universalHashFn(\genericVecAlt; \genericRand[1], \dots, \genericRand[\genericVecLen]) = \universalHashFn(\genericVec; \genericRand)$. Then, the verifier outputs $\ciphertext^{\genericRandAlt}$ where $\genericRandAlt$ is randomly selected. 
+
+
+
+%\newcommand{\digitalSigSchemeDefn}{\ensuremath{\langle \keyGen, \signingAlg, \verify\rangle} \xspace}
+
+\begin{figure}[t]
+\pcb{
+\evaTag(\genericVec, \encryptPubKey, \encryptPrivKey)\\
+\pcln\langle 
+\pkencrypt[\encryptPubKey](\grpGen[1]^{\genericVec[1]}), \dots, \pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{\genericVec[\genericVecLen]})\rangle \assign \pkencryptVec[\encryptPubKey](\genericVec) \\
+\pcln\vectorHash_{\genericVec} \assign \homomorphicProd{\encryptPubKey}{\vecIdx \in \nats[\genericVecLen]} \pkencrypt[\encryptPubKey](\grpGen[\vecIdx]^{\genericVec[\vecIdx]})\\
+%\pcln\genericSig[\genericVec] \assign \signingAlg[\privKey](\vectorHash_{\genericVec})\\
+\pcln\pcreturn \vectorHash_{\genericVec}
+\\[0.05\baselineskip] \\ [-0.3\baselineskip]
+\evaAuth(\genericVecAlt, \vectorHash_{\genericVec}, \encryptPubKey) \\
+\pcln\text{Let} ~\langle\pkencrypt[\encryptPubKey](\grpGen[1]^{\genericVecAlt[1]}), \dots, \pkencrypt[\encryptPubKey](\grpGen[\genericVecLen]^{\genericVecAlt[\genericVecLen]})\rangle \assign \genericVecAlt \\
+\pcln\tilde{\vectorHash}_{\genericVecAlt} \assign \homomorphicProd{\encryptPubKey}{\vecIdx \in \nats[\genericVecLen]} \pkencrypt[\encryptPubKey]((\grpGen[\vecIdx]^{\genericVecAlt[\vecIdx]})^{\groupOrder -1})\\
+\pcln\genericRandAlt \sample \integersModArg{\groupOrder} \\
+\pcln \pcreturn (\vectorHash_{\genericVec} \homomorphicMul{\encryptPubKey} \tilde{\vectorHash}_{\genericVecAlt})^{\genericRandAlt}
+}
+\caption{\protocolEVA: Protocol for \evaFunc\label{fig:eva_protocol}}
+\end{figure}
+
+\subsubsection{Preprocessing}
+%
+\figref{fig:fuzzy_match_pre} describes the preprocessing step of the protocol \protocolFMP. The protocol 
+uses a multiplicatively-homomorphic encryption scheme \pkencryptionSchemeDefn with public-private key pair $\langle \encryptPubKey, \encryptPrivKey \rangle$, 
+an authenticated symmetric key encryption scheme \encryptionSchemeDefn, and a digital signature scheme \sigSchemeDefn with public-private key pair $\langle \pubKey, \privKey \rangle$. The keys $\encryptPubKey, \pubKey$ are available to the client, while the corresponding private keys are known to the auditor. We will also use a PRF \prf from the projection space onto $\setDefn{0,1}^{\secParam}$. 
+
+\begin{figure*}
+\resizebox{0.9\textwidth}{!}{\vbox{%
+\begin{subfigure}[t]{0.5\textwidth}
+\pcb{
+\\  
+\textbf{Client} \hspace{6cm} \textbf{Auditor} \\
+(\pubKey, \encryptPubKey)\hspace{5cm}(\pubKey, \privKey, \encryptPubKey, \encryptPrivKey)
+\\[0.05\baselineskip] \\ [-0.3\baselineskip]
+\hspace{3cm} \pcln\label{fm:pre:init_kvs} \kvs \assign \emptyset \\
+\hspace{3cm} \pcln \blindingRand \sample \bin^{\secParam} \\
+\hspace{3cm} \pcln \text{For} ~\blocklistVec \in \blocklist \\
+\hspace{3cm} \pcln  \t \text{For} ~\projIdx \in \nats[\numProjections] \\
+\hspace{3cm} \pcln\label{fm_pre:blind_proj} \t \t \fingerprint{\blocklistVec}[\projIdx] \assign \blindingScheme(\hashFn(\projFn[\projIdx](\blocklistVec), \projFn); \blindingRand)\\
+\hspace{3cm} \pcln\label{fm_pre:eva} \t \vectorHash_{\blocklistVec} \assign \evaFunc(\evaTag, \blocklistVec, \encryptPubKey, \encryptPrivKey) \\
+\hspace{3cm} \pcln\label{fm_pre:add_kv} \t \kvs[\pkencryptVec[\pubKey](\blocklistVec)] \assign \langle \fingerprint{\blocklistVec}, \vectorHash_{\blocklistVec},\rangle\\
+\hspace{3cm} \pcln\label{fm_pre:sign_kv} \genericSig[\kvs] \assign \signingAlg[\privKey](\kvs) \\
+\hspace{2cm} \sendmessageleft*[2.5cm]{\kvs}\\
+\cuckooTable \assign \emptyset, \clientKVS \assign \emptyset \\
+\prfKey \sample \prfKeySpace, \genericSymmKey \assign \encryptKeyGen \\
+\pcln \text{If} ~\verify[\pubKey](\genericSig[\kvs]) \neq 1, ~\text{then}~\mathsf{abort} \\
+ \pcln \text{repeat steps for} ~\pkencryptVec[\pubKey](\blocklistVec) \in \kvs \\ 
+\pcln \t \text{For} ~\projIdx \in \nats[\numProjections]: \\
+\pcln\label{fm_pre:PRF_prof} \t \t {\fingerprint{\blocklistVec}}[\projIdx]' \assign \prf{\prfKey}(\fingerprint{\blocklistVec}[\projIdx])   \\
+\pcln\label{fm_pre:mask1} \t \t \randVec \sample \bin^{\genericVecLen} \\
+\pcln\label{fm_pre:mask1} \t \t \blocklistVec' \assign \encryptVec[\pubKey](\blocklistVec) ~\homomorphicXORVec{\pubKey} ~\randVec \\
+\pcln\label{fm_pre:addCHT1} \t \t \clientKVS[\fingerprint{\blocklistVec}[\projIdx]'] \assign \langle \blocklistVec', \encrypt[\genericSymmKey](\randVec, \vectorHash_{\blocklistVec})\rangle \\
+\pcln\label{fm_pre:addCHT2} \cuckooTable \assign \createCHT(\genericSetVar, \cuckooHashFn{1}, \cuckooHashFn{2}) \\
+\pcln \text{store} ~\prfKey, \cuckooHashFn{1}, \cuckooHashFn{2} \\
+\hspace{2cm} \sendmessageright*[2.5cm]{\cuckooTable, \cuckooHashFn{1}, \cuckooHashFn{2}}\\
+\hspace{6cm} \textbf{Server}\\
+\hspace{4cm} \pclinecomment{For each slot in $\cuckooTable$, decrypt $\tilde{\ciphertext}$ and store \cuckooTable}
+}
+\caption{Preprocessing\label{fig:fuzzy_match_pre}}
+\end{subfigure}
+\hspace{40pt}
+\begin{subfigure}[t]{0.5\textwidth}
+\pcb{
+\\  
+\textbf{Client} \hspace{6.3cm} \textbf{Server} \\
+(\clientData, \clientVec, \genericContentID, \encryptPubKey)\hspace{5cm} (\encryptPubKey, \encryptPrivKey, \blindingRand) 
+\\[0.05\baselineskip] \\ [-0.3\baselineskip]
+\pcln \fileKey \assign \encryptKeyGen \\
+\pcln \cOutputFile \assign \encrypt[\fileKey](\clientData) \\
+\pcln\label{fm_pre:prf_fp} \fingerprint{\clientVec}' \assign \{\prf{\prfKey}(\fingerprint{\clientVec}[\projIdx])\}_{\projIdx \in \nats[\numProjections]}\\
+\hspace{2cm} \sendmessageright*[2.5cm]{\cOutputFile, \fingerprint{\clientVec}'}\\
+\hspace{3cm} \pcln \text{For} ~\projIdx \in \nats[\numProjections], k \in \nats[2]:\\
+\hspace{3cm} \pcln\label{fm_pre:compute_idx} \t idx_k \assign \cuckooHashFn{k}(\blindingScheme(\prf{\prfKey}(\fingerprint{\clientVec}[\projIdx]); \blindingRand))\\
+\hspace{3cm} \pcln \t \text{Let} ~\cuckooTable[idx_k] \assign \langle \plaintextVec_{\projIdx, k}, \ciphertext_{\projIdx, k} \rangle\\
+\hspace{3cm} \pcln\label{fm_pre:return_rec} \t \genericVec_{\projIdx, k} \assign \encryptVec[\pubKey](\plaintextVec_{\projIdx, k})\\
+\hspace{2cm} \sendmessageleft*[2.5cm] {\{\genericVec_{\projIdx, k}, \ciphertext_{\projIdx, k} \}_{\projIdx \in \nats[\numProjections], k \in \nats[2]}}\\
+\pcln \text{For} ~\projIdx \in \nats[\numProjections], k \in \nats[2]: \\
+\pcln \t \{\secretShare{\projIdx}\}_{\projIdx \in \nats[\genericVecLen]} \assign \secretSharingScheme(\fileKey) \\
+\pcln \t \langle \genericRand_{\projIdx,k}, \vectorHash_{\blocklistVec} \rangle \assign
+\decrypt[\genericSymmKey](\ciphertext_{\projIdx,k}) \\
+\pcln\label{fm_pre:unmask} \t \blocklistVec'_{\projIdx, k} \assign \genericVec[\projIdx, k] \homomorphicXORVec{\pubKey} \randVec_{\projIdx,k} \\
+\pcln \label{fm_pre:checkeva}\t \ciphertext_{\projIdx, k} \assign \evaFunc(\evaAuth, \blocklistVec'_{\projIdx, k}, \vectorHash_{\blocklistVec}, \encryptPubKey)\\
+\pcln\label{fm_pre:blindHD} \t \genericVecAlt_{\projIdx, k} \assign \blindedHD(\blocklistVec'_{\projIdx, k}, \clientVec, \{\secretShare{\projIdx}\}_{\projIdx \in \nats[\genericVecLen]}) \\
+\pcln \t \genericRandAlt[1], \dots \genericRandAlt[\genericVecLen] \sample \integersModArg{\groupOrder}\\
+\pcln\label{fm_pre:evablind} \t \vec{\ciphertext}_{\projIdx, k} \assign \langle \ciphertext_{\projIdx, k}^{\genericRandAlt[1]}, \dots,  \ciphertext_{\projIdx, k}^{\genericRandAlt[\genericVecLen]} \rangle ~\homomorphicMulVec{\encryptPubKey} ~\genericVecAlt_{\projIdx, k}\\
+\pcln \text{store} ~\langle \clientData, \fileKey \rangle \\
+\hspace{2cm} \sendmessageright*[2.5cm]{ \{ \vec{\ciphertext}_{\projIdx, k} \}_{\projIdx \in \nats[\numProjections], k \in \nats[2]} }\\
+\hspace{3cm} \text{For} ~\projIdx \in \nats[\numProjections], k \in \nats[2]:\\
+\hspace{3cm} \t \pcln \{\secretShare{\projIdx}'\}_{\projIdx \in \nats[\genericVecLen]} \assign \decryptVec[\encryptPrivKey](\vec{\ciphertext}_{\projIdx, k}) \\ 
+\hspace{3cm} \t \pcln \tilde{\fileKey} \assign \secretShare.\SSCombine(\{\secretShare{\projIdx}'\}_{\projIdx \in \nats[\genericVecLen]})\\
+\hspace{3cm} \t \pcln /\!/~\clientData = \decrypt[\tilde{\fileKey}](\cOutputFile) ~\text{if} ~\clientVec \in \blocklist
+}
+\caption{Query\label{fig:fuzzy_match_query}}
+\end{subfigure}
+\vspace{-5pt}
+\caption{\small \protocolFMP: Fuzzy matching against blocklist with preprocessing\label{fig:fuzzy_match_full}}
+}}
+\end{figure*}
+
+During preprocessing, the client creates a cuckoo hash table \cuckooTable from a blinded key-value store \kvs signed and published by the auditors (\stepsref{fm:pre:init_kvs}{fm_pre:sign_kv}). The keys in \cuckooTable are the projections of the blocklist vectors, obfuscated under a PRF computed by the client. We require that the PRF can be obliviously computed and commutes with a blinding function $\blindingScheme(\cdot)$. An example is the Hashed Diffie-Hellman PRF where $\blindingScheme(\genericFnInput; \blindingRand) = \ro(\genericFnInput)^{\blindingRand}$ and $\prf{\prfKey}(\genericFnInput) = \ro(\genericFnInput)^{\prfKey}$; \ro is a random oracle onto a group where the gap-DH problem is hard, and $\blindingRand$ is a random element. 
+
+A slot in the cuckoo hash table indexed by the obfuscated projection $\prf{\prfKey}(\blindingScheme(\fingerprint{\blocklistVec}[\projIdx]); \blindingRand))$ has a record containing: i) the encrypted blocklist vector $\blocklistVec$, randomized with a bit mask $\pkencryptVec[\pubKey](\blocklistVec) \homomorphicXORVec{\encryptPubKey} \randVec = \pkencryptVec[\pubKey](\blocklistVec \oplus \randVec)$, ii) an encryption of the bit-mask, and iii) an encryption of the authentication tag of $\blocklistVec$ obtained from \evaFunc.  
+The latter two entries are combined in a \emph{verification object} and encrypted as a block with \encryptionSchemeDefn under a key chosen by the client (\stepsref{fm_pre:PRF_prof}{fm_pre:addCHT1}). The verification object allows the client to verify that the server has not tampered with any record during queries later. \emph{Note that the keys, i.e., the obfuscated projections are not stored in the table as they will be revealed only during queries}. 	
+
+
+%This record is stored in a key-value store \clientKVS with the projection as the key (\stepsref{fm_pre:PRF_prof}{fm_pre:addCHT1}). 
+%The auditor publishes a signed key-value store \kvs. The keys 
+%are the blocklist vectors, encrypted bit-wise, $\pkencryptVec[\encryptPubKey](\blocklistVec)$ for all $\blocklistVec \in \blocklist$. 
+%The value corresponding to $\pkencryptVec[\encryptPubKey](\blocklistVec)$  has two components. The first component is the set of projections in the locality-preserving fingerprint $\fingerprint{\blocklistVec}$, blinded with a scheme   that commutes with $\prf$ (\stepref{fm_pre:blind_proj}). A Thus, the set of blinded projections includes $\{ \ro(\projFn[1](\blocklistVec), \projFn[1])^{\blindingRand}, \dots, \ro(\projFn[\genericVecLen](\blocklistVec), \projFn[\genericVecLen])^{\blindingRand}\}$. The second component is the authentication tag obtained from \evaFunc for $\blocklistVec$ (\stepref{fm_pre:eva}). 
+%
+%After downloading \kvs, for each key, $\pkencryptVec[\pubKey](\blocklistVec)$, the client first computes the PRF on each blinded projection (\stepref{fm_pre:PRF_prof}). More specifically, the client computes $\{ \ro(\projFn[1](\blocklistVec), \projFn[1])^{\blindingRand \prfKey}, \dots, \ro(\projFn[\genericVecLen](\blocklistVec), \projFn[\genericVecLen])^{\blindingRand \prfKey}\}$. Then, the client computes a \emph{record} corresponding to each projection. The record contains: . After repeating the process for all keys, the client creates a cuckoo hash table \cuckooTable indexed by the projections using two hash functions \hashFn{1} and \hashFn{2}. The slots in the table store the corresponding records. 
+
+
+
+
+The server decrypts the randomized vectors in each record using \encryptPrivKey, and stores $\cuckooTable$. At this stage, $\cuckooTable[\hashFn{1}(\prf{\prfKey}(\blindingScheme(\fingerprint{\blocklistVec}[\projIdx]); \blindingRand))] = \langle \blocklistVec \oplus \randVec, \encrypt[\genericSymmKey](\randVec, \vectorHash_{\blocklistVec}) \rangle$ or  
+$\cuckooTable[\hashFn{2}(\prf{\prfKey}(\blindingScheme(\fingerprint{\blocklistVec}[\projIdx]); \blindingRand))] = \langle \blocklistVec \oplus \randVec', \encrypt[\genericSymmKey](\randVec', \vectorHash_{\blocklistVec})\rangle$ for all $\projIdx \in \nats[\numProjections]$. Due to IND-CPA security, and the random bit-mask applied to each blocklist vector, 
+each slot in the table is indistinguishable to the server. 
+
+
+% The client first downloads the signed key value store, samples a key for the PRF \prfKey, and computes the PRF on the blinded fingerprint components in the key-value store. Next, the client constructs a cuckoo hash table $\cuckooTable$ with $\blocklistSize \numProjections(1 + \cuckooTableParam)$ entries. Then, using two hash functions $\hashFn{1}, \hashFn{2}: \setDefn{0,1}^{\secParam} \rightarrow \blocklistSize \numProjections(1 + \cuckooTableParam)$, the client maps each projection, obfuscated with the PRF, to a slot in the table, and stores the corresponding encrypted vector from the key-value store in that slot. Finally, the client randomizes the encrypted vector stored at each slot as follows. The client samples a random bit-mask \mask for each vector, and computes $\blocklistVec \oplus \mask$ using the additively-homomorphic properties of the encryption scheme. This encrypted, randomized vector is stored in the corresponding slot in the table. The bit-mask \mask is also stored in the same slot, encrypted with an authenticated block cipher, under a client-chosen symmetric key. The obfuscated cuckoo hash table is sent to the server. 
+
+
+
+ 
+
+\subsubsection{Upload}
+%
+During an upload, the client and the server invoke the \protocolFMP query protocol. For this, the client computes the locality preserving fingerprint 
+of its content embedding $\clientVec$, and uses the projections therein to retrieve records from the cuckoo hash table. For each requested slot, the server returns the randomized bit vector $\pkencryptVec[\encryptPubKey](\blocklistVec \oplus \randVec)$ stored there, after encrypting it bit-wise under \encryptPubKey. The server also returns the verification object stored in that slot (\stepsref{fm_pre:prf_fp}{fm_pre:return_rec}). 
+
+
+%hat is, the client provides 
+%$\prf{\prfKey}(\fingerprint{\blocklistVec}[\projIdx])))$ for all $\projIdx \in \nats[\numProjections]$ to the server, and the server computes $\cuckooHashFn{1}(\blindingScheme(\prf{\prfKey}(\fingerprint{\blocklistVec}[\projIdx])));\blindingRand))$,  $\cuckooHashFn{2}(\blindingScheme(\prf{\prfKey}(\fingerprint{\blocklistVec}[\projIdx])));\blindingRand))$. These values act as indices into the table. F
+
+
+
+After authenticating and decrypting the verification object, the client reverses the bit-mask using $\pkencryptVec[\encryptPubKey](\blocklistVec \oplus \randVec) \homomorphicXORVec{\encryptPubKey} \randVec = \pkencryptVec[\encryptPubKey](\blocklistVec)$ (\stepref{fm_pre:unmask}).
+Then, it invokes \evaFunc with the authentication tag inside the verification object, and $\pkencryptVec[\encryptPubKey](\blocklistVec)$ as inputs (\stepsref{fm_pre:checkeva}{fm_pre:evablind}). Finally, the client invokes the \blindedHD procedure with secret shares of the content key. 
+For every index $\vecIdx$ where $\clientVec[\vecIdx] \oplus \genericVec[\vecIdx]$, the server obtains a secret share from the output of \blindedHD (\stepref{fm_pre:blindHD}). Also, the output of \evaFunc is used to blind the secret shares (\stepref{fm_pre:evablind}): if the server has provided a vector that is not consistent with the stored authentication tag, then $\vec{\ciphertext}_{\projIdx, k}$ will not reveal anything to the server. 
+Given enough secret shares, the server recombines them to obtain the key.  
+
+
+
+
+%\myparagraph{Authenticated server response}
+%%
+%One challenge is that the client does not have a way to verify that the re-encrypted ciphertexts provided by the malicious server corresponds to the entries in the blocklist. We will leverage the \evaFunc functionality to solve this problem/ More specifically, corresponding to each blocklist entry $\blocklistVec$, the auditor will publish $\langle \vectorHash_{\blocklistVec}, \genericSig[\blocklistVec], \genericRand[\blocklistVec] \rangle$ by invoking the functionality. Subsequently, when the client receives an encrypted vector $\langle \ciphertext, \vectorHash_{\blocklistVec}, \genericSig[\blocklistVec], \genericRand[\blocklistVec] \rangle$ claimed to be from one of the slots in \cuckooTable, it invokes \evaFunc on these inputs as the verifier. The functionality returns $\encrypt[\pubKey](\groupIdentity)$ if the verification is successful. This value is then used to blind a secret share of the content key, which the server can obtain only if the verification was successful, i.e., the blinding factor is an encryption of \groupIdentity. 
+
+
+
+
+
+\myparagraph{Hiding correlations}
+%
+When uploading a new file, the client may not want to reveal correlations with other files. This can be ensured by following the invariant: \emph{the client will query \cuckooTable for a projection value (obfuscated with the PRF) at most once across all uploads}. To satisfy the invariant, the client will store the embeddings of the previously uploaded files, either locally or encrypted on the server. When uploading a new file, if any of the projections collide with a value queried previously, then the client replaces this projection query with a random string in $\setDefn{0,1}^{\secParam}$. This random string will be indistinguishable from the actual PRF output. 
+We show in \appref{app:hiding_corr} that the false negative rate of this scheme is at most $(1 - \fnr + 2\blocklistSize \fpr)^{\numProjections}$. 
+There are no false positives. 
+
+\myparagraph{Cost}
+%
+Preprocessing $\bigO(\blocklist (\numProjections + \genericVecLen)\secParam)$ bits of communication to download the blocklist, and $\bigO(\blocklistSize \numProjections(1 + \cuckooTableParam)\genericVecLen \secParam)$ bits of communication from the client to the server. The storage cost for the server is $\bigO(\blocklistSize \numProjections \genericVecLen (1 + \cuckooTableParam))$ bits, where $\epsilon$ is the parameter used to decide the size of the cuckoo hash table~\cite{bhowmick2021apple}. Queries require $\bigO(\genericVecLen \numProjections \secParam)$ bits of communication and $\bigO(\genericVecLen \numProjections)$ compute time for the client and the server. 
+
+
+\myparagraph{Security}
+%
+The client's view during both preprocessing and query can be simulated. This is because 
+the key-value store \kvs published by the server has the blocklist vectors and their corresponding authentication tags encrypted under the auditor's public key. 
+Also, during a query, all the information in the client's view are encrypted under the server's (auditor's) public key. A distributed signature scheme~\cite{damgaard2010efficient, wang2014practical}, can ensure that the signature on \kvs cannot be forged. 
+
+The server's view after preprocessing includes the table $\cuckooTable$, where each slot has a \genericVecLen-bit random vector, and a ciphertext encrypted under 
+the client's key. During a query, the server first gets the encrypted file $\cOutputFile$ and the projections obfuscated with the PRF, $\fingerprint{\clientVec}'$. These values can be simulated due to IND-CPA security and the indistinguishability of a PRF output from a random value. Then the simulation gets $\{\genericVec_{\projIdx, k}, \ciphertext_{\projIdx, k} \}_{\projIdx \in \nats[\numProjections], k \in \nats[2]}$ as the message to the client, and checks that $\ciphertext_{\projIdx, k}$ was in \cuckooTable returned during preprocessing. If not, it returns to the server encryptions of random elements in $\{\vec{\ciphertext}_{\projIdx, k} \}_{\projIdx \in \nats[\numProjections], k \in \nats[2]}$. Otherwise, it returns the correct output from the functionality. A server that can distinguish between the simulation and the real protocol execution can either compute an authenticated ciphertext under the client's key, or find a collision in the hash function \universalHashFn. A formal proof will be available in the full version.  
+
+\fi
+
+
+%%%% Old text
+
+
+\iffalse 
+
+
+
+
+The obfuscated key value store is then sent to the server. Next, assuming that each fingerprint has $\numProjections$ random projections, the server initializes a cuckoo hash table . Thus, \cuckooTable stores each encrypted vector \blocklistVec at either $\hashFn{1}(\prf{\prfKey}(\projFn[\projIdx](\blocklistVec)))$ or $\hashFn{2}(\prf{\prfKey}(\projFn[\projIdx](\blocklistVec)))$ with high probability. If there are empty slots in the table, the server
+fills those slots with randomly-sampled vectors. T
+
+
+\noindent\textit{Step 2: Randomly permuting the cuckoo hash table}
+
+\noindent The server re-encrypts the vectors in the slots under its own key, and sends \cuckooTable back to the client. The client samples a random permutation $\perm: \blocklistSize \numProjections(1 + \cuckooTableParam) \rightarrow \blocklistSize \numProjections(1 + \cuckooTableParam)$ and permutes the entries in the table. 
+At this stage, the permuted table \cuckooTable stores each encrypted vector \blocklistVec at either $\perm(\hashFn{1}(\prf{\prfKey}(\projFn[\projIdx](\blocklistVec))))$ or $\perm(\hashFn{2}(\prf{\prfKey}(\projFn[\projIdx](\blocklistVec))))$ with high probability. Finally, the client decrypts the vectors using 
+\clientPrivKey and re-randomized them under \serverPubKey, and sends \cuckooTable back to the server; note that due to the commutative property of the encryption scheme, the order of decryption does not matter. As we will describe later, the client will retrieve the vector stored at one or more slots in the table during a query. To obfuscate the vector stored at each slot which is required to hide the permutation,
+\fi

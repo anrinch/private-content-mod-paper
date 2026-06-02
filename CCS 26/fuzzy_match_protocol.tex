@@ -1,0 +1,306 @@
+
+\newcommand{\checkBucket}{\ensuremath{\mathsf{BucketID}}\xspace}
+
+\NewDocumentCommand{\clientVecProj}{o}{\ensuremath{p_{#1}}\xspace}
+
+\begin{figure*}
+\fbox{%
+\footnotesize
+\begin{minipage}[t]{\textwidth}
+
+
+\textbf{Parameters:} A content embedding function $\embed: \universe \rightarrow \bin^{\genericVecLen}$, a symmetric key encryption scheme $\encryptionSchemeDefn$, a randomizable set homomorphic signature scheme \ourSigSchemeDefn with distributed signing functionality \distSigningFunc, a digital signature scheme \sigSchemeDefn, a detectable secret sharing scheme $\dssProtocol = \langle \SSShare, \SSCombine \rangle$, an additively homomorphic encryption scheme \ahencryptionSchemeDefn over a group \group with order \groupOrder
+
+\medskip\noindent\textbf{\underline{Blocklist Creation:}}
+
+\enumListStart
+\item The auditors create an augmented blocklist $\augmentedBlocklist$:
+\enumListStart
+\item Initialize \numBuckets buckets $\bucket{1}, \dots, \bucket{\numBuckets}$
+\item For each $\blocklistVec = \langle\blocklistVec[1], \dots, \blocklistVec[\genericVecLen] \rangle \in \blocklist$, compute $\genericSetVar[\blocklistVec] = \{ \langle \projIdx, \blocklistVec[\vecIdx], \vecIdx, \projFn[\projIdx](\blocklistVec)\rangle \}_{\projIdx \in [1,\numProjections], \vecIdx \in [1, \genericVecLen]}$. Add all the items in \genericSetVar[\blocklistVec] to a random bucket $\bucket{\bucketIdx}$. 
+\enumListEnd
+
+\item Auditors sample $\numProjections \numBuckets$ random elements $\blindingFactor_1, \dots, \blindingFactor_{
+\numProjections,\numBuckets} \sample [1, \rsaMod]$ and jointly invert the elements to obtain additive shares of $\blindingFactor_{\projIdx, \bucketIdx}^{-1} \bmod \orderFn(\qrGroup)$ using \cite{catalano2000computing}. 
+
+
+
+\item Using $\distSigningFunc$ auditors jointly sign each bucket $\genericSig[\bucket{\bucketIdx}] \assign \sign[\privKey](\bucket{\bucketIdx})$ and create $\numProjections$ blinded signatures $\genericSig[\bucket{\bucketIdx}]^{(\projIdx)} \assign \genericSig[\bucket{\bucketIdx}]^{\blindingFactor_{\projIdx, \bucketIdx}^{-1}} \bmod  \rsaMod$
+
+%$\numProjections$ 
+%
+%times with different blinding factors $\genericSig[\bucket{\bucketIdx}]^{(\projIdx)} = \sign[\privKey](\bucket{\bucketIdx} \cup \blindingFactor_{\bucketIdx, \projIdx} )$. 
+
+
+\item Each auditor $\auditor[\auditorIdx]$ signs the (hash of) i) the public key of the distributed signing algorithm, and ii) the joint signatures on the blocklist partitions:  $\auditorSig{\auditorIdx} \assign \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\pubKey,  \genericSig[\bucket{1}]^{(1)}, \dots, \genericSig[\bucket{\numBuckets}]^{(\numProjections)}))$
+
+
+%\item The auditors signs the blocklist partitions $
+
+
+\item\label{fuzzy:pre:cht1} The auditor initialize a cuckoo hash table \cuckooTable with $(1 + \cuckooTableParam) \cdot \blocklistSize$ slots, and samples two hash function $\cuckooHashFn{1}, \cuckooHashFn{2}: \bin^{\secParam} \rightarrow \nats[(1 + \cuckooTableParam) \cdot \blocklistSize]$. 
+
+\item\label{fuzzy:pre:cht2} The auditor samples a key pair $\encryptPubKey, \encryptPrivKey$ for an additively homomorphic encryption scheme \ahencryptionSchemeDefn. 
+
+
+\item\label{fuzzy:pre:cht3} For $\blocklistVec \in \blocklist$, $\projIdx \in \nats[\numProjections]$, the auditor places $\langle \ahencrypt[\encryptPubKey](\projFn[\projIdx](\blocklistVec)),\ahencrypt[\encryptPubKey](\bucketIdx), \genericSig[\bucket{\bucketIdx}]^{(\projIdx)}] \rangle$ at slot $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx](\blocklistVec))]$ or $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx](\blocklistVec))]$, where $\blocklistVec \in \bucket{\bucketIdx}$. 
+
+
+
+\item The auditors publish  $\{\pubKey, \cuckooTable , \genericSig[\bucket{1}]^{(1)}, \dots, \genericSig[\bucket{\numBuckets}]^{(\numProjections)}, \auditorSig{1}, \dots, \auditorSig{\numAuditors} \}$. The auditors provide $\encryptPubKey, \encryptPrivKey$, $\bucket{1}, \dots, \bucket{\numBuckets}$ and $\blindingFactor_1, \dots, \blindingFactor_{
+\numProjections,\numBuckets}$ to the server. 
+
+\enumListEnd
+
+\medskip\noindent\textbf{\underline{Upload:}} \algComment{\client downloads and stores  $\{\pubKey, \cuckooTable , \genericSig[\bucket{1}]^{(1)}, \dots, \genericSig[\bucket{\numBuckets}]^{(\numProjections)}, \auditorSig{1}, \dots, \auditorSig{\numAuditors} \}$. \client wants to upload a file \clientData}
+
+
+\enumListStartResume
+\item \client samples a key for the encryption scheme, $\fileKey$, and sends the encrypted file and a unique identifier $\langle \genericFileID, \encrypt[\fileKey](\clientData) \rangle$ to \server.
+
+\item \client computes $\clientVec \gets \embed(\clientData)$, and $\projFn[1](\clientVec), \dots, \projFn[\numProjections](\clientVec)$.
+
+\enumListStart
+\item  If there is some $\clientVec' \in \prevHashList$ such that $\hammingDist{\clientVec}{\clientVec'} \le \threshold$, then \client sets $\clientVecProj[\projIdx] \sample \bin^{\secParam}$ for all $\projIdx \in [1, \numProjections]$.   
+\item If there is no such $\clientVec' \in \prevHashList$: for all $\projIdx \in [1, \numProjections]$, if $\projFn[\projIdx](\clientVec) \in \prevHashList$, then set $\clientVecProj[\projIdx] \assign \bin^{\secParam}$. Otherwise set $\clientVecProj[\projIdx] \assign \projFn[\projIdx](\clientVec)$
+\enumListEnd
+
+
+
+%\item The client initializes a $(\detectionThreshold -1, 2\numProjections - \detectionThreshold + 1)$ DHF: $\dhfKeySpace \times \dhfDomain \rightarrow \group$ and samples a key $\dhfKey \sample \dhfKeySpace$. 
+%
+%\item\label{fuzzy:pre:prg} The client samples $\genericSymmKey_1, \dots, \genericSymmKey_\numProjections \sample \prfKeySpace$, and computes $\dhfSet \assign \{\prg(\genericSymmKey_\projIdx) \oplus \dhf[\dhfKey](\genericRandAlt[\projIdx])\}_{\projIdx \in \nats[\numProjections]}$ where $\genericRandAlt[\projIdx] \sample \dhfDomain$.
+
+\item \client samples a key $\voucherKey \assign \encryptKeyGen(1^\secParam)$ for the symmetric key encryption scheme \encryptionSchemeDefn, and secret shares it using a 
+$\detectionThreshold$-out-of-$\numProjections$ detectable secret-sharing schemes, 
+$\secretShare{1}, \dots, \secretShare{\numProjections} \assign \dssProtocol.\SSShare(\voucherKey)$
+
+\item\label{fuzzy:pre:match_cht} For $\projIdx \in [1, \numProjections]$, \client retrieves $\langle \ciphertext[1], \ciphertext[2], \genericSig \rangle$ from $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx])]$ and 
+$\langle \ciphertext[1]', \ciphertext[2]', \genericSig' \rangle$ from $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx])]$ and computes
+
+\enumListStartResume
+
+
+\item Using the homomorphic operator $\homomorphicAdd{\encryptPubKey}$, \client computes $\secretShareEncryption{1, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[1, \projIdx] \times (\ciphertext[1] - \clientVecProj[\projIdx])  + \secretShare{\projIdx})$  
+and $\secretShareEncryption{2, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[2, \projIdx] \times (\ciphertext[1]' - \clientVecProj[\projIdx])  + \secretShare{\projIdx})$ where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOrder - 1]$. If there is a matching projection under $\projFn[\projIdx]$, \server will learn a share of \voucherKey. 
+
+%\item Use matching projections to secret-share the voucher key \voucherKey by computing $\secretShareEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\clientVecProj[\projIdx] ) \homomorphicScalerMult{\encryptPubKey} \genericRand[1, \projIdx] \homomorphicAdd{\encryptPubKey}   \secretShare{\projIdx})$ and $\secretShareEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\clientVecProj[\projIdx]) \homomorphicScalerMult{\encryptPubKey} \genericRand[2, \projIdx] \homomorphicAdd{\encryptPubKey} \secretShare{\projIdx})$. If $\projFn[\projIdx](\blocklistVec)$ at location $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx])]$ (or $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx])]$) matches $\clientVecProj[\projIdx]$, then decryption reveals a share of \voucherKey. 
+
+\item Using the homomorphic operator $\homomorphicAdd{\encryptPubKey}$, \client computes compute $\partitionEncryption{1, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[3, \projIdx] (\ciphertext[1] - \clientVecProj[\projIdx])  + \ciphertext[2] )$  
+and $\partitionEncryption{2, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[4, \projIdx] (\ciphertext[2] - \clientVecProj[\projIdx])  + \ciphertext[2]')$ where $\genericRand[3, \projIdx], \genericRand[4, \projIdx] \sample [1, \groupOrder - 1]$. If there is a matching projection under $\projFn[\projIdx]$, \server will learn a share the corresponding bucket to check. 
+
+
+%\item  Add the partition identifiers of the vectors corresponding to the matching projections to the voucher after randomizing them: 
+%$\partitionEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\clientVecProj[\projIdx]) \homomorphicScalerMult{\encryptPubKey} \genericRand[3, \projIdx]\homomorphicAdd{\encryptPubKey} \ciphertext[2])$ and $\partitionEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\clientVecProj[\projIdx]) \homomorphicScalerMult{\encryptPubKey} \genericRand[4, \projIdx] \homomorphicAdd{\encryptPubKey} \ciphertext[2]')$
+
+\item For each $\vecIdx \in [1, \genericVecLen]$, compute $\randomize[\pubKey](\genericSig[\bucket{\bucketIdx}]^{(\projIdx)} \sigMinus[\pubKey] \{x_{\projIdx, \vecIdx}\}) = \langle  \genericSig^{\genericRand_{1, \projIdx, \vecIdx} \primeRO(x_{\projIdx, \vecIdx})}, \ro(\qrGen^{\genericRand_{1, \projIdx, \vecIdx}} \rangle $ where $x_{\projIdx, \vecIdx} = \langle \projIdx, \clientVec[\vecIdx], \vecIdx, \clientVecProj[\projIdx] \rangle$ and $\genericRand_{1, \projIdx, \vecIdx} \sample [1, \rsaMod^2]$ . Set the content verification token $\contentToken{1, \projIdx, \vecIdx} \assign \genericSig^{\genericRand_{1, \projIdx, \vecIdx} \primeRO(x_{\projIdx, \vecIdx})}$
+
+
+
+\item For each $\vecIdx \in [1, \genericVecLen]$, compute $\randomize[\pubKey](\genericSig[\bucket{\bucketIdx}]^{(\projIdx)} \sigMinus[\pubKey] \{x_{\projIdx, \vecIdx}\}) = \langle  (\genericSig')^{\genericRand_{2, \projIdx, \vecIdx} \primeRO(x_{\projIdx, \vecIdx})}, \ro(\qrGen^{\genericRand_{2, \projIdx, \vecIdx}} \rangle $ where $x_{\projIdx, \vecIdx} = \langle \projIdx, \clientVec[\vecIdx], \vecIdx, \clientVecProj[\projIdx] \rangle$ and $\genericRand_{2, \projIdx, \vecIdx} \sample [1, \rsaMod^2]$. Set the content verification token $\contentToken{2, \projIdx, \vecIdx} \assign (\genericSig')^{\genericRand_{2, \projIdx, \vecIdx} \primeRO(x_{\projIdx, \vecIdx})}$
+
+\item Secret share the file key $\{ \secretShare{1, \projIdx, 1}, \dots, \secretShare{1, \projIdx, \genericVecLen} \} \assign \dssProtocol.\SSShare(\fileKey)$. Compute $\genericSetVar[1, \projIdx] = \{ \secretShare{1, \projIdx, 1}', \dots, \secretShare{1, \projIdx, \genericVecLen}' \} $ where $\secretShare{1, \projIdx, \vecIdx}' = \secretShare{1, \projIdx, \vecIdx} \oplus \ro(\qrGen^{\genericRand_{1, \projIdx, \vecIdx}})$ 
+
+
+\item Secret share the file key $\{ \secretShare{2, \projIdx, 1}, \dots, \secretShare{2, \projIdx, \genericVecLen} \} \assign \dssProtocol.\SSShare(\fileKey)$. Compute $\genericSetVar[2, \projIdx] = \{ \secretShare{2, \projIdx, 1}', \dots, \secretShare{2, \projIdx, \genericVecLen}' \} $ where $\secretShare{2, \projIdx, \vecIdx}' = \secretShare{2, \projIdx, \vecIdx} \oplus \ro(\qrGen^{\genericRand_{1, \projIdx, \vecIdx}})$ 
+
+
+
+%\item $\dhfEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[5,\projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\dhfComponent{\projIdx})$
+%\item $\dhfEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[6,\projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\dhfComponent{\projIdx})$
+
+\enumListEnd
+
+\item \label{fuzzy:pre:voucher} \client creates the voucher \voucher  by adding $\langle \partitionEncryption{i, \projIdx}, \{\contentToken{i, \projIdx, \vecIdx}\}_{\vecIdx \in [1, \genericVecLen]} ,\genericSetVar[i, \projIdx] \rangle$ for $i \in [1,2]$, $\projIdx \in [1, \numProjections]$ and encrypts $\encrypt[\voucherKey](\voucher)$. 
+
+\item \algComment{Fast path} \client sends to \server the encrypted secret shares of the voucher key $\{\secretShareEncryption{\tblIdx,\projIdx}\}_{\tblIdx \in [2], \projIdx \in \nats[\numProjections]}$
+
+
+\item  \server decrypts $\secretShareEncryption{i, \projIdx}$ for all $i \in [1,2]$ and $\projIdx \in \nats[\numProjections]$, and for each obtains $\{ \secretShare{1}', \dots, \secretShare{\numProjections}'\}$. If $\dssProtocol.\SSCombine(\{ \secretShare{1}', \dots, \secretShare{\numProjections}'\}) = \bot$ for all, then \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$ and sends to \client $\langle \genericFileID, \detected=\fals\rangle$. This concludes the fast path check. 
+
+\item \algComment{Fine-grained check} \client sends to \server the encrypted voucher $\encrypt[\voucherKey](\voucher)$ for the fine-grained check
+
+
+\item \label{fuzzy:pre:dhf2}  If $\dssProtocol.\SSCombine(\{ \secretShare{1}', \dots, \secretShare{\numProjections}'\}) = \voucherKey$, then \server uses \voucherKey to decrypt the voucher \voucher 
+
+\begin{enumerate}
+\item Using $\partitionEncryption{i, \projIdx}$ in \voucher for all $\projIdx \in [1, \numProjections]$, \server obtains the indices of the buckets to check against. \server adds $\langle \bucketIdx, \{\contentToken{\vecIdx}\}_{\vecIdx \in [1, \genericVecLen]} ,\genericSetVar \rangle$ to $\bucketIDSet$ if $\langle \partitionEncryption{i, \projIdx}, \{\contentToken{\vecIdx}\}_{\vecIdx \in [1, \genericVecLen]} ,\genericSetVar \rangle \in \voucher$ and $\pkdecrypt[\encryptPrivKey](\partitionEncryption{i, \projIdx}) = \bucketIdx$. 
+
+%and obtains  $\{ v_{1, \projIdx}$ $v_{2, \projIdx} \}$ in \voucher. Initialize an empty set $\bucketIDSet$, and for each $\projIdx \in [1, \numProjections]$ if $\pkdecrypt[\encryptPrivKey](v_{1, \projIdx}) = \bucketIdx \in [1, \numBuckets]$ or $\pkdecrypt[\encryptPrivKey](v_{2, \projIdx}) = \bucketIdx \in [1, \numBuckets]$, then add $\bucketIdx$ to $\bucketIDSet$
+
+
+\item \label{fuzzy:pre:fine}  For $\langle \bucketIdx, \{\contentToken{\vecIdx}\}_{\vecIdx \in [1, \genericVecLen]} ,\genericSetVar \rangle \in \bucketIDSet$ and $\projIdx \in [1, \numProjections]$, where $\genericSetVar = \{ \secretShare{1}', \dots \secretShare{\genericVecLen}' \}$ 
+
+\begin{enumerate}
+\item \server computes $\accSet_1, \dots, \accSet_\genericVecLen$ where $\accSet_\vecIdx = \prod\limits_{\genericFnInput \in \bucket{\bucketIdx} \setminus \{\hashFn(\projIdx, \blocklistVec[\vecIdx], \vecIdx, \projFn[\projIdx](\blocklistVec)) \}} \primeRO(\genericSetElmt)$
+
+\item \server computes $z_1, \dots, z_\genericVecLen$ where $z_\vecIdx = \ro(\contentToken{\vecIdx}^{\blindingFactor_{\bucketIdx, \projIdx}  \accSet_\vecIdx}) \oplus \secretShare{\vecIdx}'$. If $\dssProtocol.\SSCombine(z_1, \dots, z_\genericVecLen) = \fileKey$, then \server decrypts $\encrypt[\fileKey](\clientData)$ and outputs $\langle \genericFileID, \detected = \tru, \clientData \rangle$. 
+\end{enumerate}
+%$
+\end{enumerate}
+ 
+\item If \server fails to decrypt after the fine-grained check, then \server outputs $\langle \genericFileID, \detected = \fals, \bucketIDSet \rangle$ and sends to \client $\langle \genericFileID, \detected=\fals\rangle$
+
+
+%\enumListEnd
+
+\item If \client receives $\langle \genericFileID, \detected=\fals\rangle$, \client adds $\clientVecProj[1], \dots, \clientVecProj[\numProjections]$ to $\prevHashList$. Otherwise, \client outputs $\langle \genericFileID, \detected=\tru \rangle$.
+
+
+%\item If $\dssProtocol.\SSCombine(\{ \secretShare{1}', \dots, \secretShare{\numProjections}'\}) = \voucherKey$, \server
+%
+%\item The server decrypts $\secretShareEncryption{1, \projIdx}, \secretShareEncryption{2, \projIdx}$
+%for all $\projIdx \in \nats[\numProjections]$ and obtains $\langle \genericSymmKey_{\tblIdx, \projIdx}', \secretShare{\tblIdx, \projIdx}' \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]}$. The server computes $\dhfComponent{\tblIdx, \projIdx} \assign \prg(\genericSymmKey_{\tblIdx, \projIdx}') \oplus \dhfSet_{\projIdx}$ for all $\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]$. 
+%Then, the server computes $\dhf.\dhfDetect(\langle \dhfComponent{\tblIdx, \projIdx} \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]})$. If the detection fails, the server returns 0. Otherwise
+%
+%\enumListStartResume
+%\item Let $\matchedIndexSet = \{ \langle \tblIdx, \projIdx \rangle \}$ be the set of indices obtained from $\dhf.\dhfDetect(\langle \dhfComponent{\tblIdx, \projIdx} \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]})$. 
+%\item \label{fuzzy:pre:dhf1} If $\langle i, \projIdx \rangle \in \matchedIndexSet$, the server adds $\secretShare{\projIdx}$ to the set $\genericSetVar$
+%\item The server reconstructs the key $\voucherKey$ using \secretSharingScheme.\SSCombine(\genericSetVar). 
+%\item The server decrypts $\encrypt[\voucherKey](\voucher)$ and obtains $\ciphertext[2]$ (or $\ciphertext[2]')$ from $v_{1, \projIdx}$ (or $v_{2, \projIdx}$) if $\pkdecrypt[\encryptPrivKey](\ciphertext[1]) = \projFn[\projIdx](\clientVec)$ (or $\pkdecrypt[\encryptPrivKey](\ciphertext[1]') = \projFn[\projIdx](\clientVec)$)
+%\item \label{fuzzy:pre:dhf2} The server decrypts $\ciphertext[2]$ (or $\ciphertext[2]')$ to obtain the partition number \bucketIdx. The client and server run \protocolFM with $\genericSig[\bucket{\bucketIdx}]$ as the blocklist. 
+%\enumListEnd
+%
+
+
+\enumListEnd
+
+
+\end{minipage}
+}
+\caption{\protocolFM: Fuzzy matching content moderation protocol\label{fig:fuzzy_match}}
+ \end{figure*}
+
+
+\iffalse 
+\begin{figure}[h]
+\resizebox{0.43\textwidth}{!}{\vbox{%
+\pcb{
+\textbf{\uploadFile} \hspace{7cm} \textbf{\checkContent} \\
+(\genericSig[\blocklist], \clientVec, \rsaMod,\qrGen, \clientData, \genericContentID)\hspace{5.5cm}(\rsaMod, \qrGen, \blocklist)
+\\[0.05\baselineskip] \\ [-0.3\baselineskip]
+\pcln \genericSymmKey \sample \encryptKeySpace\\
+\pcln \dhfKey \sample \dhfKeySpace \\
+\pcln \forall \projIdx \in \nats[\numProjections]: ~\quad \pclinecomment{repeat for every projection function} \\  
+\pcln\label{fuzzy:secret_share} \t \secretShare{\projIdx, 1}, 
+		\dots, \secretShare{\projIdx, \genericVecLen} \assign \secretSharingScheme.\SSShare(\genericSymmKey) ~\quad  \pclinecomment{secret share the content key}\\
+\pcln \t \genericSymmKey_1, \dots, \genericSymmKey_\genericVecLen \sample \prgKeySpace  ~\quad\pclinecomment{one-time pads for DHF evaluations}\\
+\pcln \t \genericRandAlt[\projIdx, 1], \dots, \genericRandAlt[\projIdx, \genericVecLen] \sample 
+\dhfDomain \\
+\pcln\label{fuzzy:dhf} \t \dhfSet_\projIdx \assign \{ \prg(\genericSymmKey_\vecIdx) \oplus \dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx] ) \}_{\vecIdx \in \nats[\genericVecLen]} ~\quad\pclinecomment{obfuscate DHF evaluations}\\
+\pcln\label{fuzzy:check_each_proj} \t \forall \vecIdx \in \nats[\genericVecLen]: ~\quad\pclinecomment{compute content verification token for each vector component} \\
+\pcln \t \t  \clientVec[\projIdx, \vecIdx] \assign  (\projFn[\projIdx], \clientVec[\vecIdx], \vecIdx, 
+\projFn[\projIdx](\clientVec)) \\
+\pcln \t \t \randomize(\genericSig[\blocklist] \sigMinus[\pubKey] \clientVec[\projIdx, \vecIdx]) = \\
+\pcln \t \t \t \langle  \genericSig[\blocklist]^{\genericRand[\projIdx, \vecIdx] \primeRO(\clientVec[\projIdx, \vecIdx])} \bmod \rsaMod, \ro(\qrGen^{\genericRand[\projIdx, \vecIdx]} \bmod \rsaMod) \rangle \\
+%\pcln \forall \projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen], \\
+% ~\qquad\quad \genericRand_{\projIdx, \vecIdx} \sample \nats[1][\rsaMod^2] \\
+%\pcln  \sigPair[\projIdx,\vecIdx][2] \assign \ro(\qrGen^{\genericRand_{\projIdx, \vecIdx}} \bmod \rsaMod) \\
+\pcln\label{fuzzy:compute_meta} \t \t \cOutputMeta{\projIdx, \vecIdx} \assign  \genericSig[\blocklist]^{\genericRand_{\projIdx, \vecIdx}\primeRO(\clientVec[\projIdx, \vecIdx])} \bmod \rsaMod\\
+\pcln\label{fuzzy:obfuscate_shares} \t \ssSet_\projIdx \assign \{ \ro(\qrGen^{\genericRand[\projIdx, \vecIdx]} \bmod \rsaMod) \oplus (\genericSymmKey_{\vecIdx}, \secretShare{\vecIdx}) \}_{\vecIdx \in \nats[\genericVecLen]} ~\quad\pclinecomment{obfuscate secret shares}\\
+%\pcln \forall \projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen], \\
+% ~\qquad\quad \cOutputEnc[\projIdx][\vecIdx] \assign \sigPair[\projIdx,\vecIdx][2] \oplus (\dhf[\dhfKey](\genericRandAlt[\projIdx, \vecIdx]), \secretShare{\projIdx, \vecIdx}) \\
+\pcln \cOutputFile \assign \encrypt[\genericSymmKey](\clientData) \\
+\pcln \text{store} ~\langle \genericContentID, \genericSymmKey \rangle \\
+\hspace{2cm} \sendmessageright*[3cm]{\{\cOutputFile, \ssSet_{\projIdx}, \dhfSet_{\projIdx}, \cOutputMeta{\projIdx, \vecIdx}\}_{\projIdx \in \nats[\numProjections], \vecIdx \in \nats[\genericVecLen]}}\\
+\hspace{2cm} \pcln \text{// repeat the following steps for all} ~\genericBlocklistElmt[\setIdx] \in \blocklist: \\
+\hspace{2cm} \pcln \forall \projIdx \in \nats[\numProjections]: ~\quad \pclinecomment{check for each projection} \\
+\hspace{2cm} \pcln \t \forall \vecIdx \in \nats[\genericVecLen]:\\
+\hspace{2cm} \pcln \t \t \genericVec[\setIdx, \projIdx, \vecIdx] \assign \primeRO(\projFn[\projIdx], \blocklistVec[\setIdx, \vecIdx], \vecIdx, \projFn[\projIdx](\blocklistVec_{\setIdx})) \\
+\hspace{2cm} \pcln\label{fuzzy:verifyRand} \t \t (\genericSymmKey_{\vecIdx}' , \secretShare{\vecIdx}')   \assign 
+		\ro\left(\cOutputMeta{\projIdx, \vecIdx}^{\prod\limits_{\setIdx' \in \nats[\blocklistSize] \setminus \{\setIdx\}} \genericVec[\setIdx', \projIdx, \vecIdx]}
+		 \bmod \rsaMod \right) \oplus \ssSet_{\projIdx, \vecIdx} \\
+\hspace{2cm}\label{fuzzy:dhf_detect1} \pcln \t \t \dhfOutput{\vecIdx} \assign \prg(\genericSymmKey_{\vecIdx}') \oplus \dhfSet_{\projIdx,\vecIdx} \\
+\hspace{2cm}\label{fuzzy:dhf_detect2} \pcln \t \matchedIndexSet \assign \dhf.\dhfDetect(\dhfOutput{1}, \dots, 
+\dhfOutput{\genericVecLen}) ~\quad \pclinecomment{Output 0 if fails}\\
+\hspace{2cm}\pcln \t \genericSymmKey' = 
+\secretSharingScheme.\SSCombine(\setDefn{\secretShare{\ssIdx}'}_{\ssIdx \in 
+	\matchedIndexSet})\\
+\hspace{2cm} \pcln\label{f:server:decrypt} \t \text{//} ~\clientData = 
+		\decrypt[\genericSymmKey'](\cOutputFile) ~\text{if} ~\genericCInputElmt \in 
+		\blocklist
+}
+%\vspace{-10pt}
+}}
+\caption{\protocolFM: Fuzzy-matching against blocklist\label{fig:fuzzy_match_no_pre}}
+\end{figure}
+
+\fi 
+
+
+\iffalse 
+\begin{figure}[th!]
+\footnotesize
+	\begin{mdframed}
+\noindent\textbf{\underline{Blocklist Creation:}}
+
+\enumListStart
+\item The auditor partitions the blocklist into \numBuckets buckets: $\bucket{1}, \dots, \bucket{\numBuckets}$ and signs the partitions $\genericSig[\bucket{\bucketIdx}] \assign \signingAlg(\bucket{\bucketIdx})$ for all $\bucketIdx \in \nats[\numBuckets]$ using a set-homomorphic signature scheme. 
+
+
+%\item The auditors signs the blocklist partitions $
+
+
+\item\label{fuzzy:pre:cht1} The auditor initialize a cuckoo hash table \cuckooTable with $(1 + \cuckooTableParam) \cdot \blocklistSize$ slots, and samples two hash function $\cuckooHashFn{1}, \cuckooHashFn{2}: \projectedSpace \rightarrow \nats[(1 + \cuckooTableParam) \cdot \blocklistSize]$. 
+
+\item\label{fuzzy:pre:cht2} The auditor samples a key pair $\encryptPubKey, \encryptPrivKey$ for an additively homomorphic encryption scheme $\ahencryptionSchemeDefn$. 
+
+
+\item\label{fuzzy:pre:cht3} For $\blocklistVec \in \blocklist$, $\projIdx \in \nats[\numProjections]$, the auditor places $\langle \ahencrypt[\encryptPubKey](\projFn[\projIdx](\blocklistVec)),\ahencrypt[\encryptPubKey](\bucketIdx) \rangle$ at slot $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx](\blocklistVec))]$ or $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx](\blocklistVec))]$, where $\blocklistVec \in \bucket{\bucketIdx}$. 
+
+
+
+\item The auditor publishes $\cuckooTable, \genericSig[\bucket{1}], \dots, \genericSig[\bucket{\numBuckets}]$. The auditor provides $\encryptPubKey, \encryptPrivKey$ and $\bucket{1}, \dots, \bucket{\numBuckets}$ to the server. 
+
+\enumListEnd
+
+\noindent\textbf{\underline{Upload:}}
+\enumListStartResume
+\item On input $\clientVec$, the client computes $\projFn[1](\clientVec), \dots, \projFn[\numProjections](\clientVec)$
+
+\item The client initializes a $(\detectionThreshold -1, 2\numProjections - \detectionThreshold + 1)$ DHF: $\dhfKeySpace \times \dhfDomain \rightarrow \group$ and samples a key $\dhfKey \sample \dhfKeySpace$. 
+
+\item\label{fuzzy:pre:prg} The client samples $\genericSymmKey_1, \dots, \genericSymmKey_\numProjections \sample \prfKeySpace$, and computes $\dhfSet \assign \{\prg(\genericSymmKey_\projIdx) \oplus \dhf[\dhfKey](\genericRandAlt[\projIdx])\}_{\projIdx \in \nats[\numProjections]}$ where $\genericRandAlt[\projIdx] \sample \dhfDomain$.
+
+\item The client samples a key $\voucherKey \assign \encryptKeyGen(1^\secParam)$ for the symmetric key encryption scheme \encryptionSchemeDefn, and secret shares it using a 
+$\revealThreshold$-out-of-$\numProjections$ schemes, 
+$\secretShare{1}, \dots, \secretShare{\numProjections} \assign \secretSharingScheme.\SSShare(\voucherKey)$
+
+
+\item\label{fuzzy:pre:match_cht} For $\projFn[\projIdx]$, the client retrieves $\langle \ciphertext[1], \ciphertext[2] \rangle$ from $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx])]$ and 
+$\langle \ciphertext[1]', \ciphertext[2]' \rangle$ from $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx])]$ and computes
+
+\enumListStartResume
+
+\item $\secretShareEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[1, \projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\genericSymmKey_{\projIdx}, \secretShare{\projIdx})$
+\item $\secretShareEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[2, \projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\genericSymmKey_{\projIdx}, \secretShare{\projIdx})$
+\item $\partitionEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[3, \projIdx]\homomorphicAdd{\encryptPubKey} \ciphertext[2]$
+\item $\partitionEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[4, \projIdx] \homomorphicAdd{\encryptPubKey} \ciphertext[2]'$
+%\item $\dhfEncryption{1, \projIdx} \assign (\ciphertext[1] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[5,\projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\dhfComponent{\projIdx})$
+%\item $\dhfEncryption{2, \projIdx} \assign (\ciphertext[1]' \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](-\projFn[\projIdx](\clientVec))) \homomorphicScalerMult{\encryptPubKey} \genericRand[6,\projIdx] \homomorphicAdd{\encryptPubKey} \ahencrypt[\encryptPubKey](\dhfComponent{\projIdx})$
+
+\enumListEnd
+
+\item The client creates the voucher $\voucher \assign \{ \partitionEncryption{\tblIdx,\projIdx} \}_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]}$ and sends $\encrypt[\voucherKey](\voucher), \{\secretShareEncryption{\tblIdx,\projIdx}\}_{\tblIdx \in [2], \projIdx \in \nats[\numProjections]}$ and $\dhfSet$ to the server.  
+\enumListEnd
+
+\noindent\textbf{\underline{Check:}}
+
+
+The server decrypts $\secretShareEncryption{1, \projIdx}, \secretShareEncryption{2, \projIdx}$
+for all $\projIdx \in \nats[\numProjections]$ and obtains $\langle \genericSymmKey_{\tblIdx, \projIdx}', \secretShare{\tblIdx, \projIdx}' \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]}$. The server computes $\dhfComponent{\tblIdx, \projIdx} \assign \prg(\genericSymmKey_{\tblIdx, \projIdx}') \oplus \dhfSet_{\projIdx}$ for all $\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]$. 
+Then, the server computes $\dhf.\dhfDetect(\langle \dhfComponent{\tblIdx, \projIdx} \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]})$. If the detection fails, the server returns 0. Otherwise
+
+\enumListStartResume
+\item Let $\matchedIndexSet = \{ \langle \tblIdx, \projIdx \rangle \}$ be the set of indices obtained from $\dhf.\dhfDetect(\langle \dhfComponent{\tblIdx, \projIdx} \rangle_{\tblIdx \in \nats[2], \projIdx \in \nats[\numProjections]})$. 
+\item \label{fuzzy:pre:dhf1} If $\langle i, \projIdx \rangle \in \matchedIndexSet$, the server adds $\secretShare{\projIdx}$ to the set $\genericSetVar$
+\item The server reconstructs the key $\voucherKey$ using \secretSharingScheme.\SSCombine(\genericSetVar). 
+\item The server decrypts $\encrypt[\voucherKey](\voucher)$ and obtains $\ciphertext[2]$ (or $\ciphertext[2]')$ from $v_{1, \projIdx}$ (or $v_{2, \projIdx}$) if $\pkdecrypt[\encryptPrivKey](\ciphertext[1]) = \projFn[\projIdx](\clientVec)$ (or $\pkdecrypt[\encryptPrivKey](\ciphertext[1]') = \projFn[\projIdx](\clientVec)$)
+\item \label{fuzzy:pre:dhf2} The server decrypts $\ciphertext[2]$ (or $\ciphertext[2]')$ to obtain the partition number \bucketIdx. The client and server run \protocolFM with $\genericSig[\bucket{\bucketIdx}]$ as the blocklist. 
+\enumListEnd
+
+\end{mdframed}
+\caption{\protocolFMP: Coarse-grained check for fuzzy match}
+\label{fig:fuzzy:pre}
+\end{figure}
+\fi 
