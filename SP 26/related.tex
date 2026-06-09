@@ -5,8 +5,8 @@
 \footnotesize
 % \tiny
 \setlength{\tabcolsep}{2pt}
-\caption{\centering \small Encrypted content moderation systems. 
- $\blocklistSize$: blocklist size, $\epsilon \in (0,1/2)$, $\genericVecLen$: vector length, SH: semi-honest, M: malicious, Avg: average case cos, WC: worst case cost}
+\caption{\centering \small Encrypted content moderation systems.\\ 
+ $\blocklistSize$: blocklist size, $\epsilon \in (0,1/2)$, $\genericVecLen$: vector length, SH: semi-honest, M: malicious, Avg: average-case cost, WC: worst-case cost}
   \label{tab:related}
 \begin{tabular}{| c | c | c | c | c | c | c | c | c|}
 \noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
@@ -14,19 +14,19 @@
 \cline{4 - 9} 
   & & & Server & Client & Client Comp. & Comm. Volume & Client Storage  & Server Comp. \\
 \cline{1-9}
- & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize)$  \\
+\multirow{4}{*}{Exact} & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize)$  \\
 \cline{2-9}
-Exact & Apple PSI~\cite{bhowmick2021apple} + Agg. Signature~\cite{scheffler2023public} & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(\blocklistSize)$ & $\bigO(1)$   \\ 
+& Apple PSI~\cite{bhowmick2021apple} + Agg. Signature~\cite{scheffler2023public} & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(\blocklistSize)$ & $\bigO(1)$   \\ 
 \cline{2-9}
 %& {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(1)$ & $\bigO(\blocklistSize \log \blocklistSize)$  \\ 
 %\cline{2-9}
 & {\bf This work} & \checkmark & M & SH & \makecell{Avg: $\bigO(1)$\\ WC: $\bigO(\log \blocklistSize)$}   & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{\epsilon})$ & \makecell{Avg: $\bigO(1)$\\WC: $\bigO(\blocklistSize)$}\\ 
 \cline{1-9}
- & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize} \genericVecLen)$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize  \genericVecLen)$    \\
+\multirow{2}{*}{Fuzzy} & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize} \genericVecLen)$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize  \genericVecLen)$    \\
 %\cline{2-9}
 %Fuzzy & {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$ & $\bigO(1)$ & $\bigO(\blocklistSize^{1 + \epsilon} \genericVecLen \log \blocklistSize \genericVecLen)$  \\ 
 \cline{2 - 9}
-Fuzzy & {\bf This work} & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon})$  & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{1 + \epsilon})$ & \makecell{$\bigO(\blocklistSize^{\epsilon} \times \genericVecLen)$}    \\ 
+& {\bf This work} & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon})$  & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{1 + \epsilon})$ & \makecell{$\bigO(\blocklistSize^{\epsilon} \times \genericVecLen)$}    \\ 
 \cline{1-9}
 \end{tabular}
 \vspace{0.2em}
@@ -61,7 +61,7 @@ excellent survey \cite{scheffler2023sok}.
 %(see~\cite{safer2025csam,scheffler2023public,applePSICriticBU}). . 
 
 \tblref{tab:related} compares the
-state of the art schemes with our work. We exclude preprocessing and 
+state-of-the-art schemes with our work. We exclude preprocessing and 
 blocklist creation costs for all the schemes since they are linear in the size of the 
 blocklist. Instead we focus on the online costs during file uploads. Auditability refers to whether the scheme allows a set of independent auditors to create and verify the blocklist. Our protocols support a \emph{fast path} for verification assuming that most of the uploaded content will not be blocked; we present the average case and worst case costs. 
 
@@ -77,7 +77,7 @@ blocklist. Instead we focus on the online costs during file uploads. Auditabilit
 %
 \citet{kulshrestha2021identifying} introduced a system with a
 blocklist of perceptual hashes of CSAM content. The protocol leverages a 
-single server PIR scheme, and supports both exact and approximate matching 
+single-server PIR scheme, and supports both exact and approximate matching 
 against the blocklist. \emph{The protocol only
 supports a semi-honest service provider, and cannot be trivially
 extended to provide malicious security without incurring large client costs,
