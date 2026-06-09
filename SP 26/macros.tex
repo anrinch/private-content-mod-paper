@@ -85,7 +85,10 @@
 \newcommand{\distSign}{\textsc{DSign}\xspace}
 \newcommand{\distAdd}{\textsc{DAdd}\xspace}
 \newcommand{\distDel}{\textsc{DDel}\xspace}
+\newcommand{\distBlind}{\textsc{DBlind}\xspace}
 \def\distSigningFunc{\ensuremath{\mathcal{F}_{\mathsf{dsign}}}\xspace}
+\def\distSigningProtocol{\ensuremath{\protocolNotation{\mathsf{dsign}}}\xspace}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -101,9 +104,9 @@
 \newcommand{\keygenGenSig}{\ensuremath{\algNotation{SGen}}\xspace}
 
 
-\newcommand{\bfACB}{\ensuremath{\protocolNotation{bf}}\xspace}
-\newcommand{\sigACB}{\ensuremath{\protocolNotation{sig}}\xspace}
-\newcommand{\chtACB}{\ensuremath{\protocolNotation{cht}}\xspace}
+\newcommand{\bfACB}{\ensuremath{\protocolNotation{\mathsf{bf}}}\xspace}
+\newcommand{\sigACB}{\ensuremath{\protocolNotation{\mathsf{sig}}}\xspace}
+\newcommand{\chtACB}{\ensuremath{\protocolNotation{\mathsf{cht}}}\xspace}
 
 \newcommand{\ourSigScheme}{\ensuremath{\protocolNotation{\mathsf{RH-Sig}}}\xspace}
 \NewDocumentCommand{\sign}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{sign}}\xspace}{\ensuremath{\algNotation{sign}_{#1}}\xspace}}
@@ -111,8 +114,10 @@
 \NewDocumentCommand{\randomize}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Rand}}}{\ensuremath{\algNotation{Rand}_{#1}}}}
 \NewDocumentCommand{\verifyRand}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Auth}}}{\ensuremath{\algNotation{Auth}_{#1}}}}
 \newcommand{\keyGen}{\ensuremath{\algNotation{Gen}}\xspace}
+\NewDocumentCommand{\blind}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{Blind}}}{\ensuremath{\algNotation{Blind}_{#1}}}\xspace}
+\NewDocumentCommand{\unblind}{o}{\IfNoValueTF{#1}{\ensuremath{\algNotation{UnBlind}}}{\ensuremath{\algNotation{UnBlind}_{#1}}}\xspace}
 \newcommand{\ourSigSchemeDefn}{\ensuremath{\ourSigScheme = \langle  \keyGen, \sign, \verify, 
-\randomize, \verifyRand\rangle}\xspace}
+\randomize, \verifyRand, \blind, \unblind \rangle}\xspace}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -127,10 +132,11 @@
 \newcommand{\algComment}[1]{\textit{/* #1 */}\xspace}
 \newcommand{\myparagraph}[1]{\smallskip\noindent\textbf{#1}:\xspace}
 %\newcommand{\myparagraph}{\paragraph}
-%\newtheorem{definition}{Definition}
+\newtheorem{definition}{Definition}
 \newtheorem{assumption}{Assumption}
 \newtheorem{theorem}{Theorem}[section]
-%\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{prop}[theorem]{Proposition}
 \newenvironment{myquote}%
 {\list{}{\leftmargin=0.1in\rightmargin=0.2in}\item[] \em}%
@@ -392,7 +398,7 @@ sk\IfValueT{#1}{_{#1}}\rangle}\xspace}
 
 \newcommand{\sigMsgSpace}{\ensuremath{\universe}\xspace}
 \newcommand{\sigKeySpace}{\ensuremath{\mathcal{K}}\xspace}
-\newcommand{\sigOutputSpace}{\ensuremath{\genericFnRange}\xspace}
+\newcommand{\sigOutputSpace}{\ensuremath{\mathcal{X}}\xspace}
 \newcommand{\numberOfSetsQueried}{\ensuremath{n_s}\xspace}
 \newcommand{\queriedSets}{\ensuremath{\phi}\xspace}
 \newcommand{\indcpaBit}{\ensuremath{\valNotation{b}}\xspace}
@@ -880,10 +886,10 @@ sk\IfValueT{#1}{_{#1}}\rangle}\xspace}
 \NewDocumentCommand{\genericSetDiff}{o o}
 {\ensuremath{#1\setminus\setDefn{#2}}\xspace}
 
-\NewDocumentCommand{\dhf}{o}{\ensuremath{\mathsf{DHF\IfValueT{#1}{_{#1}}}}\xspace}
+\NewDocumentCommand{\dhf}{o}{\ensuremath{\mathsf{DHF}\IfValueT{#1}{_{#1}}}\xspace}
 \newcommand{\dhfKeySpace}{\ensuremath{K_{dhf}}}
-\newcommand{\dhfDomain}{\ensuremath{\mathcal{D}}\xspace}
-\newcommand{\dhfRange}{\ensuremath{\mathcal{R}}\xspace}
+\newcommand{\dhfDomain}{\ensuremath{\mathcal{D}_{dhf}}\xspace}
+\newcommand{\dhfRange}{\ensuremath{\mathcal{R}_{dhf}}\xspace}
 \newcommand{\dhfDetect}{\ensuremath{\textsc{Detect}}\xspace}
 \newcommand{\matchedIndexSet}{\ensuremath{\setNotation{I}}\xspace}
 \newcommand{\dhfParamMatchThreshold}{\ensuremath{t_{dhf}}\xspace}
@@ -906,6 +912,8 @@ o}{\ensuremath{c\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
 \newcommand{\DSShare}{\ensuremath{\textsc{DSHARE}}\xspace}
 \newcommand{\DSCombine}{\ensuremath{\textsc{DCOMBINE}}\xspace}
 \newcommand{\ssIdx}{\ensuremath{m}\xspace}
+\def\secretSharingSchemeDefn{\ensuremath{\secretSharingScheme = \langle \SSShare, \SSCombine\rangle }\xspace}
+\def\detectableSecretSharingSchemeDefn{\ensuremath{\detectableSecretSharingScheme = \langle \DSShare, \DSCombine\rangle }\xspace}
 
 \NewDocumentCommand{\cOutputFile}{g}{\ensuremath{\mathsf{F}\IfValueT{#1}{_{#1}}}\xspace}
 \NewDocumentCommand{\cOutputMeta}{g}{\ensuremath{\mathsf{M}\IfValueT{#1}{_{#1}}}\xspace}

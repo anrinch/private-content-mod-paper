@@ -5,29 +5,29 @@
 \footnotesize
 % \tiny
 \setlength{\tabcolsep}{2pt}
-\caption{\centering \small Encrypted content moderation systems for CSAM detection. 
- $\blocklistSize$: blocklist size, $\epsilon \in (0,1/2)$, $\genericVecLen$: vector length, SH: semi-honest, M: malicious, FP: false positive rate, FN: false negative rate, Avg: average case cos, WC: worst case cost}
+\caption{\centering \small Encrypted content moderation systems. 
+ $\blocklistSize$: blocklist size, $\epsilon \in (0,1/2)$, $\genericVecLen$: vector length, SH: semi-honest, M: malicious, Avg: average case cos, WC: worst case cost}
   \label{tab:related}
-\begin{tabular}{| c | c | c | c | c | c | c | c | c | c | c |}
+\begin{tabular}{| c | c | c | c | c | c | c | c | c|}
 \noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
-\multirow{2}{*}{Type of Matching} & \multirow{2}{*}{System Name} & \multirow{2}{*}{Audibility} & \multicolumn{2}{c|}{Threat model} & \multicolumn{4}{c|}{Asymptotic Costs}  & \multicolumn{2}{c|}{Accuracy}\\
-\cline{4 - 11} 
-  & & & Server & Client & Client Comp. & Comm. Volume & Client Storage  & Server Comp. & FP & FN  \\
-\cline{1-11}
- & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize)$ & 0 & 0 \\
-\cline{2-11}
-Exact & Apple PSI~\cite{bhowmick2021apple} + Agg. Signature~\cite{scheffler2023public} & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(\blocklistSize)$ & $\bigO(1)$  & 0 & $ > 0$ \\ 
-\cline{2-11}
+\multirow{2}{*}{Type of Matching} & \multirow{2}{*}{System Name} & \multirow{2}{*}{Audibility} & \multicolumn{2}{c|}{Threat model} & \multicolumn{4}{c|}{Asymptotic Costs} \\
+\cline{4 - 9} 
+  & & & Server & Client & Client Comp. & Comm. Volume & Client Storage  & Server Comp. \\
+\cline{1-9}
+ & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize)$  \\
+\cline{2-9}
+Exact & Apple PSI~\cite{bhowmick2021apple} + Agg. Signature~\cite{scheffler2023public} & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(\blocklistSize)$ & $\bigO(1)$   \\ 
+\cline{2-9}
 %& {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(1)$  & $\bigO(1)$ & $\bigO(1)$ & $\bigO(\blocklistSize \log \blocklistSize)$  \\ 
 %\cline{2-9}
-& {\bf This work} & \checkmark & M & SH & Avg: $\bigO(1)$, WC: $\bigO(\log \blocklistSize)$   & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{\epsilon})$ &  Avg: $\bigO(1)$, WC: $\bigO(\blocklistSize)$ & 0 & 0  \\ 
-\cline{1-11}
- & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize} \genericVecLen)$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize  \genericVecLen)$  & 0 & $ > 0$  \\
+& {\bf This work} & \checkmark & M & SH & \makecell{Avg: $\bigO(1)$\\ WC: $\bigO(\log \blocklistSize)$}   & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{\epsilon})$ & \makecell{Avg: $\bigO(1)$\\WC: $\bigO(\blocklistSize)$}\\ 
+\cline{1-9}
+ & Private Hash Matching~\cite{kulshrestha2021identifying} & N/A & SH & SH & $\bigO(\sqrt{\blocklistSize} \genericVecLen)$ & $\bigO(\sqrt{\blocklistSize})$ & $\bigO(1)$ &  $\bigO(\blocklistSize  \genericVecLen)$    \\
 %\cline{2-9}
 %Fuzzy & {\bf This work} (opt. client storage) & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$ & $\bigO(1)$ & $\bigO(\blocklistSize^{1 + \epsilon} \genericVecLen \log \blocklistSize \genericVecLen)$  \\ 
-\cline{2 - 11}
-Fuzzy & {\bf This work} & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$ & $\bigO(\blocklistSize^{1 + \epsilon})$ & Avg: $\bigO(\blocklistSize^{\epsilon})$, WC: $\bigO(\blocklistSize^{\epsilon} \genericVecLen)$  & 0 & $ > 0$  \\ 
-\cline{1-11}
+\cline{2 - 9}
+Fuzzy & {\bf This work} & \checkmark & M & SH & $\bigO(\blocklistSize^{\epsilon})$  & $\bigO(\blocklistSize^{\epsilon})$ & $\bigO(\blocklistSize^{1 + \epsilon})$ & \makecell{$\bigO(\blocklistSize^{\epsilon} \times \genericVecLen)$}    \\ 
+\cline{1-9}
 \end{tabular}
 \vspace{0.2em}
 \end{table*}
@@ -47,7 +47,7 @@ In this work, we are interested in content moderation schemes for encrypted file
 incurring high costs or leaking matching
 patterns~\cite{sherry2015blindbox, ning2019privdpi, ning2020pine,
   wen2021framework}. We refer the interested reader to an
-excellent survey \cite{scheffler2023sok} on content moderation for further details
+excellent survey \cite{scheffler2023sok}.
 
 
 %However, .  In most cases, content moderation is performed using blocklists, e.g.,
@@ -82,11 +82,12 @@ against the blocklist. \emph{The protocol only
 supports a semi-honest service provider, and cannot be trivially
 extended to provide malicious security without incurring large client costs,
 e.g., by using an authenticated PIR~\cite{colombo2023authpir}}. The
-scheme also does not allow independent auditors to verify that the
-blocklist has been created honestly. In contrast, we do 
-not assume any trust on the service provider. Finally, the approximate match scheme 
-only works for a specific type of content embedding with empirically determined parameters and high false negatives (> 17\%). 
-The scheme cannot be trivially extended to other types of embeddings. 
+scheme also does not allow independent auditors to verify the blocklist.
+
+% In contrast, we do 
+% not assume any trust on the service provider. Finally, the approximate match scheme 
+% only works for a specific type of content embedding with empirically determined parameters and high false negatives ($\approx$ 17\%). 
+% The scheme cannot be trivially extended to other types of embeddings. 
 
 
 

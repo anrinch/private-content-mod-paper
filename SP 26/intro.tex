@@ -1,0 +1,208 @@
+\section{Introduction}
+%
+
+
+It is estimated that almost 50\% of the world's data resides on
+remote services, e.g., public clouds, by the end of 2025~\cite{public_storage_vol,bartley2025bigdata}. 
+Unfortunately, storage services are often misused to store and distribute harmful
+content, e.g., child-sexual-abuse-material (CSAM)~\cite{williams2022csam}. In response,
+large storage providers like Apple, Google, and Amazon have their own
+mechanisms to identify such harmful content~\cite{apple2021csam,
+  googleCSAM, amazonCSAM}. Typically, these services use blocklists curated by trusted agencies, e.g., the National Center for Missing \& Exploited Children (NCEMC) to identify problematic content. These mechanisms are reasonably effective as a deterrent and an effective method to catch ``easy'' cases of proliferation~\cite{}\footnote{Of course, a motivated attacker can still store CSAM by encrypting the content before uploading; it is unclear whether any satisfactory solution can solve this problem without completely violating client-side privacy.}
+
+
+However, the task is more challenging with end-to-end encryption (E2EE)~\cite{content_mod_e2ee} because it precludes the provider from performing any form of content moderation on data uploaded to its servers. This has raised serious concerns among child safety groups that rely on tips to detect proliferation of CSAM~\cite{doj2020international}. 
+To mitigate this tension, in 2021, Apple proposed a mechanism  
+to detect harmful content in end-to-end encrypted photos uploaded to iCloud. The system, called the Apple PSI~\cite{bhowmick2021apple}, leveraged Apple' NeuralHash technology to generate a hash of the content. The hash is then compared privately against a blocklist curated by Apple. 
+If there is a match, then the iCloud server learns the decryption key. Sophisticated attackers can still circumvent detection by obfuscating their image, e.g., by ``double-encrypting'' it before uploading to iCloud, or tamper with the client-side software itself. Nonetheless, the mechanism provided several important safeguards: i) it allowed the service provider to perform basic content sanitization while supporting E2EE, ii) it could act as a deterrent against bulk uploads by unsophisticated clients~\cite{csam_example_1,csam_example_2}, and iii) it relieves the service provider of legal liabilities due to publicly hosting CSAM. 
+
+Ultimately, the scheme was not deployed due to public concerns that it could be misused for oversight and surveillance~\cite{applePSIabandon}. Indeed, Apple's involvement in creating the
+blocklist, and the lack of a mechanism that would allow trusted parties, e.g., NCEMC, to authenticate the blocklist, is problematic~\cite{applePSICriticBBC,
+  applePSICriticBU}. Second, the system was tied exclusively to NeuralHash, which 
+produces false positives~\cite{neuralHashAttack}; unfortunately, adapting the system to other kinds of perceptual hashes is non-trivial. While the first problem can be addressed through cryptographic techniques~\cite{scheffler2023public}, the latter remains unaddressed to the best of our knowledge. 
+
+
+Thus, the central question of this paper is:
+\emph{Can we design a content moderation scheme for end-to-end encrypted data stores with minimal trust assumptions that allows service providers to perform the same level of content sanitization as possible today without end-to-end to encryption?}
+
+
+
+
+
+%\begin{myquote}
+%Can we design an encrypted content moderation system where a group of independent auditors create 
+%the blocklist such that i) clients can authenticate the blocklist before use, ii) the mechanism is compatible with different types of content hashing algorithms, iii) multiple service providers can use the same blocklist without being involved in its curation, and iv) the mechanism has low compute and communication costs?
+%\end{myquote}
+
+
+%While we be mitigated, e.g., by
+%using a different perceptual hash, and/or by authenticating the
+%blocklist by a set of trusted
+%\emph{auditors}~\cite{scheffler2023public}, this system was ultimately
+%not deployed.
+
+%In this work, we propose mechanisms for \emph{auditable} content
+%moderation for encrypted storage services. 
+
+\myparagraph{Authenticated blocklists \& distributed trust}
+%
+We envision a setting where a group of independent parties (auditors) with semi-honest majority, e.g., law enforcement, and child safety groups, publish an unforgeable blocklist with content hashes. Such blocklists are
+not uncommon, e.g., the NCEMC have published lists of missing
+children and persons~\cite{ncemc}. We 
+expect that a threshold number of these independent auditors will behave honestly, and posit that having a common blocklist curated by independent agencies, will build more trust in the system. It was also noted by prior work that the blocklist must be kept confidential from clients, because it may be considered unlawful to release the information publicly, and reveal victim identities~\cite{kulshrestha2021identifying,canetti2021broken}\footnote{We do not substantiate these claims, but treat confidentiality as a necessary feature as it is the accepted model in all prior works~\cite{kulshrestha2021identifying,scheffler2023public,bhowmick2021apple}}. 
+
+
+The published blocklists are used by the server(s) to identify problematic content. Matching against the blocklist can be either \emph{exact}, where an equality test between content hashes suffices, or \emph{fuzzy}, where a metric
+distance is computed between content hashes to estimate similarity against the blocklisted items~\cite{yang2025certphash}. The latter is important to identify content that may be obfuscated with simple transformations, e.g, image cropping, rotations, etc. 
+
+
+
+We formalize this idea by designing \emph{auditable content moderation schemes} that support both exact and fuzzy matching.  The core building block of our constructions are blocklists that can be stored and authenticated by the client with reasonable storage and compute costs while ensuring: i) \textbf{confidentiality}: clients do not learn the constituent blocked items, ii) \textbf{unforgeability}: only the auditors can create/modify the blocklist, and iii) \textbf{oblivious matching}: the client can obliviously match its input against items in the blocklist while revealing the result to the server; If the input is not in the blocklist, then the result of the match does not reveal any information. We call such blocklist designs as \emph{authenticated \& confidential blocklists} (ACBs). 
+
+\iffalse 
+A straightforward realization of an ACB is an encrypted and signed blocklist~\cite{scheffler2023public,kulshrestha2021identifying}. The auditors create a hash table with the (hash of) blocklisted items encrypted under a homomorphic encryption scheme, and sign the hash table under their own private keys. The server is provided the decryption key. During an upload, the client uses the hash table to match its content against an encrypted blocklisted item, e.g., by homomorphically subtracting a hash of its content from the encrypted value stored in the hash table; the server learns the result after decryption. There are several drawbacks of of this idea. First, the ACB is linear in size of the blocklist which may have prohibitive storage overheads if the blocklist is large~\cite{}. Second, which such blocklists are suitable for \emph{exact} matching against blocklisted items, they are not compatible with \emph{fuzzy} matching where a distance is computed between a content hash to estimate
+similarity with blocklisted items. The latter is the typical matching mechanism for several content hashing mechanisms~\cite{yang2025certphash}. 
+\fi 
+
+\myparagraph{Contributions}
+%
+We propose three new types of ACB designs leveraging new cryptographic techniques 
+
+\itemListStart
+\item An encrypted Bloom filter based design with $\bigO(1)$ cost to perform an oblivious match. We propose an \emph{authenticated OPRF} functionality extending the standard OPRF definition to a  three-party setting to create the ACB. 
+\item A signature based design where a signed, cryptographic accumulator serves as a $\bigO(1)$-sized ACB. We propose a new cryptographic primitive, a \emph{randomizable set-homomorphic signature}, that allows us to directly compute on the signature to implement an oblivious match against the blocklist with $\bigO(1)$ client cost. 
+\item An encrypted cuckoo hash table based design that supports fuzzy matching. We leverage a new cryptographic primitive, \emph{detectable secret-sharing}, that allows a party to identify the shares of a secret when there are at least $\threshold$ of them in a set, but otherwise reveals nothing.  
+\itemListEnd
+
+\myparagraph{Integeration \& Evaluation}
+%
+We leverage these ACB designs in our content moderation schemes. Our exact matching scheme supports a \emph{fast path} that verifies and approves a majority of the safe content in  
+8ms comparing against a million-sized blocklist. This is more than \textbf{60$\times$ faster} than the state-of-the-art~\cite{kulshrestha2021identifying} \emph{that operates under a more restrictive threat model with a semi-honest server} with \textbf{50$\times$} lower communication costs. The full verification for blocked content takes roughly 430 ms, but since this is presumably rare, the average cost of verification with 10\% of the content requiring a full check is 43ms, \textbf{12$\times$ faster} than the state of the art. Fuzzy matching against a blocklist with 1 million items takes less than 600ms,  \textbf{5$\times$} faster than the state-of-the-art~\cite{kulshrestha2021identifying} with \textbf{25$\times$} lower communication costs. 
+
+
+
+\iffalse 
+The token hides the blocklist elements from the clients, so 
+as to ensure that the checks are not trivially circumvented and victim identities are not 
+publicly revealed. During uploads, the \emph{blocklist authentication token} is
+used by clients to generate content-specific metadata
+in the form of a \emph{content verification token}, which is provided to the servers (along with the encrypted data)
+and allows checks against the blocklist. The
+\emph{content verification token} is hiding in the sense that if the uploaded content is
+not in the blocklist, then no information is revealed to the server.
+We realize this design to allow for either \emph{exact matching} of content, where an equality test between
+content hashes suffices, or \emph{fuzzy matching}, where a
+distance is computed between content embeddings to estimate
+similarity~\cite{yang2025certphash}.
+
+
+
+%\myparagraph{Exact matching against blocklist}
+%
+
+\myparagraph{Distributed, randomizable set-homomorphic signatures}
+%
+We design the \emph{blocklist authentication token} using a new cryptographic primitive, a \emph{randomizable set-homomorphic
+signature}. A set homomorphic signature~\cite{johnson2002homomorphic} enable signing a set of items such that given a
+signature and the public key, a party can compute a signature
+on any subset of the items. We further extend the definition with a \emph{randomizing} function. Informally, given a signature on a
+set \blocklist, applying this function to the homomorphically computed
+signature on $\blocklist \setminus \{\genericCInputElmt\}$ ensures
+that the resulting value hides $\genericCInputElmt$ when
+$\genericCInputElmt \notin \blocklist$, even when $\blocklist$ is
+known. However, when $\genericCInputElmt \in \blocklist$, the function
+produces a signature on $\blocklist \setminus
+\{\genericCInputElmt\}$ that can be verified efficiently. 
+%
+
+%\footnote{It is also possible to compute
+%the signature on the union of two sets, given the signatures on the
+%individual sets, with only the public key, but this property is not important for our construction.}
+
+We use the auditors' signature on the
+blocklist \blocklist as the \emph{blocklist authentication token}, thus ensuring unforgeability and public verifiability. 
+Then, the client derives the \emph{content verification token} by homomorphically computing the signature
+on $\blocklist \setminus \{\genericCInputElmt\}$, and applying the
+randomizing function to this signature. If $\genericCInputElmt \in
+\blocklist$, the server learns $\genericCInputElmt$ as it can verify
+the signature, but otherwise the randomizing function hides
+$\genericCInputElmt$ from the server. 
+
+
+%
+We propose a new construction for a
+randomizable set homomorphic signature scheme under the strong QR-RSA assumption that produces a constant-sized signature, \emph{independent 
+of the blocklist size}. The scheme supports distributed key generation and allows a group of independent auditors with semi-honest majority to sign and update the blocklist in a distributed fashion when the private key is secret-shared among the auditors. We leverage this construction to design a content moderation protocol with optimal client costs. 
+A key feature of our construction is a \emph{fast path} for identifying safe content that eliminates most of the expensive computation (both for the client and the server) required for a full verification, when an (encrypted) uploaded file is not on the blocklist. Thus, our protocol has modest average case costs, since presumably a large portion of the content uploaded is not on the blocklist. 
+\fi 
+
+\iffalse 
+\myparagraph{Support for fuzzy matching}
+We extend the exact-matching mechanism to compute a fuzzy
+match when the content hashes are vectors 
+in Hamming space\footnote{Our choice of Hamming distance is informed by the fact that several image embeddings use Hamming distance to identify similar images~\cite{singh2025perceptual,neuralHashAttack,yang2025certphash} and existing work on encrypted content moderation also use Hamming distance as the metric~\cite{kulshrestha2021identifying}}. This is achieved by augmenting the protocol with a relatively inexpensive 
+coarse-grained check using projections of the vectors to indicates whether a more expensive check using the \emph{content verification token} 
+is required. The coarse-grained check eliminates a large fraction of the true negatives and reduces server costs. Crucially, both the checks require communication and compute costs (server + client) that scale sublinearly in the blocklist size. 
+\fi 
+
+\iffalse
+ but the overall scheme does not scale to large blocklists due
+to high server costs. Our second technical contribution is a
+mechanism that enables fuzzy matching when the content embeddings are
+in Hamming space. Essentially, the scheme generalizes the Apple PSI
+mechanism to fuzzy matching. In short, the server stores a per-client
+cuckoo hash table~\cite{fan2014cuckoo}, indexed by random projections
+of the blocklist vectors. The values in the table are the blocklist
+vectors themselves. During uploads, a client retrieves some elements
+from the hash table based on the projections of its input, and
+computes the Hamming distance between its own content embedding and
+the results returned by the server. Crucially, the hash table is
+obfuscated by the client during a preprocessing step such that the
+server does not learn anything from the queries (including the Hamming
+distance between the blocklist elements and the client's input) unless
+there is a match, and cannot tamper with the entries in the
+table. While the preprocessing step is expensive, it is performed only
+once. The query costs scale sublinearly in the blocklist size.
+\fi 
+%\mkr{replaced ``compute time'' with latency ... ok?}
+
+
+%\myparagraph{Evaluation}
+%
+%Our exact-matching scheme is highly efficient. 
+
+%It takes less
+%than 8 milliseconds for the client to compute the \emph{content verification token}, and requires less
+%than 1KB of communication (excluding the actual encrypted content),
+%\emph{independent of the blocklist size}. For a blocklist of a million elements, the server requires on an average 300 ms to check content. The scheme is non-interactive and so the client
+%latency is not affected by the server throughput. Compared to the private exact hash
+%matching (PEMC) scheme of , our scheme is more than $2\times$ faster with more than two orders of magnitude less communication.  
+
+% a significant burden for storage-limited devices.
+
+
+
+%matching scheme takes less than 1.5 seconds to identity a potential match against a million-element blocklist of 256-bit perceptual hash vectors,
+% The fine-grained check takes about $127$ seconds \emph{but is only performed if indicated by the coarse-grained check}. The fine-grained check eliminates all false positives without revealing any content to the server. In the average case, our protocol is faster than the private \textit{approximate} hash matching (PAMC) scheme of \citet{kulshrestha2021identifying}, which has a compute time of $27$ seconds and \emph{operates under a more restrictive threat model with a semi-honest server}. 
+
+
+%In comparison, the private \textit{approximate} hash
+%matching (PAMC) scheme of \citet{kulshrestha2021identifying}, which
+%has a much higher false negative rate around 17\%, has a compute time of $27$ seconds.  Moreover, our scheme tolerates a more permissive threat model with a malicious server. 
+
+
+
+\myparagraph{Limitations \& risks of content moderation}
+%
+The primary motivation of this work is to develop new cryptographic mechanisms for content moderation, but we also acknowledge the limitations and risks of deploying such a system. First, as with any content moderation system, there are risks of misuse for unauthorized surveillance. Our solution tries to address this problem by distributing trust among multiple independent agencies, overwhelmingly the most effective counter-balance to pressure and compromise, and is widely used in both research and in practice (e.g., Tor). However, we acknowledge that this may not suffice against a powerful adversary, e.g., a nation state. Thus, further discussions and potential mitigations are necessary before any content moderation system, including ours, is widely deployed. These discussions are out of scope of this paper
+
+
+Second, any system relying only on server-side checks (as in our work) is limited to detecting content that is not obfuscated by the client before uploading e.g., by locally encrypting the data. Evidence shows that even this basic level of monitoring is important for slowing down proliferation of CSAM~\cite{doj2020international}, and and is implemented by most service providers today. Thus, our technical solution only extends these monitoring capabilities while also allowing the service provider to support end-to-end encryption. 
+
+
+
+%Service providers today are limited to only identify%ing unencrypted harmful content, as a motivated attacker can still provide an encrypted input even if the service does not support E2EE. 
+
+%This excludes a sizable set of attackers. However, 
+ 
+

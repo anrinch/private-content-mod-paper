@@ -1,18 +1,24 @@
-\documentclass[sigconf,anonymous,review]{acmart}
-\usepackage{popets}
 
-% Copyright
-\setcopyright{popets}
-\copyrightyear{YYYY}
+\documentclass[conference,compsoc]{IEEEtran}
+\ifCLASSOPTIONcompsoc
+  \usepackage[nocompress]{cite}
+\else
+  \usepackage{cite}
+\fi
 
-% Issue info
-\acmYear{YYYY}
-\acmVolume{YYYY}
-\acmNumber{X}
-\acmDOI{XXXXXXX.XXXXXXX}
-\acmISBN{}
-\acmConference{Proceedings on Privacy Enhancing Technologies}
-\settopmatter{printacmref=false,printccs=false,printfolios=true}
+
+%%%% PETS 2027
+%\documentclass[sigconf,anonymous,review]{acmart}
+%\usepackage{popets}
+%\setcopyright{popets}
+%\copyrightyear{YYYY}
+%\acmYear{YYYY}
+%\acmVolume{YYYY}
+%\acmNumber{X}
+%\acmDOI{XXXXXXX.XXXXXXX}
+%\acmISBN{}
+%\acmConference{Proceedings on Privacy Enhancing Technologies}
+%\settopmatter{printacmref=false,printccs=false,printfolios=true}
 
 
 
@@ -53,7 +59,7 @@
 \usepackage{framed}
 \usepackage{verbatim}
 \usepackage{mdframed}
-%\usepackage[numbers]{natbib}
+\usepackage[numbers]{natbib}
 \usepackage{algorithm}
 \usepackage[commentColor=gray]{algpseudocodex}
 \usepackage{etoolbox}
@@ -79,52 +85,15 @@
 \begin{document}
 
 
-\title{Authenticated Blocklisted Systems with Applications to Content Moderation}
+\title{Auditable Content Moderation for Encrypted File Stores}
 
+\maketitle
 
 
 \begin{abstract}
 An auditable content moderation scheme enables a file server to detect problematic content, e.g., CSAM, in encrypted files uploaded by a client(s). In such a system, the client uploads the encrypted file along with cryptographic metadata that allows the server to decrypt the file if the content matches an item in a blocklist. Otherwise, if the content is not on the blocklist, then the metadata does not reveal any information about the encrypted content.  We present new designs for auditable content moderation schemes that (i) enable multiple file servers to use a common, approved blocklist that they cannot undetectably modify; (ii) offer server-client communication and client compute costs that scale sublinearly in the number of elements in the blocklist; and (iii) generalize to various blocklist types and supports exact and fuzzy matching of content.  We demonstrate with benchmarks that our schemes are practical and outperform the state of the art. 
 \end{abstract}
 
-
-
-\begin{CCSXML}
-<ccs2012>
- <concept>
-  <concept_id>00000000.0000000.0000000</concept_id>
-  <concept_desc>Applied Cryptography, privacy and secure multiparty computation</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
-</ccs2012>
-\end{CCSXML}
-
-\ccsdesc[500]{Applied Cryptography~privacy and secure multiparty computation}
-%\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-%\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-%\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-
-%%
-%% Keywords. The author(s) should pick words that accurately describe
-%% the work being presented. Separate the keywords with commas.
-\keywords{Secure multiparty computation, homomorphic signature, oblivious PRF, encrypted content moderation}
-
-\maketitle
 \input{intro}
 \input{related}
 \input{problem}
@@ -199,8 +168,7 @@ due to the urgent need to combat the proliferation of CSAM, we believe that our 
 
 
 
-\bibliographystyle{ACM-Reference-Format}
-{
+\bibliographystyle{IEEEtranSN}
 \bibliography{bib.bib, misc.bib}
 
 

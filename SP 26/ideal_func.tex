@@ -5,7 +5,8 @@
 \begin{minipage}[t]{0.45\textwidth}
 \footnotesize
 
-\underline{$\contentModFuncExact$: Auditable Content Moderation with Exact Matching}		
+\underline{$\contentModFuncExact$: Auditable Content Moderation with Exact Matching}
+		
 		
 		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a server $\server$ and a client $\client$. A signature scheme $\sigSchemeDefn$. False negative rate $\fnr \in (0,1)$ and false positive rate $\fpr \in (0,1)$. 
 		
@@ -17,7 +18,7 @@
 		\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
 
 
-		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output an authenticated and confidential blocklist $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ . Store $\blocklist$
+		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ to \client. Output the blocklist \blocklist to \server and store $\blocklist$
 
 		\enumListEnd
 		
@@ -66,7 +67,8 @@
 \begin{minipage}[t]{0.45\textwidth}
 \footnotesize
 
-\noindent\underline{$\contentModFuncFuzzy$: Auditable Content Moderation with Fuzzy Matching}		
+\noindent\underline{$\contentModFuncFuzzy$: Auditable Content Moderation with Fuzzy Matching}
+		
 		
 
 		\smallskip\noindent\textbf{Parameters:} $\numAuditors$ auditors $\auditor[1], \dots, \auditor[\numAuditors]$, a server $\server$ and a client $\client$. A signature algorithm $\sigSchemeDefn$. 
@@ -78,7 +80,7 @@ Threshold $\threshold$ for a metric distance $\distanceNotation[\distance][\cdot
 	\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
 
 
-		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output an authenticated and confidential blocklist $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ . Store $\blocklist$
+		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ to \client. Output the blocklist \blocklist to \server and store $\blocklist$
 
 		\enumListEnd
 		

@@ -4,14 +4,14 @@
 
 \input{ideal_func.tex}
 
-\subsection{Problem}
+%\subsection{Problem}
 %
 
 A content moderation scheme enables a file server to detect harmful content, e.g., 
-CSAM, in encrypted files uploaded by a client(s). The client provides metadata that allows the server to decrypt the file if the content matches an item in a \textit{blocklist}. Otherwise, if the content is not on the blocklist, then the 
-metadata does not reveal any information about the encrypted content. Typically, a blocklist 
+CSAM, in encrypted files uploaded by a client(s) by matching file metadata against iems on a \textit{blocklist}. If the content is not on the blocklist, then the 
+metadata does not reveal any information. Typically, a blocklist 
 is created from a content hash~\cite{bhowmick2021apple} or an 
-\textit{embedding}~\cite{du2020perceptual, lu2017deep, raginsky2009locality}. In this work, we envision that the blocklist is jointly created by a group of \emph{auditors}. Clients can verify the authenticity of the blocklist using some public cryptographic token, e.g., a signature. Further, clients do not learn the items on the blocklist, as otherwise they can try simple transformations to evade detection. 
+\textit{embedding}~\cite{du2020perceptual, lu2017deep, raginsky2009locality}. The blocklist is published by a group of \emph{auditors}. Clients can verify its authenticity using a public cryptographic token, e.g., a signature. In addition, clients do not learn any information about the blocklisted items. 
 
 \iffalse
 At a high level, we want a \emph{content moderation scheme} to have the following properties
@@ -33,17 +33,18 @@ At a high level, we want a \emph{content moderation scheme} to have the followin
 
 %\myparagraph{Type of matching} 
 %
-Depending on the type of items in the blocklist, content matching may either be in the form of \emph{exact matching} or \emph{fuzzy matching}. Exact matching is an 
-equality test between an input and the items in the blocklist, while fuzzy matching typically computes a 
+Depending on the type of items, content matching may either be in the form of \emph{exact matching} or \emph{fuzzy matching}. Exact matching is an 
+equality test between an input and the items in the blocklist, while fuzzy matching computes a 
 distance between content embeddings and compares against a threshold. In both cases, the goal is to 
 detect content that is similar (and not just identical) because simple transformations like adding a filter 
-will make the content different enough from a nearby blocklist element. Typically, exact matching is performed over learned content hashes, e.g., a NeuralHash~\cite{apple2021csam} that derives strings or integers from the content such that two similar items hash to the same value with high probability. On the 
-other hand, fuzzy matching leverages an embedding function  that maps content $\genericSetElmt[1]$ and 
+will make the content different enough from a nearby blocklisted element. Typically, exact matching is performed over learned content hashes, e.g., a NeuralHash~\cite{apple2021csam} that derives identical strings or integers (with high probability) from similar similar content. Fuzzy matching leverages an embedding function  that maps content $\genericSetElmt[1]$ and 
 $\genericSetElmt[2]$ to corresponding elements in a metric space 
 $\metricSpace$ with distance $\distance$. If the content is similar then 
 $\distanceNotation[\distance][\contentHash(\genericSetElmt[1])][\contentHash(\genericSetElmt[2])] 
 \le \threshold$ with high 
-probability, where $\threshold$ is a threshold. Both mechanisms may introduce false positives and false negatives that can be tuned using parameters. 
+probability, where $\threshold$ is a threshold.
+
+%Both mechanisms may introduce false positives and false negatives that can be tuned using parameters. 
  
 
 \iffalse
@@ -69,7 +70,7 @@ Our content moderation system has three parties.
 	\item \textbf{Auditors:} There is a group of agencies that publish and/or verify the items on the blocklist. 
 	The auditors may include representatives from law enforcement, social rights groups, 
 	independent journalists, etc. Some of the auditors may also be untrusted, i.e., 
-	they may collude with the file servers. For this work, we assume that a majority of the auditors are honest\footnote{The honest majority assumption is an artifact of the cryptographic tool we use in our scheme but it is not a fundamental requirement of the general framework.}.
+	they may collude with the file servers. For this work, we assume that a majority of the auditors are honest\footnote{The honest majority assumption is an artifact of the cryptographic tool we use but it is not a fundamental requirement of the framework.}.
 %        We use \numAuditors to denote the number of auditors,
 %        $\auditor[\auditorIdx] \in \nats[\numAuditors]$ to denote auditor
 %        \auditorIdx, and when convenient, use
@@ -77,11 +78,10 @@ Our content moderation system has three parties.
 %        $\numDishonestAuditors < \numAuditors/2$ auditors .
         
 	\item \textbf{File server:} The server has the blocklist, although it may not necessarily participate 
-	in creating it. The file server may behave maliciously and collude 
-with the dishonest auditors to learn information in the encrypted files. However, it ensures 
-	integrity and availability of the files. 
+	in creating it. The file server may behave maliciously to breach confidentiality, however, it ensures 
+	integrity and availability. 
 
-	\item \textbf{Client:} The client is semi-honest, i.e., it will follow protocols. While at first glance, it might appear that the assumption is too strong, this model has largely proven successful in detecting content 
+	\item \textbf{Client:} The client is semi-honest, i.e., it will follow protocols. While it might appear that the assumption is too strong, this model has largely proven successful in detecting content 
 like CSAM, and acting as a deterrent against less sophisticated users~\cite{kulshrestha2021identifying,scheffler2023public,bhowmick2021apple}. 
 Moreover, sophisticated users capable of circumventing checks, e.g., by modifying the client-side code, can also use unmonitored channels for storing harmful content~\cite{kulshrestha2021identifying,scheffler2023public,bhowmick2021apple}. 
 
@@ -109,29 +109,35 @@ and therefore our work is an important first step towards designing schemes for 
 
 \subsection{Security Goals}
 \label{sec:security}
-
-The core building block of our content moderation schemes are blocklists that can be stored on the client while  ensuring: i) \textbf{confidentiality}: clients do not learn the constituent blocked elements, and ii) \textbf{unforgeability}: only the auditors can create/modify the blocklist. We call such blocklist designs  \emph{authenticated and confidential blocklists} (ACBs). The ideal functionality for auditable content moderation using such blocklists is presented in \figref{fig:ideal_func}. \contentModFuncExact supports exact matching against the blocklist, while \contentModFuncFuzzy supports a metric distance based fuzzy match. 
-
-The auditors invoke the functionality with the \createBlocklist to create an ACB, \blklistToken, from a given set of blocked items, \blocklist, and a signature under the auditors' private keys. The ACB and the signatures are published and stored by the client. During an upload, the client invokes the functionality with the \uploadFile message providing an input \clientMeta which is derived from the file content it wants to upload. The functionality stores \clientMeta along with a file identifies
-\clientMeta can be either a hash of the file, or a metric space embedding depending on the type of matching. After the client uploads the file, the server checks whether $\clientMeta \in \blocklist$ by invoking the functionality with the \checkContent (resp. \checkContentFuzzy) message. The functionality returns the result of the check with false positive rate \fpr and false negative rate \fnr. 
+%
 
 
-\iffalse 
-, and iii) \textbf{oblivious matching}: the client can obliviously match its input against items in the blocklist and reveal the result to the server; If the client's input is not in the blocklist, then the result of the match does not reveal any information. . 
-\fi 
+Our security goal is more conservative than existing work~\cite{kulshrestha2021identifying,scheffler2023public}, and the proposed Apple PSI system. In particular, unlike existing systems, which allow the server to obtain a decryption key when the client's content matches some item on the blocklist, \emph{we do not divulge the encrypted content to the server under any circumstance}. Instead, the server is only able to identify potentially problematic content by matching a content hash or embedding against the blocklist, and then decide whether to accept the encrypted content. If the content hash does not match a blocklisted item, the server does not learn any further information. The server may suspend or report an account if it observes multiple uploads from the same client that are deemed problematic. Our mechanism is agnostic to this decision. 
 
+\myparagraph{Ideal functionality}
+%
+We define the ideal functionality of an auditable content moderation scheme in \figref{fig:ideal_func}. \contentModFuncExact supports exact matching against the blocklist, while \contentModFuncFuzzy supports a fuzzy match based on a metric distance. In the functionality, the auditors invoke \createBlocklist to create a blocklist from a set of items \blocklist. The functionality outputs an authenticated and confidential blocklist $\blklistToken$, and signs \blklistToken under the private keys of all the auditors. The client downloads stores \blklistToken after verifying the signatures of all the auditors. 
 
+During an upload, the client invokes the functionality with the \uploadFile message providing an input \clientMeta which is derived from the file content it wants to upload and \blklistToken. The functionality stores \clientMeta along with a file identifier. \clientMeta can be either a hash of the file, or a metric space embedding depending on the type of matching. After the client uploads the file, the server checks whether $\clientMeta \in \blocklist$ by invoking the functionality with the \checkContent (resp. \checkContentFuzzy in \contentModFuncFuzzy) message. The functionality returns the result of the check with a fixed false positive rate \fpr and false negative rate \fnr. 
 
+The false positive rate and false negative rate is included because content/image embeddings are not perfect and typically produce false positives and false negatives. In the context of content moderation, false positives are detrimental to privacy. Thus, as we will describe, our protocol realizing \contentModFuncExact has no false positives. In contrast, the protocol realizing \contentModFuncFuzzy has a tunable false positive rate and false negative rate, and does not reveal any additional information, including the matching blocklisted item, when there is a false positive -- the server only learns a 0/1 result.  
 
-
-
+We remark that the functionality allows the client to upload multiple files with the same \contentToken{\clientData}. In practice, a client may want to avoid leaking such correlations to the server. We overcome this leakage in our protocols. Finally, while we protect blocklisted items from a client performing an \emph{offline} dictionary attack using $\blklistToken$,  we do not consider an \emph{online} dictionary attack a realistic threat -- where a client uploads content that is blocked and learns one (or more) entries in the blocklist when it is informed about the violation --  because once multiple uploaded content is deemed problematic, presumably the account will be suspended.
 
 
 
 
-\begin{remark}
-The need for blocklist confidentiality is motivated by real-world requirements where child safety groups and hosting platforms have opposed releasing public blocklists since they can be considered unlawful and reveal information about victims~\cite{canetti2021broken,kulshrestha2021identifying}.
-\end{remark}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

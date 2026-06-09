@@ -65,8 +65,13 @@ denote a security parameter.
 We will make black-box use of the following primitives 
 
 
-\smallskip\noindent\textbf{Symmetric key encryption scheme} defined by the triple of algorithms $\encryptionSchemeDefn$ with key space \encryptKeySpace. For security, the encryption scheme must satisfy \emph{weak} random key robustness~\cite{bhowmick2021apple}. 
+\smallskip\noindent\textbf{Symmetric key encryption scheme} defined by the triple of algorithms $\encryptionSchemeDefn$ with key space \encryptKeySpace. The encryption scheme satisfies IND-CPA security~\cite{bellare1998relations}. 
+
+
+\iffalse 
+For security, the encryption scheme must satisfy \emph{weak} random key robustness~\cite{bhowmick2021apple}. 
  This property implies that a ciphertext encrypted under a randomly chosen key, cannot be decrypted under a different, randomly chosen key.  We formally define the property in \appref{app:secdef}. 
+\fi 
 
 %An encryption scheme that satisfies IND-CPA\$ security and ciphertext integrity has weak random key robustness.
 
@@ -74,12 +79,10 @@ We will make black-box use of the following primitives
 homomorphic under the group operation. That is, there is an efficient
 algorithm to compute a ciphertext $\pkencrypt[\encryptPubKey](\plaintext[1] \groupOp \plaintext[2])$
 from $\pubKey$, $\ciphertext[1] = \pkencrypt[\encryptPubKey](\plaintext[1])$, and $\ciphertext[2] = \pkencrypt[\encryptPubKey](\plaintext[2])$; we denote this operation by
-$\ciphertext[1]\homomorphicAdd{\pubKey} \ciphertext[2]$. The security
-assumption for encryption to which we reduce is IND-CPA
-security~\cite{bellare1998relations}, formally defined in \appref{app:secdef:random_key}
+$\ciphertext[1]\homomorphicAdd{\pubKey} \ciphertext[2]$. The encryption scheme satisfies IND-CPA security~\cite{bellare1998relations}.
 
 \smallskip\noindent\textbf{Digital signature scheme} defined by the triple of algorithms \sigSchemeDefn
-that satisfies unforgeability under chosen message attack, formally defined in \figref{fig:experiments} in the Appendix. 
+that satisfies unforgeability under chosen message attack~\cite{}.
 
 
 \iffalse 

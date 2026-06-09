@@ -17,18 +17,17 @@
 \cline{2-5}
 & Time (in sec.) & Comm. (in KB) & Time (in sec.) & Comm. (in KB)\\
 \cline{1-5}
-1048576 & 0.59 (61) & 20 (1310) & 27.5 & 508\\
+1048576 & 0.59 & 20  & 27.5 & 508\\
 \cline{1-5}
-2097152 & 0.59 (61) & 20(1310) & 27.5 & 586 \\
+2097152 & 0.59  & 20 & 27.5 & 586 \\
 \cline{1-5}
-4194304 & 0.59 (61) & 20 (1310) & 27.7 & 742 \\
+4194304 & 0.59  & 20  & 27.7 & 742 \\
 \cline{1-5}
-8388608 & 0.59 (61) & 20 (1310) & 28.3 & 1053.9 \\
+8388608 & 0.59  & 20  & 28.3 & 1053.9 \\
 \cline{1-5}
 \end{tabular}
 %\vspace{0.2em}
-\caption{\small Comparison of \protocolFMP against PAMC\label{tab:comp}. The time inside the parentheses 
-is the time for a fine-grained check, if required.}
+\caption{\small Comparison of \protocolFM against PAMC\label{tab:comp}. }
 \end{table}
 
 All our protocols have been implemented and benchmarked\footnote{https://anonymous.4open.science/r/content-mod-code-2125/}. 
@@ -86,11 +85,19 @@ We benchmarked the upload time in \protocolEM by varying the fraction of queries
 
 \subsection{Fuzzy Matching}
 %
-We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes. We instantiated the projection functions with the construction of \citet{chongchitmate2024approximate}. The blocklist was partitioned into \numBlocklistParts such that there are 64 vectors per bucket. We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFP \le 0.07$. We compared against the private approximate matching (PAMC) protocol~\cite{kulshrestha2021identifying} that only tolerates a semi-honest server and has a higher false negative rate of roughly $17\%$
+We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes. We instantiated the projection functions with the construction of \citet{chongchitmate2024approximate}.  We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFN \le 0.07$. 
 
 \myparagraph{Uploads}
 %
-\figref{fig:cpu-pre-approx} demonstrates the compute costs of \protocolFM. In the conservative case where all uploads required a fine-grained check, \protocolFM requires around 61 seconds per upload. \emph{We recall that the cost of the protocol is independent of the blocklist size, and scales only in the number of projections and size of the vectors}.  Increasing the fraction of uploads served by fast path checks, proportionally reduces the compute costs. When $90\%$ of the uploads are served by the fast path (when blocklisted content is infrequently uploaded), the protocol requires less than 7 seconds per check on average. 
+We compared against the private approximate matching (PAMC) protocol~\cite{kulshrestha2021identifying} that only tolerates a semi-honest server and has a higher false negative rate of roughly $17\%$. \tblref{tab:comp} presents the results. We observe that  our protocol is faster (\textbf{by a factor of 5$\times$}) and requires less communication (\textbf{by at least a factor of 25$\times$}). The protocol of \citet{kulshrestha2021identifying} does not have any false positives because it computes the actual distance between the client's input and the blocklisted items, but this comes at the cost latencies that are unacceptable for a file store. In contrast, as discussed before, we tolerate a small amount of false positives (without leaking any infomration to the server) to have better performance while tolerating a malicious server. 
+
+\myparagraph{Storage costs}
+%
+Both of our content moderation schemes require some client-side storage. For \protocolEM, a millions-sized blocklist requires roughly 4MB of storage for storing the the Bloom filter based ACB \bfBlklistToken,  for an overall false positive rate of $0.001$ in the fast path. The signature based ACB \sigBlklistToken also requires in total 4MB. Thus, the total storage cost is reasonable and less than 10MB. 
+
+The storage cost for storing the ACB for the fuzzy match requires roughly 
+
+% \figref{fig:cpu-pre-approx} demonstrates the compute costs of \protocolFM. In the conservative case where all uploads required a fine-grained check, \protocolFM requires around 61 seconds per upload. \emph{We recall that the cost of the protocol is independent of the blocklist size, and scales only in the number of projections and size of the vectors}.  Increasing the fraction of uploads served by fast path checks, proportionally reduces the compute costs. When $90\%$ of the uploads are served by the fast path (when blocklisted content is infrequently uploaded), the protocol requires less than 7 seconds per check on average. 
 
 
 %\myparagraph{Costs without preprocessing}
@@ -146,7 +153,7 @@ We conducted experiments for our fuzzy matching protocol \protocolFM using a blo
 %%\myparagraph{Comparison against \cite{kulshrestha2021identifying}}
 %%
 
-We compared \protocolFM against the PAMC protocol of \citet{kulshrestha2021identifying}, and \tblref{tab:comp} presents the results. We observe that in the average case, when the coarse-grained check does not identify a match, our protocol is faster (\textbf{by a factor of 5$\times$}) and requires less communication (\textbf{by at least a factor of 25$\times$}). However, the fine-grained check is more expensive. 
+
 
 
 
