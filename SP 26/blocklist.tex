@@ -771,7 +771,7 @@ For security, a DSS scheme ensures that when there are less that \secretShareThr
 
 \myparagraph{Detectable hash function}
 %
-We will make use of a primitive introduced by the Apple PSI mechanism~\cite{bhowmick2021apple} called a detectable hash 
+We will make use of a primitive introduced by the Apple PSI mechanism~\cite{pinkas2021applepsi} called a detectable hash 
 function to realize a DSS scheme. Formally, a $(\dhfParamMatchThreshold, \dhfParamRandThreshold)$-detectable 
 hash function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$ has the following 
 two properties.
@@ -813,7 +813,7 @@ two properties.
   the detection algorithm identifies these components. However,
   if less than $\dhfParamMatchThreshold+1$ entries are generated
   by $\dhf$, then the detection algorithm does not reveal any
-  information about $\matchedIndexSet$ due to the \dhfParamMatchThreshold-wise independence. More details about the DHF scheme is in \cite{bhowmick2021apple} is in \appref{}. 
+  information about $\matchedIndexSet$ due to the \dhfParamMatchThreshold-wise independence. More details about the DHF scheme is in \appref{sec:dhf}. 
 
 
 \myparagraph{Protocol for detectable secret sharing}
