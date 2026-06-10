@@ -1,4 +1,4 @@
-\section{Preliminaries}
+\subsection{Preliminaries}
 \label{sec:def}
 %
 
@@ -17,9 +17,13 @@ $\genericFnFamily[\genericFnKey]: \genericFnDomain \rightarrow
 \genericFnRange$ the function with
 $\genericFnFamily[\genericFnKey](\genericFnDomainElmt) =
 \genericFnFamily(\genericFnKey, \genericFnDomainElmt)$ for each
-$\genericFnDomainElmt \in \genericFnDomain$. We use $\secParam$ to 
-denote a security parameter. 
+$\genericFnDomainElmt \in \genericFnDomain$. $\secParam$  
+denotes a security parameter. 
 
+
+\myparagraph{Cryptographic tools}
+%
+We use standard cryptographic tools: i) an IND-CPA secure symmetric key encryption scheme \encryptionSchemeDefn, ii) a digital signature scheme \sigSchemeDefn, and iii) an IND-CPA secure additively-homomorphic encryption scheme $\ahencryptionSchemeDefn$. We will also make use of a pseudorandom function family, a pseudorandom permutation family and a pseudorandom number generator; the specifications are provided in the sections they are used. We refer to a textbook on cryptography, e.g.,~\cite{katz2007introduction} for a formal definition of these primitives. 
 
 
 \begin{definition}[Strong QR-RSA problem]
@@ -48,7 +52,7 @@ denote a security parameter.
         $\genericFnOutput$ and random choices by \rsaAdversary, and
         the maximum is taken over all adversary algorithms
         $\rsaAdversary$ that run in total time $\timeBound$.
-	\end{definition}
+\end{definition}
 
 
 \NewDocumentCommand{\cciOracle}{g}{%
@@ -61,7 +65,7 @@ denote a security parameter.
 
 %
 
-
+\iffalse
 We will make black-box use of the following primitives.
 
 
@@ -83,7 +87,7 @@ $\ciphertext[1]\homomorphicAdd{\pubKey} \ciphertext[2]$. The encryption scheme s
 
 \smallskip\noindent\textbf{Digital signature scheme} defined by the triple of algorithms \sigSchemeDefn
 that satisfies unforgeability under chosen message attack~\cite{}.
-
+\fi 
 
 \iffalse 
 \smallskip\noindent\textbf{Detectable Secret Sharing}
