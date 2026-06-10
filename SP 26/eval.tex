@@ -13,7 +13,7 @@
 \setlength{\tabcolsep}{2pt}
 \begin{tabular}{| c | c | c | c | c |}
 \noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
-\multirow{2}{*}{DB size} & \multicolumn{2}{c|}{Our protocol \protocolFMP} & \multicolumn{2}{c|}{PAMC~\cite[Table~8]{kulshrestha2021identifying}}\\  
+\multirow{2}{*}{DB size} & \multicolumn{2}{c|}{Our protocol \protocolFM} & \multicolumn{2}{c|}{PAMC~\cite[Table~8]{kulshrestha2021identifying}}\\  
 \cline{2-5}
 & Time (in sec.) & Comm. (in KB) & Time (in sec.) & Comm. (in KB)\\
 \cline{1-5}
@@ -27,7 +27,7 @@
 \cline{1-5}
 \end{tabular}
 %\vspace{0.2em}
-\caption{\small Comparison of \protocolFM against PAMC\label{tab:comp}. }
+\caption{\small Comparison of \protocolFM against PAMC~\cite{kulshrestha2021identifying}\label{tab:comp}. }
 \end{table}
 
 All our protocols have been implemented and benchmarked\footnote{https://anonymous.4open.science/r/content-mod-code-2125/}. 
@@ -93,9 +93,7 @@ We compared against the private approximate matching (PAMC) protocol~\cite{kulsh
 
 \myparagraph{Storage costs}
 %
-Both of our content moderation schemes require some client-side storage. For \protocolEM, a millions-sized blocklist requires roughly 4MB of storage for storing the the Bloom filter based ACB \bfBlklistToken,  for an overall false positive rate of $0.001$ in the fast path. The signature based ACB \sigBlklistToken also requires in total 4MB. Thus, the total storage cost is reasonable and less than 10MB. 
-
-The storage cost for storing the ACB for the fuzzy match requires roughly 
+Both of our content moderation schemes require some client-side storage. For \protocolEM, a millions-sized blocklist requires roughly 4MB of storage for storing the the Bloom filter based ACB \bfBlklistToken,  for an overall false positive rate of $0.001$ in the fast path. The signature based ACB \sigBlklistToken also requires in total 4MB. Thus, the total storage cost is reasonable and less than 10MB. The CHT-based ACB \chtBlklistToken for the fuzzy match requires roughly 2.5GB for a million-sized blocklist with 20 projections. This is less than $5\%$ of the capacity of most commercially available smartphones with $\ge 64$GB of storage. 
 
 % \figref{fig:cpu-pre-approx} demonstrates the compute costs of \protocolFM. In the conservative case where all uploads required a fine-grained check, \protocolFM requires around 61 seconds per upload. \emph{We recall that the cost of the protocol is independent of the blocklist size, and scales only in the number of projections and size of the vectors}.  Increasing the fraction of uploads served by fast path checks, proportionally reduces the compute costs. When $90\%$ of the uploads are served by the fast path (when blocklisted content is infrequently uploaded), the protocol requires less than 7 seconds per check on average. 
 

@@ -272,17 +272,17 @@ clustered to have an efficient construction~\cite{chongchitmate2024approximate}.
 
 
 \For{$\blocklistVec \in \blocklist$}
-\State Auditors compute the the locality-preserving fingerprint $\fingerprint{\blocklistVec}$
+\State Auditors compute the the locality-preserving fingerprints $\{\fingerprint(\blocklistVec)\}_{\blocklistVec \in \blocklist}$ using \numProjections randomly sampled functions $\projFn[1], \dots, \projFn[\numProjections]$
 \EndFor
-\State Auditors invoke $\chtACB.\publishList\left(\{ \fingerprint{\blocklistVec} \}_{\blocklistVec \in \blocklist}\right)$ and publish \chtBlklistToken and $\{\signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blklistToken))\}_{\auditorIdx \in [1, \numAuditors]}$ using \numProjections randomly sampled functions. 
+\State Auditors invoke $\chtACB.\publishList\left(\{ \fingerprint(\blocklistVec) \}_{\blocklistVec \in \blocklist}\right)$ and publish \chtBlklistToken and $\{\signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blklistToken))\}_{\auditorIdx \in [1, \numAuditors]}$ . 
 
 \Statex\LComment{Threshold matching against blocklist during uploads}
 
 \State \client sends $\langle \genericFileID, \encrypt{\fileKey}(\clientData) \rangle$ to \server
 
-\State \client computes $\clientVec \assign \embed(\clientData)$ and $\fingerprint{\clientVec}$. 
+\State \client computes $\clientVec \assign \embed(\clientData)$ and $\fingerprint(\clientVec)$ under the projection functions $\projFn[1], \dots, \projFn[\numProjections]$. 
 
-\State \client and \server invoke $\chtACB.\thresholdSearchBlocklist(\fingerprint{\clientVec}, \chtBlklistToken)$. 
+\State \client and \server invoke $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold)$. 
 \If{$\chtACB.\thresholdSearchBlocklist(\fingerprint{\clientVec}, \chtBlklistToken) = 1$}
 \State \server adds $\genericFileID$ to flagged content list $\flagContentList$
 \State \server outputs $\langle \genericFileID, \detected=\tru\rangle$. 
