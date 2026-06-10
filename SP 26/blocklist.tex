@@ -70,7 +70,7 @@ The core building block of our content moderation schemes are blocklist designs 
 \blklistToken is stored on the client and supports oblivious matching against \blocklist during uploads. The preprocessing may require secrets from the client and the server. We also support constructions where preprocessing is not necessary to support matching. In that case, $\blklistToken = \blindedBlocklist$. 
 
 
-\item $\searchBlocklist$: This is an interactive mechanism invoked by the client and the server where given an input $\genericCInputElmt$ from the client, the mechanism outputs either $\tru$ or $\fals$ to the server depending on whether $\genericCInputElmt \in \blocklist$, and a predefined false positive rate and a false negative rate. 
+\item $\searchBlocklist$: This is an interactive mechanism invoked by the client and the server where given an input $\genericCInputElmt$ from the client, the mechanism outputs either $\tru$ or $\fals$ to the server depending on whether $\genericCInputElmt \in \blocklist$, and a predefined false positive rate and a false negative rate\footnote{While the mechanism only  returns a \tru/\fals, the protocols may additionally reveal $\genericCInputElmt$ when $\genericCInputElmt \in \blocklist$. This leakage is inevitable since there is no lower bound on the size of \blocklist, and as such, the server can easily guess $\genericCInputElmt$ when there is a match against a small blocklist.}. 
 
 \begin{align*}
 \cprob{}{\searchBlocklist(\genericCInputElmt, \blklistToken) = \tru}{\genericCInputElmt \in \blocklist} \ge 1 - \fnr\\
@@ -89,7 +89,7 @@ where $\fnr \in (0,1)$ is the false negative rate, and $\fpr \in (0,1)$ is the f
 %The mechanism also returns a $\{0, 1\}$ to the client to indicate whether there was a match.  
 
 
-\item $\thresholdSearchBlocklist$: This is an optional interactive mechanism invoked by the client and server where given a set of inputs $\genericCInputSet \assign \{ \genericCInputElmt{1}, \dots, \genericCInputElmt{\genericVecLen} \}$ from the client, and a public threshold $\threshold$, the functionality outputs a value in $\{\tru,\fals\}$.
+\item $\thresholdSearchBlocklist$: This is an optional interactive mechanism invoked by the client and server where given a set of inputs $\genericCInputSet \assign \{ \genericCInputElmt{1}, \dots, \genericCInputElmt{\genericVecLen} \}$ from the client, and a public threshold $\threshold$, the mechanism outputs a value in $\{\tru,\fals\}$.
 
 \begin{align*}
 \cprob{}{\thresholdSearchBlocklist(\genericCInputSet, \blklistToken) = \tru}{|\genericCInputSet \cap \blocklist| \ge \threshold} \ge  1 - \fnr\\
@@ -184,21 +184,27 @@ We will introduce three different types of authenticated blocklists, and use the
 
 \begin{figure*}
 \captionsetup[subfigure]{font=small,labelfont=small}
-	\begin{subfigure}[t]{0.5\textwidth}
-\includegraphics[scale=0.27]{figs/bf_use.pdf}
+	\begin{subfigure}[t]{0.32\textwidth}
+\includegraphics[width=\linewidth]{figs/bf_use.pdf}
 \caption{Bloom filter-based ACB}
 \label{fig:bf_acb}
-
 \end{subfigure}
+\hfill
 \captionsetup[subfigure]{font=small,labelfont=small}
-	\begin{subfigure}[t]{0.5\textwidth}
-\includegraphics[scale=0.28]{figs/signature_use.pdf}
+	\begin{subfigure}[t]{0.32\textwidth}
+\includegraphics[width=\linewidth]{figs/signature_use.pdf}
 \caption{Signature-based ACB}
 \label{fig:sig_acb}
 \end{subfigure}
+\captionsetup[subfigure]{font=small,labelfont=small}
+	\begin{subfigure}[t]{0.32\textwidth}
+\includegraphics[width=\linewidth]{figs/cht_use.pdf}
+\caption{CHT-based ACB}
+\label{fig:cht_acb}
+\end{subfigure}
 
-\caption{Authenticated and confidential blocklist constructions from a Bloom filter and a homomorphic signature}
-\label{fig:sig_use}
+\caption{Authenticated and confidential blocklist constructions}
+\label{fig:acb}
 \end{figure*}
 
 \subsection{Bloom Filter Based Blocklist}
@@ -370,7 +376,7 @@ The costs of creating and searching are as follows.
 The security of the ACB is due to the following.
 
 \itemListStart
-\item Confidentiality and unforgeability is ensured by \authOPRFFunc, and IND-CPA security of the encryption scheme. 
+\item Confidentiality and unforgeability is ensured by \authOPRFFunc, and IND-CPA security. 
 \item During a search, the server learns $\prf{\prfKeyClient}(\genericCInputElmt)$, which is indistinguishable from random to the server if $\genericCInputElmt \notin \blocklist$. Recall that the server only learns $\prf{\prfKeyClient}(\genericBlocklistElmt)$ for $\genericBlocklistElmt \in \blocklist$.
 \itemListEnd
 
@@ -530,7 +536,7 @@ $\randomize[\pubKey](\genericSig[\blocklist] \sigMinus[\pubKey]
 
 
 \begin{gather*}
-\cprob{bigg}{\begin{array}{c} \adversary(\genericSigPair[1]) = \genericBlocklistElmt \\ \land ~\genericBlocklistElmt \in \blocklist\end{array} }{\begin{array}{c} \langle \pubKey, \privKey \rangle \assign \keyGen(1^{\secParam}) \\ \blindingFactor \sample \genericRandSpace \\ \genericSigPair[1] \assign \blind[\privKey](\genericSig[\blocklist], \blindingFactor)\end{array} } \\ \le 1/|\universe| + \neglProb 
+\cprob{bigg}{\begin{array}{c} \genericBlocklistElmt \assign \adversary(\genericSigPair[1])  \\ \land ~\genericBlocklistElmt \in \blocklist\end{array} }{\begin{array}{c} \langle \pubKey, \privKey \rangle \assign \keyGen(1^{\secParam}) \\ \blindingFactor \sample \genericRandSpace \\ \genericSigPair[1] \assign \blind[\privKey](\genericSig[\blocklist], \blindingFactor)\end{array} } \\ \le 1/|\universe| + \neglProb 
 \end{gather*}
 
 \itemListEnd
@@ -765,7 +771,7 @@ For security, a DSS scheme ensures that when there are less that \secretShareThr
 
 \myparagraph{Detectable hash function}
 %
-We will make use of a primitive introduced by \citet{bhowmick2021apple} called a detectable hash 
+We will make use of a primitive introduced by the Apple PSI mechanism~\cite{bhowmick2021apple} called a detectable hash 
 function to realize a DSS scheme. Formally, a $(\dhfParamMatchThreshold, \dhfParamRandThreshold)$-detectable 
 hash function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$ has the following 
 two properties.
@@ -807,13 +813,19 @@ two properties.
   the detection algorithm identifies these components. However,
   if less than $\dhfParamMatchThreshold+1$ entries are generated
   by $\dhf$, then the detection algorithm does not reveal any
-  information about $\matchedIndexSet$ due to the \dhfParamMatchThreshold-wise independence. 		
+  information about $\matchedIndexSet$ due to the \dhfParamMatchThreshold-wise independence. More details about the DHF scheme is in \cite{bhowmick2021apple} is in \appref{}. 
 
 
 \myparagraph{Protocol for detectable secret sharing}
-The protocol for a DSS $\dssProtocol = \langle \DSShare, \DSCombine \rangle$ is in \algoref{protocol:dss}. Given a secret, the share procedure $\DSShare$ first secret-shares it into $\secretShareLength$ shares $\{\secretShare{1}, \dots, \secretShare{\secretShareLength} \}$ and select \secretShareLength one-time pads $\genericSymmKey_1, \dots, \genericSymmKey_{\secretShareLength}$ (line 3 - 4). Then, it compute a $(\secretShareLength - \secretShareThreshold, \secretShareThreshold - 1)$ DHF and encrypts the DHF components with the one-time pads (line 5).  The secret-share set is order by $\{\langle \setIdx, \secretShare{\setIdx}, \genericSymmKey_{\setIdx} \rangle\}_{\setIdx \in [1, \secretShareLength]}$. The DHF vector contains the encrypted DHF components $\{\langle \setIdx, \dhf[\dhfKey](\genericRand[1]) \oplus \genericSymmKey_\setIdx \rangle\}_{\setIdx \in [1, \secretShareLength]}$.
+The protocol for a DSS scheme $\dssProtocol = \langle \DSShare, \DSCombine \rangle$ is in \algoref{protocol:dss}. Given a secret $\genericSymmKey$, the share procedure $\DSShare$ first secret-shares it into $\secretShareLength$ shares $\{\secretShare{1}, \dots, \secretShare{\secretShareLength} \}  \assign \SSShare(\genericSymmKey)$. Then, it combines the secret shares with \secretShareLength components of a $(\secretShareLength - \secretShareThreshold, \secretShareThreshold - 1)$ DHF: $\ssSet \assign  \{\langle \dhf[\dhfKey](\genericRand_{\setIdx}), \secretShare{\setIdx} \}_{\setIdx \in [1, \secretShareLength]}$ for $\genericRand_{\setIdx} \sample \dhfDomain$.
 
-During reconstruction $\DSCombine$, if there are at least $\secretShareThreshold$ one-time pads available in the secret-share set, then the corresponding DHF components can be decrypted and inform the reconstructor of the correct shares (lines 9 - 10). Otherwise, the one-time pads makes the DHF components indistinguishable from random. 
+\iffalse
+Then, it compute a $(\secretShareLength - \secretShareThreshold, \secretShareThreshold - 1)$ DHF and encrypts the DHF components with the one-time pads (line 5).  The secret-share set is order by $\{\langle \setIdx, \secretShare{\setIdx}, \genericSymmKey_{\setIdx} \rangle\}_{\setIdx \in [1, \secretShareLength]}$. The DHF vector contains the encrypted DHF components $\{\langle \setIdx, \dhf[\dhfKey](\genericRand[1]) \oplus \genericSymmKey_\setIdx \rangle\}_{\setIdx \in [1, \secretShareLength]}$.
+\fi 
+
+During reconstruction using the $\DSCombine$ procedure, if there are at least $\secretShareThreshold$ DHF components, then it informs the reconstructor of the correct shares. Otherwise, if more than $\secretShareLength - \secretShareThreshold + 1$ components of \ssSet are replaced by (pseudo) random components, then no information is revealed about \genericSymmKey and the ($< \secretShareThreshold$) secret-shares in \ssSet. 
+
+%). Otherwise, the one-time pads makes the DHF components indistinguishable from random. 
 
 \iffalse 
 
@@ -821,7 +833,9 @@ During reconstruction $\DSCombine$, if there are at least $\secretShareThreshold
 
 \subsubsection{Blocklist construction}
 %
-The ACB is the encrypted cuckoo hash table and the full construction described in \algoref{acb:cht}. During a search $\thresholdSearchBlocklist(\genericCInputSet, \chtBlklistToken, \threshold)$, the client uses detectable secret sharing such that the server is able to reconstruct a secret only when $\setSize{\genericCInputSet \cap \blocklist} \ge \threshold$. 
+The ACB is the encrypted cuckoo hash table. The full construction is described in \algoref{acb:cht} and depicted in \figref{fig:cht_acb}. Each location in the table is an encrypted item in the blocklist, as decided by the cuckoo hash functions (lines 3 - 5).
+
+During a search $\thresholdSearchBlocklist(\genericCInputSet, \chtBlklistToken, \threshold)$, the client uses a detectable secret sharing scheme such that the server is able to reconstruct a secret only when $\setSize{\genericCInputSet \cap \blocklist} \ge \threshold$. This is enabled by encrypting the detectable secret shares of the secret with independently sampled keys for a PRG (\eqnsref{cht:homomorphic_add_1}{cht:homomorphic_add_2}), and encrypting the PRG keys using an additively homomorphic encryption such that the server obtains a key if the client's input matches a corresponding (encrypted) item in the table (\eqnsref{cht:prg_1}{cht:prg_2}). If the server obtains at least $\threshold$ PRG keys, then it can decrypt $\threshold$ DSS components, allowing it to reconstruct the secret (lines 15 - 17). 
 
 
 \myparagraph{Cost \& Security}
@@ -875,11 +889,11 @@ $\ciphertext[2]$ from $\cuckooTable[\cuckooHashFn{2}(\genericCInputElmt{\projIdx
 \label{cht:homomorphic_add_1} \\ 
 & \secretShareEncryption{2, \projIdx} \assign \genericRand[2, \projIdx] \homomorphicScalerMult{\encryptPubKey} (\ciphertext[2] \homomorphicAdd{\encryptPubKey}  ( - \genericCInputElmt{\projIdx})) \homomorphicAdd{\encryptPubKey} \pkencrypt[\encryptPubKey](\prgSeed{\genericVecLen + \projIdx})
 \label{cht:homomorphic_add_2} \\ 
-& \secretShareEncryption{1, \projIdx}^{\ast} \assign s_{\projIdx}^{\ast} \oplus \prg(\prgSeed{\projIdx}) \nonumber\\
-& \secretShareEncryption{2, \projIdx}^{\ast} \assign s_{\genericVecLen + \projIdx}^{\ast} \oplus \prg(\prgSeed{\genericVecLen + \projIdx}) \nonumber 
+& \secretShareEncryption{1, \projIdx}^{\ast} \assign s_{\projIdx}^{\ast} \oplus \prg(\prgSeed{\projIdx}) \label{cht:prg_1}\\
+& \secretShareEncryption{2, \projIdx}^{\ast} \assign s_{\genericVecLen + \projIdx}^{\ast} \oplus \prg(\prgSeed{\genericVecLen + \projIdx})\label{cht:prg_2} 
 \end{align}
 
-where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOrder - 1]$. The encrypted calculations in \eqnsref{cht:homomorphic_add_1}{cht:homomorphic_add_2} are performed using the additively homomorphic operators defined in \secref{}. 
+where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOrder - 1]$. The encrypted calculations in \eqnsref{cht:homomorphic_add_1}{cht:homomorphic_add_2} are performed using the additively homomorphic operators defined in \secref{sec:def}. 
 
 
 \EndFor

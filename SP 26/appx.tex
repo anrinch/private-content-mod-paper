@@ -361,7 +361,7 @@ The second case is when $\hammingDist{\clientVec}{\genericVec} \le \threshold$. 
 %More specifically with 30 projections, the false negative rate according to \thmref{thm:fnr} (and experimentally verified) is 1\%. In comparison, the false negative rate achieved by previous work with pHash is roughly 17\%. Assuming an Elgamal encryption in an elliptic curve subgroup, the total communication cost during query is roughly 500KB which matches the cost of the PHM scheme (see \tblref{tab:related}), but under significantly lower false negatives (lower by at least 15\%) and under a weaker threat model. 
 
 
-\section{Apple PSI Detectable Hash Function}
+\subsection{Detectable Hash Function}
 
 This implementation is provided the APPLE PSI white paper. Apple no longer hosts this white paper. The following is adapted from the section 4.3 of the APPLE PSI white paper where a complete construction of the detectable hash function is given.
 \\
@@ -393,7 +393,7 @@ A standard argument shows that the function DHF is weak t-wise independent: for 
 \subsection{Detection Algorithm}
 
 The detection algorithm is given a matrix of $m$ columns, where each column is an element of $\mathcal{R} = \mathbb{F}^{s+1}_{l}$. It needs to detect those columns that are an output of the DHF, assuming there are at least $\max(t+ 1, m−s)$ such columns. Recall that this means that there are at least $t + 1$ DHF columns and at most $s$ random columns.
-\\\\
+
 This problem is related to decoding the interleaved Reed-Solomon code under random noise. Apple's decoder uses a technique first described by Coppersmith and Sudan "Reconstructing curves in three (and higher) dimensional space form noisy data", 2003.
 
 \begin{enumerate}
