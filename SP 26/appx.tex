@@ -1,11 +1,21 @@
-\section{Open Science}
+%\section{Open Science}
 %
-We adhere to the open science policy and our implementation is available (anonymized) at \cite{code}. 
+%We adhere to the open science policy and our implementation is available (anonymized) at \cite{code}. 
 
+\begin{figure}[th!]
+		\includegraphics[scale=0.3]{plots/figs/server_sigtime.pdf}
+		\caption{\centering \footnotesize CPU time for signing blocklist (in seconds) }
+		\label{fig:dis_sign}
+	\end{figure}
+	
 \input{experiments}
 \input{distributed_signing.tex}
 \input{authOPRF.tex}
 \input{detectableSecretShareProtocol}
+
+	
+
+
 %\input{sig_experiments.tex}
 %\input{secdef.tex}
 %\input{proofs_sig.tex}
