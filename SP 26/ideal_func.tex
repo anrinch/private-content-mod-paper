@@ -42,7 +42,7 @@
 		
 		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$, and $\clientMeta' \in \blocklist$, then return 1 with probability at least $1 - \fnr$. 
 
-		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$, and $\clientMeta' \in \blocklist$, then return 0 with probability at least $1 - \fnr$.  
+		\item If there is an entry $\langle \genericFileID, \clientMeta' \rangle \in \retList$, and $\clientMeta' \notin \blocklist$, then return 0 with probability at least $1 - \fpr$.  
 
 
 	
@@ -77,7 +77,7 @@ Threshold $\threshold$ for a metric distance $\distanceNotation[\distance][\cdot
 		\smallskip\noindent\textbf{Creating blocklist:} 
 		\enumListStart
 		
-	\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
+	\item	Upon receiving the message $(\createBlocklist, \auditor[\auditorIdx], \blocklist, \privKey[\auditorIdx])$ from auditor $\auditor[\auditorIdx]$, store the blocklist and the auditor's private key
 
 
 		\item After receiving the \createBlocklist message from all auditors, abort if the blocklists submitted by the auditors are not the same. Otherwise, output $\blklistToken$ created from \blocklist, and signatures under the auditor's keys $\{ \signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\blklistToken) \}_{\auditorIdx \in [1, \numAuditors]}$ to \client. Output the blocklist \blocklist to \server and store $\blocklist$

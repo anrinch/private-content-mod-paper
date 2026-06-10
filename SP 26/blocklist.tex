@@ -170,7 +170,7 @@ We will introduce three different types of authenticated blocklists, and use the
 \includegraphics[scale=0.27]{figs/bf_use.pdf}
 \caption{Bloom filter-based ACB}
 \label{fig:bf_acb}
-\vline
+
 \end{subfigure}
 \captionsetup[subfigure]{font=small,labelfont=small}
 	\begin{subfigure}[t]{0.5\textwidth}
@@ -179,7 +179,7 @@ We will introduce three different types of authenticated blocklists, and use the
 \label{fig:sig_acb}
 \end{subfigure}
 
-\caption{}
+\caption{Authenticated and confidential blocklist constructions from a Bloom filter and a homomorphic signature}
 \label{fig:sig_use}
 \end{figure*}
 
@@ -243,7 +243,7 @@ We define a functionality called \emph{authenticated OPRF}, that extends the def
 
 \myparagraph{Realizing \authOPRFFunc}
 %
-We realize \authOPRFFunc by leveraging the the 2HashDH PRF construction~\cite{jarecki2014round} in a group where the OM gap-DH problem is hard. The construction is $\prf{\prfKeyClient}(\genericFnInput) = \oprfRO[2](\genericFnInput, \oprfRO[1](\genericFnInput)^{\prfKeyClient})$, where $\oprfRO[1], \oprfRO[2]$ are random oracles. The full protocol is in \figref{fig:authOPRF} in \appref{app:authOPRF}. In brief,
+We realize \authOPRFFunc by leveraging the the 2HashDH PRF construction~\cite{jarecki2014round} in a group where the OM gap-DH problem is hard. The construction is $\prf{\prfKeyClient}(\genericFnInput) = \oprfRO[2](\genericFnInput, \oprfRO[1](\genericFnInput)^{\prfKeyClient})$, where $\oprfRO[1], \oprfRO[2]$ are random oracles. The protocol is in \figref{protocol:authOPRF} in the Appendix. In brief,
 
 \enumListStart
 \item The auditors ``blind'' the blocklist elements and publish an ordered set $\blindedBlocklist \assign \{\langle \setIdx, \oprfRO[1](\genericBlocklistElmt[\setIdx]\rangle)^{\oprfBlindingFactor[\setIdx]}\}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$. The server is provided the blinding factors and the (ordered) blocklist elements $\langle 1, \genericBlocklistElmt_1, \oprfBlindingFactor[1]\rangle, \dots, \langle \blocklistSize, \genericBlocklistElmt_\blocklistSize, \oprfBlindingFactor[\blocklistSize] \rangle$ . 
@@ -409,8 +409,7 @@ being provided $\genericSigPairAlt[1] \in \sigOutputSpace$ and $\genericSigPairA
 		
 		\item $\genericSigPair[1]' \assign \blind(\genericSigPair[1], \genericRand)$: On input $\genericSigPair[1] \in \sigOutputSpace$ and $\genericRand \in \genericRandSpace$, the algorithm outputs $\genericSigPairAlt[1] \gets \randomizeFn[\pubKey](\genericSigPair[1],\genericRand)$.
 
-        \item $\{ \genericSigPair[1], \bot \} \assign \unblind(\genericSigPairAlt[1], \genericRand)$: On input $\genericSigPairAlt[1] \in \sigOutputSpace$ and $\genericRand \in \genericRandSpace$, the algorithm outputs $\genericSigPair[1]$ if $\genericSigPairAlt[1] = \randomizeFn[\pubKey](\genericSigPair[1],\genericRand)$. Otherwise, it outputs a random element in
-		$\sigOutputSpace$.
+        \item $\genericSigPair[1]  \assign \unblind(\genericSigPairAlt[1], \genericRand)$: On input $\genericSigPairAlt[1] \in \sigOutputSpace$ and $\genericRand \in \genericRandSpace$, the algorithm outputs $\genericSigPair[1] \assign \randomizeFn[\pubKey](\genericSigPairAlt[1],\genericRand)$.
         
 	\itemListEnd
 	
@@ -826,34 +825,37 @@ The cost of creating the blocklist with \blocklistSize items is $\bigO(\blocklis
 \State The auditors samples a key pair $\encryptPubKey, \encryptPrivKey$ for \ahencryptionScheme
 
 
-\State For $\genericBlocklistElmt \in \blocklist$, the auditors place $\ahencrypt[\encryptPubKey](\genericBlocklistElmt)$ at slot $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx](\genericBlocklistElmt))]$ or $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx](\genericBlocklistElmt))]$ using cuckoo hashing. 
+\State For $\genericBlocklistElmt \in \blocklist$, the auditors place $\ahencrypt[\encryptPubKey](\genericBlocklistElmt)$ at slot $\cuckooTable[\cuckooHashFn{1}(\projFn[\projIdx](\genericBlocklistElmt))]$ or $\cuckooTable[\cuckooHashFn{2}(\projFn[\projIdx](\genericBlocklistElmt))]$ using cuckoo hashing. At each empty slot in the table, store $\ahencrypt[\encryptPubKey](\groupIdentity)$.
 
-\State The auditors sign the ACB $\chtBlklistToken \assign \cuckooTable$ under their own private keys and publish $\{\signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blklistToken))\}_{\auditorIdx \in [1, \numAuditors]}$ 
+\State The auditors sign the ACB $\chtBlklistToken \assign \cuckooTable$ under their own private keys and publish $\{\signGenSig[\auditorPrivKeyGenericScheme[\auditorIdx]](\hashFn(\blklistToken))\}_{\auditorIdx \in [1, \numAuditors]}$. The auditors provide \blocklist and \encryptPrivKey to \server. 
+
 
 \EndProcedure
 
 
-\Statex\Procedure{\thresholdSearchBlocklist}{\genericCInputSet, \chtBlklistToken, \threshold}
+\Statex\Procedure{\thresholdSearchBlocklist}{$\genericCInputSet \assign \{ \genericCInputElmt{\setIdx}\}_{\setIdx \in [1, \genericVecLen]}, \chtBlklistToken, \threshold$}
 
 
 \LComment{Client secret-shares a secret value and encrypts the shares}
 
-\State \client invokes $\langle \ssSet, \dhfSet \rangle \assign \DSShare(\groupIdentity)$
-\State \client samples 2\secretShareLength PRG keys $\prgSeed{1}, \dots, \prgSeed{2\secretShareLength} \sample \prgKeySpace$
+\State \client invokes $\ssSet \assign \DSShare(\groupIdentity)$
+\State \client samples 2\genericVecLen PRG keys $\prgSeed{1}, \dots, \prgSeed{2\genericVecLen} \sample \prgKeySpace$
 
 \For{$\genericCInputElmt{\projIdx} \in \genericCInputElmt{1}, \dots, \genericCInputElmt{\genericVecLen}$}
 
 \State \client retrieves $\ciphertext[1]$ from $\cuckooTable[\cuckooHashFn{1}(\genericCInputElmt{\projIdx})]$ and 
-$\ciphertext[2]$ from $\cuckooTable[\cuckooHashFn{2}(\genericCInputElmt{\projIdx})]$ and computes for $\ssSet = \{ s_1^{\ast}, \dots, s_{2\genericVecLen}^{\ast} \}$
+$\ciphertext[2]$ from $\cuckooTable[\cuckooHashFn{2}(\genericCInputElmt{\projIdx})]$ and computes for $\ssSet = \{ s_1^{\ast}, \dots, s_{2\genericVecLen}^{\ast} \}$ and $\projIdx \in [1, \genericVecLen]$
 
-\begin{align*}
-& \secretShareEncryption{1, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[1, \projIdx] \times (\ciphertext[1] - \genericCInputElmt{\projIdx})  + \prgSeed{\projIdx}) \\
-& \secretShareEncryption{2, \projIdx} \assign \pkencrypt[\encryptPubKey](\genericRand[2, \projIdx] \times (\ciphertext[2] - \genericCInputElmt{\projIdx})  + \prgSeed{\genericVecLen + \projIdx}) \\
-& \secretShareEncryption{1, \projIdx}^{\ast} \assign s_{\projIdx}^{\ast} \oplus \prg(\prgSeed{\projIdx}) \\
-& \secretShareEncryption{2, \projIdx}^{\ast} \assign s_{\genericVecLen + \projIdx}^{\ast} \oplus \prg(\prgSeed{\genericVecLen + \projIdx}) \\
-\end{align*}
+\begin{align}
+& \secretShareEncryption{1, \projIdx} \assign \genericRand[1, \projIdx] \homomorphicScalerMult{\encryptPubKey} (\ciphertext[1] \homomorphicAdd{\encryptPubKey}  ( - \genericCInputElmt{\projIdx})) \homomorphicAdd{\encryptPubKey} \pkencrypt[\encryptPubKey](\prgSeed{\projIdx})
+\label{cht:homomorphic_add_1} \\ 
+& \secretShareEncryption{2, \projIdx} \assign \genericRand[2, \projIdx] \homomorphicScalerMult{\encryptPubKey} (\ciphertext[2] \homomorphicAdd{\encryptPubKey}  ( - \genericCInputElmt{\projIdx})) \homomorphicAdd{\encryptPubKey} \pkencrypt[\encryptPubKey](\prgSeed{\genericVecLen + \projIdx})
+\label{cht:homomorphic_add_2} \\ 
+& \secretShareEncryption{1, \projIdx}^{\ast} \assign s_{\projIdx}^{\ast} \oplus \prg(\prgSeed{\projIdx}) \nonumber\\
+& \secretShareEncryption{2, \projIdx}^{\ast} \assign s_{\genericVecLen + \projIdx}^{\ast} \oplus \prg(\prgSeed{\genericVecLen + \projIdx}) \nonumber 
+\end{align}
 
-where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOrder - 1]$. 
+where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOrder - 1]$. The encrypted calculations in \eqnsref{cht:homomorphic_add_1}{cht:homomorphic_add_2} are performed using the additively homomorphic operators defined in \secref{}. 
 
 
 \EndFor
@@ -864,7 +866,7 @@ where $\genericRand[1, \projIdx], \genericRand[2, \projIdx] \sample [1, \groupOr
 \Statex \LComment{Upon receiving the above inputs from \client}
 
 
-\State \server decrypts $\secretShareEncryption{i, \projIdx}$ for all $i \in [1,2]$ and $\projIdx \in [1,2\genericVecLen]$, and obtains $\{ \prgSeedAlt{1}, \dots, \prgSeedAlt{2\genericVecLen} \}$
+\State \server decrypts $\secretShareEncryption{i, \projIdx}$ for all $i \in [1,2]$ and $\projIdx \in [1,2\genericVecLen]$ using \encryptPrivKey, and obtains $\{ \prgSeedAlt{1}, \dots, \prgSeedAlt{2\genericVecLen} \}$
 
 \State \server computes 
 
