@@ -18,7 +18,7 @@
 \itemListStart
 \item Upon receiving $(\distSign, \auditor[\auditorIdx], \blocklist,  \auditorPrivKeyOurScheme[\auditorIdx])$ from $\auditor[\auditorIdx]$, store $\blocklist, \privKey[\auditorIdx]$. After receiving the $\distSign$ message from all auditors, check that all the messages have the same input $\blocklist$. If so, output $\sign[\auditorPrivKeyOurScheme](\blocklist)$, otherwise abort.  
 
-\item Upon receiving $(\distBlind, \auditor[\auditorIdx], \genericSig[\blocklist], \auditorPrivKeyOurScheme[\auditorIdx])$ from $\auditor[\auditorIdx]$, store $\genericSig[\blocklist], \privKey[\auditorIdx]$. After receiving the $\distSign$ message from all auditors, check that all the messages have the same input $\genericSig[\blocklist]$. If so, output $\blind[\auditorPrivKeyOurScheme](\genericSig[\blocklist])$, otherwise abort. 
+\item Upon receiving $(\distBlind, \auditor[\auditorIdx], \genericSig[\blocklist], \genericRand,  \auditorPrivKeyOurScheme[\auditorIdx])$ from $\auditor[\auditorIdx]$, store $\genericSig[\blocklist], \privKey[\auditorIdx]$. After receiving the $\distBlind$ message from all auditors, check that all the messages have the same input $\genericSig[\blocklist]$ and $\genericRand \in [1, \rsaMod^2]$. If so, output $\blind[\auditorPrivKeyOurScheme](\genericSig[\blocklist], \genericRand)$, otherwise abort. 
 
 \item Upon receiving $(\distAdd, \auditor[\auditorIdx], \blocklist, \genericSetVar, \auditorPrivKeyOurScheme[\auditorIdx])$ from $\auditor[\auditorIdx]$, store $\blocklist, \genericSetVar, \auditorPrivKeyOurScheme[\auditorIdx]$. After receiving the $\distAdd$ from all auditors, check that all the messages have the same inputs $\blocklist$ and $\genericSetVar$. If so, output $\sign[\auditorPrivKeyOurScheme](\blocklist \cup \genericSetVar)$, otherwise abort. 
 
@@ -68,7 +68,7 @@
 
 \smallskip\noindent\textbf{Realizing \distBlind:}
 
-\noindent Auditors sample a random prime number $\blindingFactor \sample \primes$ and using \citet[Fig 3]{catalano2000computing} compute shares of $\blindingFactor^{-1} \bmod \phi(\qrGroup)$. Then, using the protocol above compute and output $\langle \genericSig[\blocklist]^{\frac{1}{\blindingFactor}}, \blindingFactor  \rangle$.  
+\noindent Auditors sample a random number $\blindingFactor \sample [1, \rsaMod^2]$ using a distributed randomness beacon~\cite{choi2023sok} and using \citet[Fig 3]{catalano2000computing} compute shares of $\blindingFactor^{-1} \bmod \phi(\qrGroup)$. Then, using the protocol above compute and output $\langle \genericSig[\blocklist]^{\frac{1}{\blindingFactor}}, \blindingFactor  \rangle$.  
 
 
 \end{minipage}

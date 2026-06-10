@@ -63,8 +63,8 @@
 \NewDocumentCommand{\privKey}{o}{\IfNoValueTF{#1}{\ensuremath{sk}\xspace}{\ensuremath{sk_{#1}}\xspace}}
 
 
-\NewDocumentCommand{\auditorPubKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{pk^{(r)}}\xspace}{\ensuremath{pk_{#1}^{(r)}}\xspace}}
-\NewDocumentCommand{\auditorPrivKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{sk^{(r)}}\xspace}{\ensuremath{sk^{(r)}_{#1}}\xspace}}
+\NewDocumentCommand{\auditorPubKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{pk^{(d)}}\xspace}{\ensuremath{pk_{#1}^{(d)}}\xspace}}
+\NewDocumentCommand{\auditorPrivKeyOurScheme}{o}{\IfNoValueTF{#1}{\ensuremath{sk^{(d)}}\xspace}{\ensuremath{sk^{(d)}_{#1}}\xspace}}
 \NewDocumentCommand{\auditorPubKeyGenericScheme}{o}{\IfNoValueTF{#1}{\ensuremath{pk}\xspace}{\ensuremath{pk_{#1}}\xspace}}
 \NewDocumentCommand{\auditorPrivKeyGenericScheme}{o}{\IfNoValueTF{#1}{\ensuremath{sk}\xspace}{\ensuremath{sk_{#1}}\xspace}}
 \newcommand{\encryptPubKey}{\ensuremath{\pubKey_{e}}\xspace}
