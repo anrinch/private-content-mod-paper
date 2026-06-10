@@ -1051,9 +1051,9 @@ o}{\ensuremath{c\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
 
 \newcommand{\blklistTokenAlt}{\ensuremath{\mathcal{T_{\blocklist'}}}\xspace}
 
-\NewDocumentCommand{\blklistToken}{g g}{\IfNoValueTF{#1}
-{\ensuremath{\mathcal{T_{\blocklist}\IfValueT{#2}{^{(#2)}}}}\xspace}
-{\ensuremath{\mathcal{T_{#1}\IfValueT{#2}{^{(#2)}}}}\xspace}
+\NewDocumentCommand{\blklistToken}{g g}{\IfNoValueTF{#1}%
+{\ensuremath{\mathcal{T_{\blocklist}\IfValueT{#2}{^{(#2)}}}}\xspace}%
+{\ensuremath{\mathcal{T_{#1}\IfValueT{#2}{^{(#2)}}}}\xspace}%
 }
 
 
