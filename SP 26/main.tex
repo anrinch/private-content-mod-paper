@@ -108,8 +108,41 @@ An auditable content moderation scheme enables a file server to detect problemat
 \input{eval.tex}
 \input{conclusion.tex}
 
-\newpage
-\section{Ethical Considerations}
+%\newpage
+
+
+
+\iffalse
+We will discuss the ethical considerations of our work in the following
+
+\enumListStart
+\item \textbf{Stakeholders}: If deployed, our research will provide a tool for service providers to safeguard against misuse of their services to store harmful content. By introducing independent auditors, we reduce the potential risk of surveillance and censorship. However, the ethical risks of general content moderation itself needs to be taken into account when evaluating the ethical implications of our work. The debate regarding free speech vs. moderating misinformation does not have a conclusive answer but several works have tried to summarize arguments both in favor or against it~\cite{kozyreva2023resolving}. 
+
+Nonetheless, service providers have a responsibility to ensure that their services are not being misused to proliferate harmful content. Therefore, moderating for such content is justified, and necessary~\cite{howard2023ethics}. However, to protect the interests of the clients, we need to ensure that auditors of the blocklist act independently and without influence. While in many cases this may not be possible, e.g., due to government interference, we believe this trust model is more suitable than endowing trust entirely on self-interested service providers. 
+
+
+
+\item \textbf{Impacts:} Our research did not involve testing with any real data or human subjects. As such, there are no violations of privacy or potential for harm. 
+
+\item \textbf{Mitigations:} 
+%
+We acknowledge that, sometimes, the most ethical path is not to do the research or not to publish the research after it is complete. However, 
+due to the urgent need to combat the proliferation of CSAM, we believe that our research is socially-relevant, and take possible countermeasures to prevent misuse of the system. 
+\enumListEnd
+\fi
+
+
+
+
+
+\bibliographystyle{IEEEtranSN}
+\bibliography{bib.bib, misc.bib}
+
+
+\appendix
+\input{appx.tex}
+
+\subsection{Ethical Considerations}
 %
 If deployed, our research will provide a tool for service providers to
 safeguard against misuse of their services to store harmful
@@ -145,36 +178,6 @@ due to the urgent need to combat the proliferation of CSAM, we believe
 that the potential benefits of our research far outweigh its risks,
 thereby satisfying the Beneficence criterion of the Menlo Report.
 
-\iffalse
-We will discuss the ethical considerations of our work in the following
 
-\enumListStart
-\item \textbf{Stakeholders}: If deployed, our research will provide a tool for service providers to safeguard against misuse of their services to store harmful content. By introducing independent auditors, we reduce the potential risk of surveillance and censorship. However, the ethical risks of general content moderation itself needs to be taken into account when evaluating the ethical implications of our work. The debate regarding free speech vs. moderating misinformation does not have a conclusive answer but several works have tried to summarize arguments both in favor or against it~\cite{kozyreva2023resolving}. 
-
-Nonetheless, service providers have a responsibility to ensure that their services are not being misused to proliferate harmful content. Therefore, moderating for such content is justified, and necessary~\cite{howard2023ethics}. However, to protect the interests of the clients, we need to ensure that auditors of the blocklist act independently and without influence. While in many cases this may not be possible, e.g., due to government interference, we believe this trust model is more suitable than endowing trust entirely on self-interested service providers. 
-
-
-
-\item \textbf{Impacts:} Our research did not involve testing with any real data or human subjects. As such, there are no violations of privacy or potential for harm. 
-
-\item \textbf{Mitigations:} 
-%
-We acknowledge that, sometimes, the most ethical path is not to do the research or not to publish the research after it is complete. However, 
-due to the urgent need to combat the proliferation of CSAM, we believe that our research is socially-relevant, and take possible countermeasures to prevent misuse of the system. 
-\enumListEnd
-\fi
-
-
-
-
-
-\bibliographystyle{IEEEtranSN}
-\bibliography{bib.bib, misc.bib}
-
-
-\newpage
-
-\appendix
-\input{appx.tex}
 
 \end{document}

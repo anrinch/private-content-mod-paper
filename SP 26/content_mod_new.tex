@@ -28,7 +28,7 @@ We can directly leverage either a Bloom filter based blocklist or a signature ba
 \enumListEnd
 
 \noindent\textbf{Upload:}
-When uploading content \clientData
+When uploading some content \clientData
 \enumListStart
 \item (\emph{fast path}:) The client derives the content hash $\genericCInputElmt \assign \embed(\clientData)$ and invokes $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. If the search returns 0, then the client and server can abort because this means $\genericCInputElmt \notin \blocklist$. The server will store the encrypted content. 
 
@@ -333,3 +333,5 @@ Creating the ACB has $\bigO(\blocklistSize)$ cost, and as discussed in \secref{s
 \begin{theorem}
 Assuming there is an IND-CPA secure additively homomorphic encryption scheme, \protocolFM securely realizes \contentModFuncExact with false positive rate \badFP and false negative rate \badFN. 
 \end{theorem}
+
+The proof is available in the full version~\cite{code}.
