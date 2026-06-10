@@ -28,7 +28,7 @@ We can directly leverage either a Bloom filter based blocklist or a signature ba
 \enumListEnd
 
 \noindent\textbf{Upload:}
-When uploading content \clientData
+When uploading some content \clientData
 \enumListStart
 \item (\emph{fast path}:) The client derives the content hash $\genericCInputElmt \assign \embed(\clientData)$ and invokes $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. If the search returns 0, then the client and server can abort because this means $\genericCInputElmt \notin \blocklist$. The server will store the encrypted content. 
 
