@@ -42,15 +42,15 @@ $\genericSetElmt[2]$ to corresponding elements in a metric space
 $\metricSpace$ with distance $\distance$. If the content is similar then 
 $\distanceNotation[\distance][\contentHash(\genericSetElmt[1])][\contentHash(\genericSetElmt[2])] 
 \le \threshold$ with high 
-probability, where $\threshold$ is a threshold.
+probability, where $\threshold$ is a threshold, and the probability is taken over random selection of the embedding function. 
 %
-\mkr{Where the probability is taken over random selection of
-  \genericSetElmt[1] and \genericSetElmt[2]?}
+%\mkr{Where the probability is taken over random selection of
+ % \genericSetElmt[1] and \genericSetElmt[2]?}
 %
-\mkr{In the notation
-  $\distanceNotation[\distance][\contentHash(\genericSetElmt[1])][\contentHash(\genericSetElmt[2])]$,
-  \distance looks like an integer (e.g., $\distance = 2$ for Euclidian distance).
-  Maybe change the macro to render as $\distance(\cdot, \cdot)$?}
+%\mkr{In the notation
+ % $\distanceNotation[\distance][\contentHash(\genericSetElmt[1])][\contentHash(\genericSetElmt[2])]$,
+ % \distance looks like an integer (e.g., $\distance = 2$ for Euclidian distance).
+ % Maybe change the macro to render as $\distance(\cdot, \cdot)$?}
 
 %Both mechanisms may introduce false positives and false negatives that can be tuned using parameters. 
  

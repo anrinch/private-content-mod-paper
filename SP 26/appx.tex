@@ -361,4 +361,55 @@ The second case is when $\hammingDist{\clientVec}{\genericVec} \le \threshold$. 
 %More specifically with 30 projections, the false negative rate according to \thmref{thm:fnr} (and experimentally verified) is 1\%. In comparison, the false negative rate achieved by previous work with pHash is roughly 17\%. Assuming an Elgamal encryption in an elliptic curve subgroup, the total communication cost during query is roughly 500KB which matches the cost of the PHM scheme (see \tblref{tab:related}), but under significantly lower false negatives (lower by at least 15\%) and under a weaker threat model. 
 
 
+\section{Apple PSI Detectable Hash Function}
 
+This implementation is provided the APPLE PSI white paper. Apple no longer hosts this white paper. The following is adapted from the section 4.3 of the APPLE PSI white paper where a complete construction of the detectable hash function is given.
+\\
+\\
+The detectable hash function is an s-detectable t-wise independent hash function $DHF: \mathcal{K} \times \mathcal{X} \rightarrow \mathcal{R}$, also called an (s,t)-DHF.
+
+\begin{itemize}
+    \item $s$ is an upper bound on the size of the set $S$.
+    \item $t+1$ is the threshold number of matches before the sever learns any data.
+\end{itemize}
+
+let $l$ be be a 64-bit prime.
+\\
+
+\subsection{Construction}
+The function $DHF: \mathcal{K} \times \mathcal{X} \rightarrow \mathcal{R}$ is defined as follows:
+
+\begin{itemize}
+    \item $ \mathcal{K} := \mathbb{F}^{s \times t}_l, \mathcal{X}:= \mathbb{F}_l$, $\mathcal{R}:=\mathbb{F}^{s+1}_l$
+    \item We treat a key $k \in \mathcal{K}$ as a sequence of $s$ polynomials $p_1, \dots, p_s \in \mathbb{F}_l[X]$ each of degree at most $t-1$. Each row of the matrix $k \in \mathcal{K}$ is one polynomial.
+    \item For $k \in \mathcal{K}$ and $x_0 \in \mathcal{X}$ define $$DHF(k, x_0) := (x_0,p_1(x_0),\dots,p_s(x_0)) \in \mathbb{F}^{s+1}_l$$
+\end{itemize}
+
+The output of $\DHF(k,x_0)$ is a column vector in $\mathbb{F}^{s+1}_l$
+\\
+\\
+A standard argument shows that the function DHF is weak t-wise independent: for random $k \xleftarrow{\$} K$ and random $x_1, \dots, x_t \xleftarrow{\$} \mathbb{F}_l$, the distribution $DHF(k, x_1), . . . , DHF(k, x_t)$ is uniform in $\mathcal{R}^t$.
+
+\subsection{Detection Algorithm}
+
+The detection algorithm is given a matrix of $m$ columns, where each column is an element of $\mathcal{R} = \mathbb{F}^{s+1}_{l}$. It needs to detect those columns that are an output of the DHF, assuming there are at least $\max(t+ 1, m−s)$ such columns. Recall that this means that there are at least $t + 1$ DHF columns and at most $s$ random columns.
+\\\\
+This problem is related to decoding the interleaved Reed-Solomon code under random noise. Apple's decoder uses a technique first described by Coppersmith and Sudan "Reconstructing curves in three (and higher) dimensional space form noisy data", 2003.
+
+\begin{enumerate}
+    \item expand each of the $m$ give column vectors $\mathbf{r} \leftarrow (x_0, r_1, \dots, r_s) \in \mathbb{F}^{s+1}_{l}$ into a column vector $\mathbf{r'} \in \mathbb{F}^{s+t}_{l}$ by setting $$\mathbf{r'} \leftarrow (1, x_0, x_0^2, \dots, x_0^{t-1}, r_1, \dots, r_s) \in \mathbb{F}^{s+t}_{l}$$
+    \item let $M \in \mathbb{F}^{(s+t) \times m}_l$ be the resulting matrix after expansion. Every row of $M$ contains at least $t+1$ evaluations of some polynomial $f$ of degree at most $t-1$.
+	Hence, the $t+1$ correct DHF columns of $M$ must be linearly independent.
+    \item if $dim(kernel{M)) = 0$ then output $fail$ and stop. The $kernel(M)$ is the right kernel of $M$. Else:
+    \begin{itemize}
+        \item let $\mathbf{w} \in \matchbb{F}^{m}_{l}$ be a vector in the kernel of $M$, namely $M \cdot \mathbf{w} = 0$.
+        \item let $Z \subseteq [m]$ be the set of indices where $\mathbf{w}$ is non-zero.
+        \item let $M[Z] \in \mathbb{F}_l^{(s+t) \times |Z|}$ be the sub-matrix of $M$ restricted to the columns in $Z$.
+        \item output the set of inidices $\hat{Z} \subseteq [m]$ where $i \in \hat{Z}$ iff column number $i$ of $M$ is in the linear span of the columns in $M[Z]$. Note that $\hat{Z}$ is a super set of $Z$.
+    \end{itemize}
+\end{enumerate}
+
+
+\\
+\\
+To show that the detection algorithm works correctly, consider the case where $M$ contains at least $t+1$ DHF columns. Let $\hat{M}$ be the sub-matrix of $M$ containing all the expanded random columns and exactly t of the expanded DHF columns. This is a matrix containing at most $s + t$ columns and exactly $s + t$ rows. Moreover, the top $t$ rows are linearly independent, and the bottom $s$ rows are truly random. The columns of such a matrix are linearly independent with probability about $1 − (1/l)$, assuming $l >>  s + t$. The remaining columns of $M$ are in the linear span of the t DHF columns of $\hat{M}$ . Therefore, the vector $\mathbf{w}$ can only be non-zero at positions that correspond to DHF columns. Moreover, with high probability, these columns will span the linear space of DHF columns. Hence, with high probability, the algorithm outputs exactly the indices of the columns in M that are DHF columns, as required.
