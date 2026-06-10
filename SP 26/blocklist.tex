@@ -210,6 +210,9 @@ We introduce confidentiality by constructing the Bloom filter with obfuscated it
 \subsubsection{Authenticated OPRF}
 %
 We define a functionality called \emph{authenticated OPRF}, that extends the definition of an oblivious pseudorandom function (OPRF) to a three party functionality \authOPRFFunc (\figref{fig:authOPRF_func}), where a group of $\numAuditors$ auditors with semi-honest majority jointly sign a list of inputs to a pseudorandom function. \authOPRFFunc receives the key for the PRF from the client acting as the sender. The receiver of the PRF evaluations is the server, who does not provide inputs.
+%
+\mkr{Is it a three-party functionality, or a $(\numAuditors+2)$-party
+  (\numAuditors auditors + 1 client + 1 server) functionality?}
 
 
 
@@ -280,7 +283,7 @@ $\{ \langle \genericBlocklistElmt_\setIdx, \oprfRO[2](\genericBlocklistElmt[\set
 We create a Bloom-filter-based ACB \bfBlklistToken using \authOPRFFunc as shown in \algoref{acb:bf} and depicted in \figref{fig:bf_acb}.  At a high level, the auditors invoke \authOPRFFunc with \publishList to publish a blinded blocklist \blindedBlocklist, while the client and server invoke \evaluate with \blindedBlocklist as input (line 6). Using the output $\{ \langle \genericBlocklistElmt_\setIdx, \prf{\prfKeyClient}(\genericBlocklistElmt[\setIdx]) \rangle \}_{\genericBlocklistElmt[\setIdx] \in \blocklist}$ from \authOPRFFunc, the server creates $\numBins \assign \lceil \blocklistSize/\log \blocklistSize \rceil$ Bloom filters, $\bloomFilter[1], \dots, \bloomFilter[\numBins]$ , where $\blocklistSize = \setSize{\blocklist}$. The items $\genericBlocklistElmt$ and $\prf{\prfKeyClient}(\genericBlocklistElmt)$ are added to $\bloomFilter[\bloomFilterIdx]$ where $\bloomFilterIdx = \prf{\prfKeyClient}(\genericBlocklistElmt) \bmod \numBins$ (lines 8 - 15).  Instead of directly storing 
 $\prf{\prfKeyClient}(\genericBlocklistElmt)$ in the Bloom filter, the server stores $\prp{\prpKeyServer}(\prf{\prfKeyClient})(\genericBlocklistElmt)$, where \prp is a pseudorandom permutation and \prpKeyServer is a key sampled by the server; the reason will be clarified in \secref{sec:content_mod}. Finally, the Bloom filters are encrypted by the server under a symmetric key and stored by the client as the ACB. 
 
-During a search with input $\genericCInputElmt$, the client sends to the server $\genericCInputElmtPRFEval \assign \prf{\prfKeyClient}(\genericCInputElmt)$ and the encrypted Bloom filter $\bloomFilter[\bloomFilterIdx]$ where $\bloomFilterIdx = \genericCInputElmtPRFEval \bmod \numBins$. The server checks if $\prp{\prpKeyServer}(\genericCInputElmtPRFEval) \in \bloomFilter[\bloomFilterIdx]$, and if so, the search returns a positive (lines 22 - 23). To prevent the server from correlating searches, the client maintains a list of previously queried items, \prevHashList. If $\genericCInputElmt \in \prevHashList$, then the client sets $\genericCInputElmtPRFEval \sample \bin^{\secParam}$; 
+During a search with input $\genericCInputElmt$, the client sends to the server $\genericCInputElmtPRFEval \assign \prf{\prfKeyClient}(\genericCInputElmt)$ and the encrypted Bloom filter $\bloomFilter[\bloomFilterIdx]$ where $\bloomFilterIdx = \genericCInputElmtPRFEval \bmod \numBins$. The server checks if $\prp{\prpKeyServer}(\genericCInputElmtPRFEval) \in \bloomFilter[\bloomFilterIdx]$, and if so, the search returns a positive (lines 22 - 23 \mkr{I don't see a line 23.}). To prevent the server from correlating searches, the client maintains a list of previously queried items, \prevHashList. If $\genericCInputElmt \in \prevHashList$, then the client sets $\genericCInputElmtPRFEval \sample \bin^{\secParam}$. \mkr{Might want to clarify somewhere that \oprfRO[2] outputs elements in $\bin^{\secParam}$, too?}
 
 
 
@@ -349,17 +352,17 @@ During a search with input $\genericCInputElmt$, the client sends to the server 
 
 \myparagraph{Costs}
 %
-The costs of creating and searching are as follows 
+The costs of creating and searching are as follows.
 
 \itemListStart
 \item \createBlocklist has $\bigO(\blocklistSize)$ cost for the auditors, client and server. This is a one-time cost.
 \item \searchBlocklist has $\bigO(1)$ cost for the client and the server, and $\bigO(\log \blocklistSize)$ communication cost for a single Bloom filter. 
-\item The total storage cost for the client is $\sum\limits_{\bloomFilterIdx \in [1, \numBins]} |\bloomFilter[\bloomFilterIdx]|$
+\item The total storage cost for the client is $\sum\limits_{\bloomFilterIdx \in [1, \numBins]} |\bloomFilter[\bloomFilterIdx]|$.
 \itemListEnd 
 
 \myparagraph{Security}
 %
-The security of the ACB is due to the following
+The security of the ACB is due to the following.
 
 \itemListStart
 \item Confidentiality and unforgeability is ensured by \authOPRFFunc, and IND-CPA security of the encryption scheme. 
