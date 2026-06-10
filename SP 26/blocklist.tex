@@ -48,6 +48,12 @@ The core building block of our content moderation schemes are blocklist designs 
 \[
 \prob{\adversary(\blindedBlocklist) = \genericBlocklistElmt \land \genericBlocklistElmt \in \blocklist} \le 1/|\universe| + \neglProb 
 \]
+%
+\mkr{Would advise writing $\genericBlocklistElmt \gets
+  \adversary(\blindedBlocklist)$, to make it clearer that \adversary
+  is producing \genericBlocklistElmt.  This might be a bigger change to
+  make throughout the paper, though, and so I won't make it here.}
+
 
 \item \emph{Unforgeability:} The auditors sign $\blindedBlocklist$ (and other relevant information) under their own keys.  
 
@@ -71,12 +77,18 @@ The core building block of our content moderation schemes are blocklist designs 
 \cprob{}{\searchBlocklist(\genericCInputElmt, \blklistToken) = \fals}{\genericCInputElmt \notin \blocklist} \le 1 - \fpr 
 \end{align*}
 
-, where $\fnr \in (0,1)$ is the false negative rate, and $\fpr \in (0,1)$ is the false positive rate.
+where $\fnr \in (0,1)$ is the false negative rate, and $\fpr \in (0,1)$ is the false positive rate.
+%
+\mkr{Again, it's unclear what the probability is taken over.  If you
+  mean random choice of \genericCInputElmt, then maybe condition on
+  $\genericCInputElmt \getsr \blocklist$ and $\genericCInputElmt \getsr
+  \universe \setminus \blocklist$?  Or do you just mean random choices
+  of the client and server?}
 
 %The mechanism also returns a $\{0, 1\}$ to the client to indicate whether there was a match.  
 
 
-\item $\thresholdSearchBlocklist$: This is an optional interactive mechanism invoked by the client and server where given a set of inputs $\genericCInputSet \assign \{ \genericCInputElmt{1}, \dots, \genericCInputElmt{\genericVecLen} \}$ from the client, and a public threshold $\threshold$, the functionality outputs a value in $\{0,1\}$ 
+\item $\thresholdSearchBlocklist$: This is an optional interactive mechanism invoked by the client and server where given a set of inputs $\genericCInputSet \assign \{ \genericCInputElmt{1}, \dots, \genericCInputElmt{\genericVecLen} \}$ from the client, and a public threshold $\threshold$, the functionality outputs a value in $\{\tru,\fals\}$.
 
 \begin{align*}
 \cprob{}{\thresholdSearchBlocklist(\genericCInputSet, \blklistToken) = \tru}{|\genericCInputSet \cap \blocklist| \ge \threshold} \ge  1 - \fnr\\
@@ -84,7 +96,11 @@ The core building block of our content moderation schemes are blocklist designs 
 \end{align*}
 
 
-, where $\fnr \in (0,1)$ is the false negative rate, and $\fpr \in (0,1)$ is the false positive rate. Crucially, for both \searchBlocklist and \thresholdSearchBlocklist,  if the client's input(s) is not on the blocklist, then no additional information about $\genericCInputElmt$ and $\genericCInputSet$ respectively is revealed to the server. 
+where $\fnr \in (0,1)$ is the false negative rate, and $\fpr \in (0,1)$ is the false positive rate.
+%
+\mkr{Same question here.}
+%
+Crucially, for both \searchBlocklist and \thresholdSearchBlocklist,  if the client's input(s) is not on the blocklist, then no additional information about $\genericCInputElmt$ and $\genericCInputSet$ respectively is revealed to the server. 
 
 %The mechanism also returns a $\{0, 1\}$ to the client to indicate whether there was a match. 
 
