@@ -62,7 +62,7 @@ denote a security parameter.
 %
 
 
-We will make black-box use of the following primitives 
+We will make black-box use of the following primitives.
 
 
 \smallskip\noindent\textbf{Symmetric key encryption scheme} defined by the triple of algorithms $\encryptionSchemeDefn$ with key space \encryptKeySpace. The encryption scheme satisfies IND-CPA security~\cite{bellare1998relations}. 
@@ -75,7 +75,7 @@ For security, the encryption scheme must satisfy \emph{weak} random key robustne
 
 %An encryption scheme that satisfies IND-CPA\$ security and ciphertext integrity has weak random key robustness.
 
-\smallskip\noindent\textbf{Additively homomorphic encryption scheme} defined by the triple $\ahencryptionSchemeDefn$.  The plaintext space is a group \group of prime order with identity \groupIdentity. The encryption scheme is
+\smallskip\noindent\textbf{Additively homomorphic public-key encryption scheme} defined by the triple $\ahencryptionSchemeDefn$.  The plaintext space is a group \group of prime order with identity \groupIdentity. The encryption scheme is
 homomorphic under the group operation. That is, there is an efficient
 algorithm to compute a ciphertext $\pkencrypt[\encryptPubKey](\plaintext[1] \groupOp \plaintext[2])$
 from $\pubKey$, $\ciphertext[1] = \pkencrypt[\encryptPubKey](\plaintext[1])$, and $\ciphertext[2] = \pkencrypt[\encryptPubKey](\plaintext[2])$; we denote this operation by
