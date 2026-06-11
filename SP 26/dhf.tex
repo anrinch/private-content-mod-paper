@@ -1,0 +1,51 @@
+\section{Detectable Hash Function}
+\label{sec:dhf}
+The Apple PSI system introduced a \emph{detectable hash function}. The following construction is adapted from their white paper, as detailed in \cite{pinkas2021applepsi}. 
+
+
+The detectable hash function is an s-detectable t-wise independent hash function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$, also called an $(s,t)$-DHF.
+
+\begin{itemize}
+    \item $s$ is an upper bound on the size of the set $S$.
+    \item $t+1$ is the threshold number of matches before the sever learns any data.
+\end{itemize}
+
+
+Let $\ell$ be be a 64-bit prime. The function $\dhf: \dhfKeySpace \times \dhfDomain \rightarrow \dhfRange$ is defined as follows:
+
+\begin{itemize}
+    \item $ \dhfKeySpace \assign \field^{s \times t}_l, \dhfDomain \assign \field_{\ell}$, $\dhfRange \assign \field^{s+1}_l$
+    \item We treat a key $\dhfKey \sample \dhfKeySpace$ as a sequence of $s$ polynomials $p_1, \dots, p_s \in \field_{\ell}[X]$ each of degree at most $t-1$. Each row of the matrix $\dhfKey$ is one polynomial.
+    \item For $\dhfKey$ and $x_0 \in \dhfDomain$ define 
+    
+    \[\dhf[\dhfKey](x_0) \assign (x_0,p_1(x_0),\dots,p_s(x_0)) \in \field^{s+1}_{\ell}
+    \]
+\end{itemize}
+
+The output of $\dhf[\dhfKey](x_0)$ is a column vector in $\field^{s+1}_\ell$. A standard argument shows that the function DHF is weak t-wise independent: for random $\dhfKey \sample \dhfKeySpace$ and random $x_1, \dots, x_t \assign \field_\ell$, the distribution $\dhf[\dhfKey](x_1), \dots , \dhf[\dhfKey](x_t)$ is uniform in $\dhfRange^t$.
+
+\myparagraph{Detection Algorithm}
+%
+The detection algorithm is given a matrix of $m$ columns, where each column is an element of $\dhfRange = \field^{s+1}_{\ell}$. It needs to detect those columns that are an output of \dhf, assuming that there are at least $\max(t+1,m - s)$ such columns. Recall that this means that there are at least $t + 1$ DHF columns and at most $s$ random columns.
+
+%
+This problem is related to decoding the interleaved Reed-Solomon code under random noise. The decoding algorithm uses a technique first described by \citet{coppersmith2003reconstructing} as follows
+
+\begin{enumerate}
+    \item Expand each of the $m$ give column vectors $\mathbf{r} \assign (x_0, r_1, \dots, r_s) \in \mathbb{F}^{s+1}_{\ell}$ into a column vector $\mathbf{r'} \in \field^{s+t}_{\ell}$ by setting $$\mathbf{r'} \assign (1, x_0, x_0^2, \dots, x_0^{t-1}, r_1, \dots, r_s) \in \mathbb{F}^{s+t}_{\ell}$$
+    
+    \item Let $M \in \field^{(s+t) \times m}_\ell$ be the resulting matrix after expansion. Every row of $M$ contains at least $t+1$ evaluations of some polynomial $f$ of degree at most $t-1$.
+	Hence, the $t+1$ correct DHF columns of $M$ must be linearly independent.
+    \item If $\dim(kernel(M)) = 0$ then output  $\bot$ and stop. The $kernel(M)$ is the right kernel of $M$. Otherwise:
+    
+    \begin{itemize}
+        \item Let $\mathbf{w} \in \field^{m}_{\ell}$ be a vector in the kernel of $M$, namely $M \cdot \mathbf{w} = 0$.
+        \item Let $Z \subseteq [1,m]$ be the set of indices where $\mathbf{w}$ is non-zero.
+        \item Let $M[Z] \in \field_{\ell}^{(s+t) \times |Z|}$ be the sub-matrix of $M$ restricted to the columns in $Z$.
+        \item Output the set of indices $\hat{Z} \subseteq [m]$ where $i \in \hat{Z}$ iff. column number $i$ of $M$ is in the linear span of the columns in $M[Z]$. Note that $\hat{Z}$ is a super set of $Z$.
+    \end{itemize}
+\end{enumerate}
+
+The algorithm has $\bigO((s+t) * m^2) \in \bigO(s^3)$ cost since it requires a matric decomposition over $M$. To show that the detection algorithm works correctly, consider the case where $M$ contains at least $t+1$ DHF columns. Let $\hat{M}$ be the sub-matrix of $M$ containing all the expanded random columns and exactly $t$ of the expanded are DHF columns. This is a matrix containing at most $s+t$ columns and exactly $s+t$ rows. 
+Moreover, the top $t$ rows are linearly independent, and the bottom $s$ rows are truly random. The columns of such a matrix are linearly independent with probability about $1 - 1/\ell$, assuming $\ell >> s +t$. 
+The remaining columns of $M$ are in the linear span of the t DHF columns of $\hat{M}$ . Therefore, the vector $\mathbf{w}$ can only be non-zero at positions that correspond to DHF columns. Moreover, with high probability, these columns will span the linear space of DHF columns. Hence, with high probability, the algorithm outputs exactly the indices of the columns in M that are DHF columns, as required.
