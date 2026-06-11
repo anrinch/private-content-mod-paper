@@ -3,7 +3,7 @@
 %
 
 
-\myparagraph{Notation}
+%\myparagraph{Notation}
 %
 We use $\assign$ to denote assignment of the value on its right to
 the variable on its left, and $\sample$ to sample uniformly from the
@@ -25,7 +25,7 @@ denotes a security parameter.
 %
 We use standard cryptographic tools: i) an IND-CPA secure symmetric key encryption scheme \encryptionSchemeDefn, ii) a digital signature scheme \sigSchemeDefn, and iii) an IND-CPA secure additively-homomorphic encryption scheme $\ahencryptionSchemeDefn$. We will also make use of a pseudorandom function family, a pseudorandom permutation family and a pseudorandom number generator; the specifications are provided in the sections they are used. We refer to a textbook on cryptography, e.g.,~\cite{katz2007introduction} for a formal definition of these primitives. 
 
-
+\iffalse 
 \begin{definition}[Strong QR-RSA problem]
 	Assume that $\rsaMod = \safePrime[1] \safePrime[2]$ where
         $\safePrime[1]$ and $\safePrime[2]$ are random, safe prime
@@ -53,7 +53,7 @@ We use standard cryptographic tools: i) an IND-CPA secure symmetric key encrypti
         the maximum is taken over all adversary algorithms
         $\rsaAdversary$ that run in total time $\timeBound$.
 \end{definition}
-
+\fi 
 
 \NewDocumentCommand{\cciOracle}{g}{%
 	\ensuremath{\algNotation{O}_{\IfNoValueTF{#1}{\$}{#1}}}\xspace}

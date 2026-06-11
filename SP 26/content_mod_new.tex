@@ -9,7 +9,7 @@
 We describe our content moderation scheme with exact-matching capabilities in \algoref{protocol:em}; we assume that the client wants to upload content drawn from the universe \universe, and the content hash function $\contentHash: \universe \rightarrow \bin^{\genericVecLen}$ maps any such content to an \genericVecLen-bit string. Two items $\genericUniverseElmt, \genericUniverseElmtAlt$ are similar iff. $\contentHash(\genericUniverseElmt) = \contentHash(\genericUniverseElmtAlt)$.  
 
 
-\myparagraph{Key idea: fast path with two ACBs}
+\myparagraph{Key idea: fast path combining two ACBs}
 %
 We can directly leverage either a Bloom filter based blocklist or a signature based blocklist to realize \contentModFuncExact. In the former, the cost of matching against the blocklist is $\bigO(1)$ but the construction has false positives. In the latter, there are no false positives (or false negatives) but the costs for matching is linear (in the blocklist size). This motivates the questions: \emph{can we design a scheme that has sublinear matching costs without incurring false positives?} Our solution is to combine the two ACBs to realize \contentModFuncExact without false positives and sublinear matching costs (\algoref{protocol:em}). 
 
@@ -32,7 +32,7 @@ When uploading some content \clientData
 \enumListStart
 \item (\emph{fast path}:) The client derives the content hash $\genericCInputElmt \assign \embed(\clientData)$ and invokes $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. If the search returns 0, then the client and server can abort because this means $\genericCInputElmt \notin \blocklist$. The server will store the encrypted content. 
 
-\item (\emph{fine-grained check}:) Otherwise, let $\bloomFilter[\bloomFilterIdx]$ be the Bloom filter such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)) \in \bloomFilter[\bloomFilterIdx]$; recall that the server learns $\bloomFilter[\bloomFilterIdx]$ in $\bfACB.\searchBlocklist$. The server identifies the blocklist partitions containing the items included in $\bloomFilter[\bloomFilterIdx]$. More specifically, the server calculates the set of indices $$\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \blocklistPartition{\partitionIdx}\}$$, and sends it to the client 
+\item (\emph{fine-grained check}:) Otherwise, let $\bloomFilter[\bloomFilterIdx]$ be the Bloom filter such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)) \in \bloomFilter[\bloomFilterIdx]$; recall that the server learns $\bloomFilter[\bloomFilterIdx]$ in $\bfACB.\searchBlocklist$. The server identifies the blocklist partitions containing the items included in $\bloomFilter[\bloomFilterIdx]$. Specifically, the server calculates the set of indices $$\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \blocklistPartition{\partitionIdx}\}$$, and sends it to the client 
 
 
 \item Upon receiving $\partitionIDSet$, the client invokes $\sigACB.\searchBlocklist(\genericCInputElmt, \sigBlklistToken{\partitionIdx})$ for all $\partitionIdx \in \partitionIDSet$. If any invocation returns $\genericCInputElmt$ to the server, then $\genericCInputElmt \in \blocklist$; the server rejects the encrypted content and aborts. Otherwise, $\genericCInputElmt \notin \blocklist$ and the server accepts the content and informs the client.  
@@ -40,14 +40,10 @@ When uploading some content \clientData
 
 \myparagraph{Costs}
 %
-
-\itemListStart
-\item The preprocessing for \bfBlklistToken requires a one-time $\bigO(\blocklistSize)$ compute and communication cost for the client and the server. The client also requires $\bigO(\blocklistSize +
- \numBlocklistParts)$ storage. 
+The preprocessing for \bfBlklistToken requires a one-time $\bigO(\blocklistSize)$ compute and communication cost for the client and the server. The client also requires $\bigO(\blocklistSize + \numBlocklistParts)$ storage. 
  
-\item During an upload, $\bigO(1)$ compute cost for the client and server (with high probability) when the uploaded content does not match an item in the blocklist, i.e., fast path verification. Alternatively, $\bigO(\setSize{\partitionIDSet}) \in \bigO(\log \blocklistSize)$ compute cost for the client and $\bigO(\blocklistSize)$ server cost when the client's uploaded file matches an item on the blocklist
-\item $\bigO((\blocklistSize/\numBlocklistParts)+ \log \blocklistSize)$ communication cost for sending an encrypted Bloom filter, and $\bigO(\log \blocklistSize)$ randomized signatures if a fine-grained check is deemed necessary. If $\numBlocklistParts \in \bigO(\blocklistSize)$, then the cost of an upload is $\bigO(\log \blocklistSize)$. 
-\itemListEnd
+During an upload, $\bigO(1)$ compute cost for the client and server (with high probability) when the uploaded content does not match an item in the blocklist, i.e., fast path verification. Alternatively, $\bigO(\setSize{\partitionIDSet}) \in \bigO(\log \blocklistSize)$ compute cost for the client and $\bigO(\blocklistSize)$ server cost when the client's uploaded file matches an item on the blocklist. The overall communication cost for an upload is $\bigO((\blocklistSize/\numBlocklistParts)+ \log \blocklistSize)$ for sending an encrypted Bloom filter, and $\bigO(\log \blocklistSize)$ randomized signatures if a fine-grained check is deemed necessary. If $\numBlocklistParts \in \bigO(\blocklistSize)$, then the cost of an upload is $\bigO(\log \blocklistSize)$. 
+
 
 
 
@@ -125,7 +121,9 @@ Comparing an input against the blocklist is challenging when we need to implemen
 
 We take a different approach by leveraging the fact that our functionality has strictly weaker requirements than a fuzzy PSI/PMT protocol because: i) it tolerates false positives and false negatives, and ii) it does not output the matching items to the server/client. Thus, we can design a protocol with lower costs. The key idea is to use projections of the blocklist vectors as the matching criteria: two vectors are considered close if they have identical projections under a certain number of projection functions. Obviously, leaking the projections themselves will allow the server to learn information about the encrypted content. Therefore, we only reveal the \emph{number of matching projections} when they are above a certain threshold, but not the projections themselves. Thus, even if there is a false positive, the server does not learn any more information about the content.
 
+\iffalse 
 We do not provide a mechanism to disambiguate false positives from true positives. A fine-grained check without false positives must essentially solve the fuzzy, ``distribution-free''~\cite{} private membership problem against malicious receivers with sublinear communication costs. To the best of our knowledge, there is no such protocol that scales to the throughput requirements of a file server. Hence, we adopt a best-effort approach focusing on efficiency rather than accuracy: we will select projection functions carefully such that the chance of false positives are low. Given the false positive rate, the server can fix a threshold and decide to report/suspend an account if there are more than a threshold number of potential matches, which is likely to include a true positive. To realize this idea, we will first define the projection functions, and then show how to combine it with our cuckoo hash based ACB to realize \contentModFuncFuzzy. 
+\fi 
 
 \iffalse 
 , and if required, follow it by performing  a significantly more expensive but perfectly accurate test over the actual vectors. Specifically, if the client's input matches a certain threshold number of projections against the blocklisted items, then the server performs the fine-grained check., and the likely candidates in the blocklist that should be checked against the input. We note that the \contentModFunc functionality allows this leakage, since the server does not learn the content key.  Nonetheless, , and iii) the candidate set is reasonably large and can be set as a tunable parameter. A caveat here is that the fine-grained check must be performed over the actual embedding vectors and not just the projections, so the blocklist authentication token and the content verification token must be modified to account for entire vectors. , and then describe how to modify the tokens. 
@@ -172,8 +170,7 @@ where,  \fpr and \fnr are the false positive rate and false negative rate under 
 \end{definition}
 
 Intuitively, \eqnref{eq:no_false_neg} ensures that two items close in the metric space agree on at least one of the projections 
-with high probability. \eqnref{eq:no_false_pos} implies that two items far apart in the metric space do not agree on \emph{all} their projections 
-with high probability. Note that \fpr and \fnr may not be negligible. Also, since the projection functions are selected randomly, the overall false positives and false negatives over the projections are binomially distributed. Specifically, 
+with high probability. \eqnref{eq:no_false_pos} implies that two items far apart in the metric space do not agree on \emph{all} their projections with high probability.Since the projection functions are selected randomly, the overall false positives and false negatives over the projections are binomially distributed. Specifically, 
 
 
 \def\scalingFn{\ensuremath{\alpha}\xspace}
@@ -182,6 +179,7 @@ with high probability. Note that \fpr and \fnr may not be negligible. Also, sinc
 \label{corr:fingerprint_intersection}
 Let $\threshold \in \reals^{++}$ be a distance threshold, and $\scalingFn: \reals^{++} \rightarrow  [1, \numProjections]$ is a scaling function. Also, let $\detectionThreshold \assign \scalingFn(\threshold)$. Given two elements $\genericMetricSpaceElmt, \genericMetricSpaceElmtAlt \in \metricSpace$ and a detection threshold, 
 
+\begin{small}
 \begin{gather*}
 \prob{\badFN} = 
 \cprob{}{\begin{array}{c} |\fingerprint{}(\genericMetricSpaceElmt) \cap \fingerprint{}(\genericMetricSpaceElmtAlt)|  \\ < \numProjections - \detectionThreshold + 1 \end{array}}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] \le \threshold} 
@@ -189,6 +187,7 @@ Let $\threshold \in \reals^{++}$ be a distance threshold, and $\scalingFn: \real
 \prob{\badFP} = \cprob{}{\begin{array}{c} |\fingerprint{}(\genericMetricSpaceElmt) \cap \fingerprint{}(\genericMetricSpaceElmtAlt)| \\ \ge  \detectionThreshold \end{array}}{\distanceNotation[\distance][\genericMetricSpaceElmt][\genericMetricSpaceElmtAlt] > \threshold} 
 \\ \le \sum\limits_{i = \detectionThreshold}^{\blocklistSize \numProjections} \binom{\blocklistSize\numProjections}{i} \fpr^{i} (1 - \fpr)^{\blocklistSize \numProjections - i} \\
 \end{gather*}
+\end{small}
 
 \end{corollary}
 
@@ -235,9 +234,9 @@ Let $\detectionThreshold \in [1, \numProjections]$. Given two elements $\generic
 \end{corollary}
 \fi 
 
-\myparagraph{Locality-preserving fingerprint for the Hamming distance}
+\myparagraph{Construction for the Hamming distance}
 %
-\citet{chongchitmate2024approximate} describe a construction for a locality-preserving fingerprint for the Hamming space using uniformly sampled functions $\projFn[1], \dots, 
+\citet{chongchitmate2024approximate} describe a construction for a locality-preserving fingerprint  using uniformly sampled functions $\projFn[1], \dots, 
 \projFn[\numProjections]$ where $\projFn[\projIdx]: \setDefn{0,1}^{\genericVecLen} \rightarrow 
 \setDefn{0,1}^{\secParam}$. Each function specifies a random subset of bits from the input 
 vector, and injectively maps it to a $\secParam$-bit string. Consider a set
@@ -253,14 +252,23 @@ $\blocklist \subseteq \setDefn{0,1}^{\genericVecLen}$.
 \enumListEnd
 
 The set $\fingerprint{\blocklistVec} \assign \setDefn{\projBuckets[1][\blocklistVec], \dots, \projBuckets[\numProjections][\blocklistVec]}$ is a locality-preserving 
-fingerprint of $\blocklistVec$ assuming negligible collisions in $\hashFn$. If all the vectors in $\blocklist$ are at least $\lshConst 
+fingerprint of $\blocklistVec$. We refer to \cite{chongchitmate2024approximate} for further details about how to select \numProjections for reasonably low values of \badFN and \badFP. If all the vector embeddings in $\blocklist$ are at least $> 2 \threshold$ distance apart, then $\numProjections$ is sublinear in \blocklistSize; most embedding functions satisfy this property~\cite{kulshrestha2021identifying, mckeown2023hamming}. 
+
+\iffalse 
+similar 
+items are close in the embedded space, while dissimilar items are sufficiently far apart~\cite{}. Alternatively, nearby items can be repeatedly 
+clustered to have an efficient construction~\cite{chongchitmate2024approximate}
+\fi 
+
+\iffalse 
+If all the vectors in $\blocklist$ are at least $\lshConst 
 \threshold$ distance apart, then $\numProjections = \bigO\left((\genericSetSize 
 \lshConst)^{\frac{1}{\lshConst - 1}} (\secParam + \log \genericSetSize)\right)$ projections ensure that 
 $\fpr^\numProjections$ and $\fnr^\numProjections$ are both negligible in \secParam; here $\setSize{\blocklist} = \blocklistSize$. Observe that if $\lshConst > 2$, the number of projections are sublinear in 
 $\genericSetSize$. Most embedding functions ensure that similar 
 items are close in the embedded space, while dissimilar items are sufficiently far apart~\cite{kulshrestha2021identifying, mckeown2023hamming}. Alternatively, nearby items can be repeatedly 
 clustered to have an efficient construction~\cite{chongchitmate2024approximate}.
-
+\fi 
 
 
 \begin{algorithm}[t]
@@ -329,7 +337,7 @@ Once the flagged content list for an account exceeds a certain threshold \reveal
 
 \myparagraph{Cost \& Security }
 %
-Creating the ACB has $\bigO(\blocklistSize)$ cost, and as discussed in \secref{sec:acb}, the cost of a threshold search is $\bigO(\detectionThreshold)$ for the client and $\bigO(\detectionThreshold \times \numProjections)$ for the server.   
+Creating the ACB has $\bigO(\blocklistSize)$ cost, and as discussed in \secref{sec:acb}, the cost of a threshold search is $\bigO(\detectionThreshold)$ for the client and $\bigO(\numProjections^3)$ for the server.   
 \begin{theorem}
 Assuming there is an IND-CPA secure additively homomorphic encryption scheme, \protocolFM securely realizes \contentModFuncExact with false positive rate \badFP and false negative rate \badFN. 
 \end{theorem}

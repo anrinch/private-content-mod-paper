@@ -22,6 +22,9 @@
 \label{sec:acb}
 %
 
+
+
+
 The core building block we leverage to realize the ideal functionalities described in \secref{sec:security} are authenticated and confidential blocklists (ACB), jointly created by the auditors from a common set of blocklisted items. 
 
 % blocklists that can be stored on the client while  ensuring: i) \textbf{confidentiality}: clients do not learn the constituent blocked elements, and ii) \textbf{unforgeability}: only the auditors can create and modify the blocklist. We call such blocklist designs  \emph{authenticated and confidential blocklists} (ACBs). 
@@ -642,7 +645,7 @@ Here, $\euclideanConst[1], \euclideanConst[2]$ are integers such that $\euclidea
 \itemListEnd
 
 The security of the scheme (UF-CMA and IND-SR) reduces to the 
-strong QR-RSA assumption in the random oracle model. Confidentiality under blinding is ensured by the fact that for $\blindingFactor \sample [1, \rsaMod^2]$, $\randomizeFn(\genericSigPair[1], \blindingFactor) = \genericSigPair[1]^{\blindingFactor} \bmod \rsaMod$ is uniformly distributed in \qrGroup~\cite{micciancio2005rsa}. The proofs are available in the full version of the paper~\cite{code}. 
+strong QR-RSA assumption~\cite{cramer2000signature} in the random oracle model. Confidentiality under blinding is ensured by the fact that for $\blindingFactor \sample [1, \rsaMod^2]$, $\randomizeFn(\genericSigPair[1], \blindingFactor) = \genericSigPair[1]^{\blindingFactor} \bmod \rsaMod$ is uniformly distributed in \qrGroup~\cite{micciancio2005rsa}. The proofs are available in the full version of the paper~\cite{code}. 
 
 %We show in \appref{sec:proof:sig_scheme} that the security of the scheme . 
 
@@ -752,7 +755,7 @@ The blocklist constructions we have considered so far only support the exact sea
 
 During a threshold search the client performs lookups in \cuckooTable, and then compares its inputs with the encrypted values in the corresponding locations in the hash table, by homomorphically subtracting one from the other, and blinding the result with a random multiplicative factor. If the projections match, then after decryption, the server should observe an encryption of \groupIdentity. 
 
-To support threshold searches, the client secret-shares a known value in the encrypted results provided to the server. After decryption, if the server obtains enough shares, then it can reconstruct the value and confirm. \emph{The main challenge is that the server should know which shares have been correctly decrypted when there are at least a threshold number of them, otherwise  the server should not learn any information}. We address this challenge by using a \emph{detectable} secret sharing scheme. We provide the necessary background below. 
+To support threshold searches, the client secret-shares a known value in the encrypted results. After decryption, if the server obtains enough shares, then it can reconstruct the value and confirm. \emph{The main challenge is that the server should know which shares have been correctly decrypted when there are at least a threshold number of them, otherwise  the server should not learn any information}. We address this challenge by using a \emph{detectable} secret sharing scheme. We provide the necessary background below. 
 
 \newcommand{\secretShareThreshold}{\ensuremath{t_{ss}}\xspace}
 \newcommand{\secretShareLength}{\ensuremath{\ell_{ss}}\xspace}

@@ -530,11 +530,11 @@ sk\IfValueT{#1}{_{#1}}\rangle}\xspace}
 \NewDocumentCommand{\distanceNotation}{o o o}
 {
 	\IfNoValueTF{#2}
-	{\ensuremath{d(\cdot, \cdot)}\xspace}
+	{\ensuremath{mathbf{dist}(\cdot, \cdot)}\xspace}
 	{
 		\IfNoValueTF{#3}
-		{\ensuremath{d(#2)}\xspace}
-		{\ensuremath{d(#2,#3)}\xspace}
+		{\ensuremath{\mathbf{dist}(#2)}\xspace}
+		{\ensuremath{\mathbf{dist}(#2,#3)}\xspace}
 	}
 }
 

@@ -6,29 +6,6 @@
 
 
 
-\begin{table}[t]
-% \fontsize{5.6}{5.6} \selectfont
-\footnotesize
-% \tiny
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{| c | c | c | c | c |}
-\noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
-\multirow{2}{*}{DB size} & \multicolumn{2}{c|}{Our protocol \protocolFM} & \multicolumn{2}{c|}{PAMC~\cite[Table~8]{kulshrestha2021identifying}}\\  
-\cline{2-5}
-& Time (in sec.) & Comm. (in KB) & Time (in sec.) & Comm. (in KB)\\
-\cline{1-5}
-1048576 & 0.59 & 20  & 27.5 & 508\\
-\cline{1-5}
-2097152 & 0.59  & 20 & 27.5 & 586 \\
-\cline{1-5}
-4194304 & 0.59  & 20  & 27.7 & 742 \\
-\cline{1-5}
-8388608 & 0.59  & 20  & 28.3 & 1053.9 \\
-\cline{1-5}
-\end{tabular}
-%\vspace{0.2em}
-\caption{\small Comparison of \protocolFM against PAMC~\cite{kulshrestha2021identifying}\label{tab:comp}. }
-\end{table}
 
 All our protocols have been implemented and benchmarked\footnote{https://anonymous.4open.science/r/content-mod-code-2125/}. 
 We implemented the protocols in C++ and Python. Group arithmetic was implemented using the NTL library\footnote{\url{https://libntl.org}}. The gRPC library\footnote{\url{https://grpc.io}} was used for implementing communication between the client and the server. For the OPRF and the partially homomorphic encryption scheme, we used the \emph{oblivious} library\footnote{\url{https://pypi.org/project/oblivious/}}, and the \emph{lightPHE} library~\cite{serengil2024lightphe} respectively. We used the exponential Elgamal encryption scheme for the additively-homomorphic encryption over the ED25519 elliptic curve. All parameters were configured to provide 112 bits of security. 
@@ -67,7 +44,7 @@ We conducted experiments for $\protocolEM$ using blocklists containing random SH
 
 \myparagraph{Publishing the blocklist}
 %
-\figref{fig:dis_sign} in the Appendix shows the compute costs for publishing the blocklist. We set the number of partitions $\numBlocklistParts$ such that each partition has at most 64 items. This  was fixed based on the time to perform a fine-grained match, if required. Signing a blocklist with a million items takes roughly 170 seconds with up to 10 auditors
+\figref{fig:dis_sign} in the Appendix shows the compute costs for publishing the blocklist. We set the number of partitions $\numBlocklistParts$ such that each partition has at most 64 items. Signing a blocklist with a million items takes roughly 170 seconds with up to 10 auditors. The total storage cost for the client $\bigO(\setSize{\bfBlklistToken} + \setSize{\sigBlklistToken})$ for a blocklist with a million items is roughly 8MB. 
 
 %When a signature has to be updated, e.g., when new items are added to the blocklist, we can leverage the homomorphic properties of the signature scheme. Updating a signature with 1000 new items takes less than 0.5 seconds.
 
@@ -79,21 +56,46 @@ We conducted experiments for $\protocolEM$ using blocklists containing random SH
 %
 We benchmarked the upload time in \protocolEM by varying the fraction of queries that require a fast path verification (\figref{fig:cpu-pre}). The reported times are averaged over 1000 queries. In the most conservative case, where every upload results in a fine-grained check, the protocol requires roughly 430 milliseconds for a blocklist with a million items. In contrast, the PEMC protocol requires 750 milliseconds to perform the check. Moreover, when the fraction of queries served through a fast path verification increases, the compute times reduce proportionally. This feature is absent from the PEMC protocol, which runs a full check for every uploaded file. In fact, if we make a reasonable assumption that for a server detecting CSAM, a large fraction (90\%) of the content will not be blocklisted, \protocolEM achieves verification times of 43 ms per upload on average, a \textbf{12$\times$ compute cost improvement over PEMC}. 
 
-\figref{fig:exact_comm} shows the communication costs of \protocolEM. Recall that the communication involves a Bloom filter for a specific bin, which in our cases has $\log \blocklistSize$ items, and $\log \blocklistSize$ signatures when a fine grained check is required. Even in the most conservative case when none of the uploads are served by a fast path, the communication required in \protocolEM for a 1 million-item blocklist is roughly 6KB. In comparison, PEMC requires 394KB since it performs a PIR over the blocklist. Thus, \protocolEM has \textbf{50$\times$ lower communication volume than PEMC}. 
+\figref{fig:exact_comm} shows the communication costs of \protocolEM. Even in the most conservative case when none of the uploads are served by a fast path, the communication required in \protocolEM for a 1 million-item blocklist is roughly 6KB. In comparison, PEMC requires 394KB since it performs a PIR over the blocklist. Thus, \protocolEM has \textbf{50$\times$ lower communication volume than PEMC}. 
 
 
+\begin{table}[t]
+% \fontsize{5.6}{5.6} \selectfont
+\footnotesize
+% \tiny
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{| c | c | c | c | c |}
+\noalign{\global\arrayrulewidth1pt}\hline\noalign{\global\arrayrulewidth0.4pt}
+\multirow{2}{*}{DB size} & \multicolumn{2}{c|}{Our protocol \protocolFM} & \multicolumn{2}{c|}{PAMC~\cite[Table~8]{kulshrestha2021identifying}}\\  
+\cline{2-5}
+& Time (in sec.) & Comm. (in KB) & Time (in sec.) & Comm. (in KB)\\
+\cline{1-5}
+1048576 & 0.59 & 20  & 27.5 & 508\\
+\cline{1-5}
+2097152 & 0.59  & 20 & 27.5 & 586 \\
+\cline{1-5}
+4194304 & 0.59  & 20  & 27.7 & 742 \\
+\cline{1-5}
+8388608 & 0.59  & 20  & 28.3 & 1053.9 \\
+\cline{1-5}
+\end{tabular}
+%\vspace{0.2em}
+\caption{\small Comparison of \protocolFM against PAMC~\cite{kulshrestha2021identifying}\label{tab:comp}. }
+\end{table}
 
 \subsection{Fuzzy Matching}
 %
-We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes. We instantiated the projection functions with the construction of \citet{chongchitmate2024approximate}.  We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFN \le 0.07$. 
+We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes. We instantiated the projection functions with the construction of \citet{chongchitmate2024approximate}.  We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFN \le 0.07$. The total storage cost for the client $\bigO(\chtBlklistToken)$ for a million-item blocklist is 2.5GB, less than $5\%$ of the capacity of commercially available smartphones with $\ge 64$GB of storage
 
 \myparagraph{Uploads}
 %
-We compared against the private approximate matching (PAMC) protocol~\cite{kulshrestha2021identifying} that only tolerates a semi-honest server and has a higher false negative rate of roughly $17\%$. \tblref{tab:comp} presents the results. We observe that  our protocol is faster (\textbf{by a factor of 5$\times$}) and requires less communication (\textbf{by at least a factor of 25$\times$}). The protocol of \citet{kulshrestha2021identifying} does not have any false positives because it computes the actual distance between the client's input and the blocklisted items, but this comes at the cost latencies that are unacceptable for a file store. In contrast, as discussed before, we tolerate a small amount of false positives (without leaking any infomration to the server) to have better performance while tolerating a malicious server. 
+We compared against the private approximate matching (PAMC) protocol~\cite{kulshrestha2021identifying} that only tolerates a semi-honest server and has a higher false negative rate of roughly $17\%$. \tblref{tab:comp} presents the results. We observe that  our protocol is faster (\textbf{by a factor of 5$\times$}) and requires less communication (\textbf{by at least a factor of 25$\times$}). The protocol in \cite{kulshrestha2021identifying} does not have any false positives because it computes the actual distance between the client's input and the blocklisted items, but this comes at the cost latencies that are unacceptable for a file store. In contrast, as discussed before, we tolerate a small amount of false positives (without leaking any information to the server) to have better performance while tolerating a malicious server. 
 
+\iffalse
 \myparagraph{Storage costs}
 %
-Both of our content moderation schemes require some client-side storage. For \protocolEM, a millions-sized blocklist requires roughly 4MB of storage for storing the the Bloom filter based ACB \bfBlklistToken,  for an overall false positive rate of $0.001$ in the fast path. The signature based ACB \sigBlklistToken also requires in total 4MB. Thus, the total storage cost is reasonable and less than 10MB. The CHT-based ACB \chtBlklistToken for the fuzzy match requires roughly 2.5GB for a million-sized blocklist with 20 projections. This is less than $5\%$ of the capacity of most commercially available smartphones with $\ge 64$GB of storage. 
+Both of our content moderation schemes require some client-side storage. For \protocolEM, a millions-sized blocklist requires roughly 4MB of storage for storing the the Bloom filter and the signature based ACB \sigBlklistToken also requires in total 4MB. The CHT-based ACB \chtBlklistToken for the fuzzy match requires roughly 2.5GB for a million-sized blocklist with 20 projections. This is less than $5\%$ of the capacity of most commercially available smartphones with $\ge 64$GB of storage. 
+\fi 
 
 % \figref{fig:cpu-pre-approx} demonstrates the compute costs of \protocolFM. In the conservative case where all uploads required a fine-grained check, \protocolFM requires around 61 seconds per upload. \emph{We recall that the cost of the protocol is independent of the blocklist size, and scales only in the number of projections and size of the vectors}.  Increasing the fraction of uploads served by fast path checks, proportionally reduces the compute costs. When $90\%$ of the uploads are served by the fast path (when blocklisted content is infrequently uploaded), the protocol requires less than 7 seconds per check on average. 
 
