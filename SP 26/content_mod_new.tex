@@ -6,7 +6,7 @@
 
 \subsection{Exact Matching: Realizing \contentModFuncExact}
 %
-We describe our content moderation scheme with exact-matching capabilities in \algoref{protocol:em}; we assume that the client wants to upload content drawn from the universe \universe, and the content hash function $\contentHash: \universe \rightarrow \bin^{\genericVecLen}$ maps any such content to an \genericVecLen-bit string. Two items $\genericUniverseElmt, \genericUniverseElmtAlt$ are similar iff. $\contentHash(\genericUniverseElmt) = \contentHash(\genericUniverseElmtAlt)$.  
+We describe our content moderation scheme with exact-matching capabilities in \algoref{protocol:em}. The client uploads content drawn from the universe \universe, and the content hash function $\contentHash: \universe \rightarrow \bin^{\genericVecLen}$ maps content to a \genericVecLen-bit string. Two items $\genericUniverseElmt, \genericUniverseElmtAlt$ are similar iff. $\contentHash(\genericUniverseElmt) = \contentHash(\genericUniverseElmtAlt)$.  
 
 
 \myparagraph{Key idea: fast path combining two ACBs}
@@ -32,7 +32,9 @@ When uploading some content \clientData
 \enumListStart
 \item (\emph{fast path}:) The client derives the content hash $\genericCInputElmt \assign \embed(\clientData)$ and invokes $\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken)$. If the search returns 0, then the client and server can abort because this means $\genericCInputElmt \notin \blocklist$. The server will store the encrypted content. 
 
-\item (\emph{fine-grained check}:) Otherwise, let $\bloomFilter[\bloomFilterIdx]$ be the Bloom filter such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)) \in \bloomFilter[\bloomFilterIdx]$; recall that the server learns $\bloomFilter[\bloomFilterIdx]$ in $\bfACB.\searchBlocklist$. The server identifies the blocklist partitions containing the items included in $\bloomFilter[\bloomFilterIdx]$. Specifically, the server calculates the set of indices $$\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \blocklistPartition{\partitionIdx}\}$$, and sends it to the client 
+\item (\emph{fine-grained check}:) Otherwise, let $\bloomFilter[\bloomFilterIdx]$ be the Bloom filter such that $\prp{\prpKeyServer}(\prf{\prfKeyClient}(\genericCInputElmt)) \in \bloomFilter[\bloomFilterIdx]$; recall that the server learns $\bloomFilter[\bloomFilterIdx]$ in $\bfACB.\searchBlocklist$. The server identifies the partitions containing the items included in $\bloomFilter[\bloomFilterIdx]$. 
+
+$$\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \blocklistPartition{\partitionIdx}\}$$, and sends the set of indices \partitionIDSet to the client 
 
 
 \item Upon receiving $\partitionIDSet$, the client invokes $\sigACB.\searchBlocklist(\genericCInputElmt, \sigBlklistToken{\partitionIdx})$ for all $\partitionIdx \in \partitionIDSet$. If any invocation returns $\genericCInputElmt$ to the server, then $\genericCInputElmt \in \blocklist$; the server rejects the encrypted content and aborts. Otherwise, $\genericCInputElmt \notin \blocklist$ and the server accepts the content and informs the client.  
@@ -80,13 +82,14 @@ During an upload, $\bigO(1)$ compute cost for the client and server (with high p
 \If{$\bfACB.\searchBlocklist(\genericCInputElmt, \bfBlklistToken) = 0$} \Comment{Fast path}
 \State \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$ and aborts. 
 \Else  \Comment{Fine-grained check}
-\State \server computes $\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \partition{\partitionIdx}\}$ and sends to \client.  
+\State \server sends $\partitionIDSet \assign \{ \partitionIdx: \genericBlocklistElmt \in \bloomFilter[\bloomFilterIdx] ~\land ~\genericBlocklistElmt \in \blocklistPartition{\partitionIdx}\}$ to \client.  
 \For{each $\partitionIdx \in \partitionIDSet$}
 \State \client invokes $\sigACB.\searchBlocklist\left(\genericCInputElmt,\sigBlklistToken{\partitionIdx}\right)$
 \If{$\sigACB.\searchBlocklist\left(\genericCInputElmt,\sigBlklistToken{\partitionIdx}\right) = \genericCInputElmt$}
 \State \server outputs $\langle \genericFileID, \detected = \tru, \genericCInputElmt \rangle$ and aborts
 \Else
-\State \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$. \client adds $\genericCInputElmt$ to $\prevHashList$. 
+\State \server outputs $\langle \genericFileID, \detected = \fals, \emptyset \rangle$. 
+%\client adds $\genericCInputElmt$ to $\prevHashList$. 
 \EndIf
 \EndFor
 \EndIf
@@ -104,10 +107,8 @@ The proof is available in the full version~\cite{code}
 
 \subsection{Fuzzy Matching: Realizing \contentModFuncFuzzy}
 %
-We will describe a content moderation scheme realizing \contentModFuncFuzzy. We will assume that the set of blocklisted items are embedded into a metric space with distance \distance; the embedding produces a \genericVecLen-dimensional vector, and so we will refer to 
-the blocklisted items as vectors henceforth. 
-Our protocol will detect matches of the form $\tupleDefn{\blocklistVec, \clientVec}$ such that 
-$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$. In return, the protocol will have a small number of false negatives -- cases where items are blocked but are not detected. Our protocol operates over bit-vectors in the Hamming space;  our choice of Hamming distance is informed by the fact that several image embeddings use Hamming distance to identify similar images~\cite{singh2025perceptual,neuralHashAttack,yang2025certphash} and existing work on encrypted content moderation also use Hamming distance as the metric~\cite{kulshrestha2021identifying}.
+We will describe a content moderation scheme realizing \contentModFuncFuzzy.The set of blocklisted items are embedded into a metric space with distance $\distance$; the embedding produces a \genericVecLen-dimensional vector. Our protocol will detect matches of the form $\tupleDefn{\blocklistVec, \clientVec}$ such that 
+$\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \threshold$. Our protocol operates over bit-vectors in the Hamming space;  several image embeddings~\cite{singh2025perceptual,neuralHashAttack,yang2025certphash} and existing work on content moderation use Hamming distance as the metric~\cite{kulshrestha2021identifying}.
 
 
 %\emph{All existing content moderation schemes that perform fuzzy matching suffer from false negatives~\cite{kulshrestha2021identifying}}. The protocol does not have false positives. 
@@ -117,9 +118,9 @@ $\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt] \le \th
 
 \myparagraph{Key Idea: Using projections for a threshold match}
 %
-Comparing an input against the blocklist is challenging when we need to implement a fuzzy match. The problem is that to accurately detect a match, we must compute $\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt]$ for $\genericBlocklistElmt \in \blocklist$. One solution is to use a fuzzy membership test (PMT) or a fuzzy private set intersection(PSI) protocol~\cite{}, but they have high computational costs, and cannot scale to the latency requirements of a file server. 
+Comparing an input against the blocklist is challenging when we need to implement a fuzzy match. The problem is that to accurately detect a match, we must compute $\distanceNotation[\distance][\genericBlocklistElmt][\genericCInputElmt]$ for all $\genericBlocklistElmt \in \blocklist$. One solution is to use a generic fuzzy membership test (PMT) or a fuzzy private set intersection(PSI) protocol~\cite{piske2025distance,garimella2022structure,van2024fuzzy}, but they have high computational costs, and cannot scale to the latency requirements of a file server. 
 
-We take a different approach by leveraging the fact that our functionality has strictly weaker requirements than a fuzzy PSI/PMT protocol because: i) it tolerates false positives and false negatives, and ii) it does not output the matching items to the server/client. Thus, we can design a protocol with lower costs. The key idea is to use projections of the blocklist vectors as the matching criteria: two vectors are considered close if they have identical projections under a certain number of projection functions. Obviously, leaking the projections themselves will allow the server to learn information about the encrypted content. Therefore, we only reveal the \emph{number of matching projections} when they are above a certain threshold, but not the projections themselves. Thus, even if there is a false positive, the server does not learn any more information about the content.
+We take a different approach by leveraging the fact that our functionality has strictly weaker requirements: i) it tolerates false positives and false negatives, and ii) it does not output the matching items to the server/client. Thus, we can design a protocol with lower costs. The key idea is to use projections of the blocklist vectors as the matching criteria: two vectors are considered close if they have identical projections under a certain number of projection functions. Obviously, leaking the projections will allow the server to learn information about the encrypted content. Therefore, we only reveal the \emph{number of matching projections} when they are above a certain threshold, but not the projections themselves. Even if there is a false positive, the server does not learn any more information about the content.
 
 \iffalse 
 We do not provide a mechanism to disambiguate false positives from true positives. A fine-grained check without false positives must essentially solve the fuzzy, ``distribution-free''~\cite{} private membership problem against malicious receivers with sublinear communication costs. To the best of our knowledge, there is no such protocol that scales to the throughput requirements of a file server. Hence, we adopt a best-effort approach focusing on efficiency rather than accuracy: we will select projection functions carefully such that the chance of false positives are low. Given the false positive rate, the server can fix a threshold and decide to report/suspend an account if there are more than a threshold number of potential matches, which is likely to include a true positive. To realize this idea, we will first define the projection functions, and then show how to combine it with our cuckoo hash based ACB to realize \contentModFuncFuzzy. 
@@ -129,7 +130,7 @@ We do not provide a mechanism to disambiguate false positives from true positive
 , and if required, follow it by performing  a significantly more expensive but perfectly accurate test over the actual vectors. Specifically, if the client's input matches a certain threshold number of projections against the blocklisted items, then the server performs the fine-grained check., and the likely candidates in the blocklist that should be checked against the input. We note that the \contentModFunc functionality allows this leakage, since the server does not learn the content key.  Nonetheless, , and iii) the candidate set is reasonably large and can be set as a tunable parameter. A caveat here is that the fine-grained check must be performed over the actual embedding vectors and not just the projections, so the blocklist authentication token and the content verification token must be modified to account for entire vectors. , and then describe how to modify the tokens. 
 \fi 
 
-\subsubsection{Locality-Preserving Fingerprints}
+%\subsubsection{Locality-Preserving Fingerprints}
 
 
 \begin{definition}
@@ -188,7 +189,6 @@ Let $\threshold \in \reals^{++}$ be a distance threshold, and $\scalingFn: \real
 \\ \le \sum\limits_{i = \detectionThreshold}^{\blocklistSize \numProjections} \binom{\blocklistSize\numProjections}{i} \fpr^{i} (1 - \fpr)^{\blocklistSize \numProjections - i} \\
 \end{gather*}
 \end{small}
-
 \end{corollary}
 
 The proof is available in the full version~\cite{code}. 
@@ -276,7 +276,7 @@ clustered to have an efficient construction~\cite{chongchitmate2024approximate}.
 \footnotesize
 \begin{algorithmic}[1]
 
-\Statex\LComment{Create a CHT based blocklist using locality-preserving fingerprints}
+\LComment{Create a CHT based blocklist using locality-preserving fingerprints}
 
 
 \For{$\blocklistVec \in \blocklist$}
@@ -317,22 +317,22 @@ clustered to have an efficient construction~\cite{chongchitmate2024approximate}.
 A locality-preserving fingerprint provides a construction realizing \contentModFuncFuzzy (\algoref{protocol:fuzzy}). 
 
 \enumListStart
-\item The auditors compute the locality preserving fingerprints of all the blocklist vectors. 
-\item The auditors publish an encrypted cuckoo hash table based blocklist by invoking $\chtACB.\publishList$ with the locality-preserving fingerprints as input
-\item During an upload, 
-\enumListStart
-\item The client computes $\clientVec \assign \embed(\clientData)$
-\item The client and server invoke $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold)$ to perform a threshold search which returns $\tru$ when 
-$|\fingerprint(\clientVec) \cap \chtBlklistToken| \ge \detectionThreshold$. Due to \corrref{corr:fingerprint_intersection}, there is some vector $\blocklistVec \in \blocklist$ such that $\hammingDist{\clientVec}{\blocklistVec} \le \threshold$ with probability at least $1 - \prob{\badFP}$. 
+ 
+\item The auditors publish an encrypted hash table based blocklist by invoking $\chtACB.\publishList$ with the locality-preserving fingerprints of the blocklist vectors as input
+\item During an upload, the client computes $\clientVec \assign \embed(\clientData)$ and invokes $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold)$ to perform a threshold search which returns $\tru$ when 
+$|\fingerprint(\clientVec) \cap \chtBlklistToken| \ge \detectionThreshold$. Due to \corrref{corr:fingerprint_intersection}, there is some $\blocklistVec \in \blocklist$ such that $\hammingDist{\clientVec}{\blocklistVec} \le \threshold$ with probability at least $1 - \prob{\badFP}$. 
 
-\item When $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold) = \tru$, the server adds the ID to a \emph{flagged content list} $\flagContentList$ for that specific account 
+\item When $\chtACB.\thresholdSearchBlocklist(\fingerprint(\clientVec), \chtBlklistToken, \detectionThreshold) = \tru$, the server adds the ID to a \emph{flagged content list} $\flagContentList$. 
 
 %\item If there are already a predefined threshold \revealThreshold number of content IDs in \flagContentList, then the server deletes all the corresponding content and informs the client. Otherwise, the server accepts the encrypted content and stores it. 
 \enumListEnd
-\enumListEnd
+
+Once the flagged content list for an account exceeds a certain threshold \revealThreshold, the server may suspend the account and/or delete the flagged files. Given \badFP, the server can estimate the expected number of false positives in a certain number of uploads, and check if the client's uploaded content exceeds this number by a large margin. This approach was also followed by the Apple PSI system, although it additionally revealed the content key to the server, which we avoid for a more conservative definition of privacy. 
 
 
-Once the flagged content list for an account exceeds a certain threshold \revealThreshold, the server may suspend the account and/or delete the flagged files. The threshold \revealThreshold is determined using the probability of a false positive \badFP. Since the projection functions are selected randomly, the probability of multiple false positives drops exponentially. Thus, when the number of matches exceeds the expected number of false positives by a reasonable factor, the server can infer that there is a true positive with high probability. We provide an analysis in the full version~\cite{code}. 
+\iffalse
+The threshold \revealThreshold is determined using the probability of a false positive \badFP. Thus, when the number of matches exceeds the expected number of false positives by a reasonable factor, the server can infer that there is a true positive with high probability. We provide an analysis in the full version~\cite{code}. 
+\fi 
 
 
 \myparagraph{Cost \& Security }
@@ -343,3 +343,5 @@ Assuming there is an IND-CPA secure additively homomorphic encryption scheme, \p
 \end{theorem}
 
 The proof is available in the full version~\cite{code}.
+
+\input{plots.tex}

@@ -1,14 +1,13 @@
 \section{Evaluation}
 
-\input{plots.tex}
 
 
 
+%The gRPC library\footnote{\url{https://grpc.io}} was used for implementing communication between the client and the server.
 
 
-
-All our protocols have been implemented and benchmarked\footnote{https://anonymous.4open.science/r/content-mod-code-2125/}. 
-We implemented the protocols in C++ and Python. Group arithmetic was implemented using the NTL library\footnote{\url{https://libntl.org}}. The gRPC library\footnote{\url{https://grpc.io}} was used for implementing communication between the client and the server. For the OPRF and the partially homomorphic encryption scheme, we used the \emph{oblivious} library\footnote{\url{https://pypi.org/project/oblivious/}}, and the \emph{lightPHE} library~\cite{serengil2024lightphe} respectively. We used the exponential Elgamal encryption scheme for the additively-homomorphic encryption over the ED25519 elliptic curve. All parameters were configured to provide 112 bits of security. 
+All our protocols have been implemented and benchmarked~\cite{code}. 
+We implemented the protocols in C++ and Python. Group arithmetic was implemented using the NTL library\footnote{\url{https://libntl.org}}.  For the OPRF and the partially homomorphic encryption scheme, we used the \emph{oblivious} library\footnote{\url{https://pypi.org/project/oblivious/}}, and the \emph{lightPHE} library~\cite{serengil2024lightphe} respectively. We used the exponential Elgamal encryption scheme for the additively-homomorphic encryption over the ED25519 elliptic curve. All parameters were configured to provide 112 bits of security. 
 Benchmarks were performed with a single server running on an Amazon t2.2xlarge instance with 8vCPUs and 32GB of memory. Our implementations are single-threaded. Clients were run on a t2.large instance with 2vCPUs and 8GB of memory. 	
 
 
@@ -44,7 +43,7 @@ We conducted experiments for $\protocolEM$ using blocklists containing random SH
 
 \myparagraph{Publishing the blocklist}
 %
-\figref{fig:dis_sign} in the Appendix shows the compute costs for publishing the blocklist. We set the number of partitions $\numBlocklistParts$ such that each partition has at most 64 items. Signing a blocklist with a million items takes roughly 170 seconds with up to 10 auditors. The total storage cost for the client $\bigO(\setSize{\bfBlklistToken} + \setSize{\sigBlklistToken})$ for a blocklist with a million items is roughly 8MB. 
+\figref{fig:dis_sign} in the Appendix shows the compute costs for publishing the blocklist. Each blocklist partition has at most 64 items. Creating a blocklist with a million items takes roughly 170 seconds with up to 10 auditors. The total storage cost for the client $\bigO(\setSize{\bfBlklistToken} + \setSize{\sigBlklistToken})$ for a blocklist with a million items is roughly 8MB. 
 
 %When a signature has to be updated, e.g., when new items are added to the blocklist, we can leverage the homomorphic properties of the signature scheme. Updating a signature with 1000 new items takes less than 0.5 seconds.
 
@@ -54,9 +53,9 @@ We conducted experiments for $\protocolEM$ using blocklists containing random SH
 
 \myparagraph{Uploads}
 %
-We benchmarked the upload time in \protocolEM by varying the fraction of queries that require a fast path verification (\figref{fig:cpu-pre}). The reported times are averaged over 1000 queries. In the most conservative case, where every upload results in a fine-grained check, the protocol requires roughly 430 milliseconds for a blocklist with a million items. In contrast, the PEMC protocol requires 750 milliseconds to perform the check. Moreover, when the fraction of queries served through a fast path verification increases, the compute times reduce proportionally. This feature is absent from the PEMC protocol, which runs a full check for every uploaded file. In fact, if we make a reasonable assumption that for a server detecting CSAM, a large fraction (90\%) of the content will not be blocklisted, \protocolEM achieves verification times of 43 ms per upload on average, a \textbf{12$\times$ compute cost improvement over PEMC}. 
+We benchmarked the upload time in \protocolEM by varying the fraction of queries that require a fast path verification (\figref{fig:cpu-pre}). The reported times are averaged over 1000 queries. In the most conservative case, where every upload results in a fine-grained check, the protocol requires roughly 430 milliseconds for a blocklist with a million items. In contrast, the PEMC protocol requires 750 milliseconds to perform the check. Moreover, when the fraction of queries served through a fast path verification increases, the compute times reduce proportionally. This feature is absent from the PEMC protocol, which runs a full check for every uploaded file. If we make a reasonable assumption that a large fraction (90\%) of the content will not be blocklisted, \protocolEM achieves verification times of 43 ms per upload on average, a \textbf{12$\times$ compute cost improvement over PEMC}. 
 
-\figref{fig:exact_comm} shows the communication costs of \protocolEM. Even in the most conservative case when none of the uploads are served by a fast path, the communication required in \protocolEM for a 1 million-item blocklist is roughly 6KB. In comparison, PEMC requires 394KB since it performs a PIR over the blocklist. Thus, \protocolEM has \textbf{50$\times$ lower communication volume than PEMC}. 
+\figref{fig:exact_comm} shows the communication costs of \protocolEM. The communication required in \protocolEM for a 1 million-item blocklist is roughly 6KB. In comparison, PEMC requires 394KB since it performs a PIR over the blocklist. Thus, \protocolEM has \textbf{50$\times$ lower communication volume than PEMC}. 
 
 
 \begin{table}[t]
@@ -85,7 +84,7 @@ We benchmarked the upload time in \protocolEM by varying the fraction of queries
 
 \subsection{Fuzzy Matching}
 %
-We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes. We instantiated the projection functions with the construction of \citet{chongchitmate2024approximate}.  We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFN \le 0.07$. The total storage cost for the client $\bigO(\chtBlklistToken)$ for a million-item blocklist is 2.5GB, less than $5\%$ of the capacity of commercially available smartphones with $\ge 64$GB of storage
+We conducted experiments for our fuzzy matching protocol \protocolFM using a blocklist with random 256 bit vectors that simulate perceptual hashes.  We set the number of projections to 20 which gives a false positive rate $\badFP \le 0.02$ and $\badFN \le 0.07$. In this setting, the total storage cost for the client $\bigO(\chtBlklistToken)$ for a million-item blocklist is 2.5GB, less than $5\%$ of the capacity of a typical commercially available smartphone with $\ge 64$GB of storage
 
 \myparagraph{Uploads}
 %

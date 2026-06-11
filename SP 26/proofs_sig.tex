@@ -269,7 +269,7 @@ $1/\oracleQueries$.
 
 
 \end{proof}
-
+\iffalse 
 \subsection{Proof of robustness to key recovery}
 
 \begin{theorem}
@@ -284,9 +284,9 @@ $1/\oracleQueries$.
 Here \oracleQueries is the number of distinct queries to the random oracle \primeRO and 
 $\oracleQueries'$ is the number of distinct queries to the random oracle \ro.
 
-
 \end{theorem}
 
 \begin{proof}
 The proof straightforwardly reduces to the IND-SR security of the signature scheme. Since $\genericSigPair[2]$ is the output of a random oracle, \recoverAdversary{2} has either randomly guessed $\qrGen^{\genericRand}$ or computed it from $\langle \genericSetVar, \genericCInputElmt, \genericSig[\genericSetVar], \genericSig[\genericSetVar \setminus \{\genericCInputElmt\}],  \genericSigPair[1], \pubKey, \adversaryState{1} \rangle$. The former case happens with probability at most $\frac{\oracleQueries' }{\setSize{\qrGroup}} $. In the latter case, if \recoverAdversary{2} produces $\qrGen^{\genericRand}$ with probability \recoverAdv, then this adversary can be used as a subroutine by \indsrAdversary{3} to win $\Experiment{\indsrLabel[\indBit]}{\sigScheme}$ with advantage  at least $1/2 \recoverAdv$. 
 \end{proof}
+\fi 
