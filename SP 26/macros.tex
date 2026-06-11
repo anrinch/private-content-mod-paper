@@ -58,7 +58,7 @@
 \newcommand{\prpKeyServer}{\ensuremath{\kappa_{\mathsf{PRP}}^{S}}\xspace}
 \newcommand{\prfKeyClient}{\ensuremath{\kappa_{\mathsf{PRF}}^{C}}\xspace}
 \newcommand{\prgKey}{\ensuremath{\kappa_{PRG}}\xspace}
-\newcommand{\dhfKey}{\ensuremath{k_{dhf}}\xspace}
+\newcommand{\dhfKey}{\ensuremath{k_{\mathit{dhf}}}\xspace}
 \NewDocumentCommand{\pubKey}{o}{\IfNoValueTF{#1}{\ensuremath{pk}\xspace}{\ensuremath{pk_{#1}}\xspace}}
 \NewDocumentCommand{\privKey}{o}{\IfNoValueTF{#1}{\ensuremath{sk}\xspace}{\ensuremath{sk_{#1}}\xspace}}
 
@@ -81,7 +81,7 @@
 \newcommand{\checkContent}{\textsc{CheckFile}\xspace}
 \newcommand{\checkContentFuzzy}{\textsc{CheckFileFuzzy}\xspace}
 \newcommand{\funcFNR}{\ensuremath{FNR}\xspace}
-\newcommand{\dssFunc}{\ensuremath{\mathcal{F}_{dss}}\xspace}
+\newcommand{\dssFunc}{\ensuremath{\mathcal{F}_{\mathit{dss}}}\xspace}
 \newcommand{\distSign}{\textsc{DSign}\xspace}
 \newcommand{\distAdd}{\textsc{DAdd}\xspace}
 \newcommand{\distDel}{\textsc{DDel}\xspace}
@@ -289,7 +289,7 @@
 
 \newcommand{\dhfSet}{\ensuremath{D}\xspace}
 \newcommand{\dhfSetElmt}[1]{\ensuremath{d_{#1}}\xspace}
-\newcommand{\ssSet}{\ensuremath{SS}\xspace}
+\newcommand{\ssSet}{\ensuremath{\mathit{SS}}\xspace}
 
 \NewDocumentCommand{\genericSetElmt}{o o}%
 {%
@@ -888,13 +888,13 @@ sk\IfValueT{#1}{_{#1}}\rangle}\xspace}
 {\ensuremath{#1\setminus\setDefn{#2}}\xspace}
 
 \NewDocumentCommand{\dhf}{o}{\ensuremath{\mathsf{DHF}\IfValueT{#1}{_{#1}}}\xspace}
-\newcommand{\dhfKeySpace}{\ensuremath{K_{dhf}}}
-\newcommand{\dhfDomain}{\ensuremath{\mathcal{D}_{dhf}}\xspace}
-\newcommand{\dhfRange}{\ensuremath{\mathcal{R}_{dhf}}\xspace}
+\newcommand{\dhfKeySpace}{\ensuremath{K_{\mathit{dhf}}}}
+\newcommand{\dhfDomain}{\ensuremath{\mathcal{D}_{\mathit{dhf}}}\xspace}
+\newcommand{\dhfRange}{\ensuremath{\mathcal{R}_{\mathit{dhf}}}\xspace}
 \newcommand{\dhfDetect}{\ensuremath{\textsc{Detect}}\xspace}
 \newcommand{\matchedIndexSet}{\ensuremath{\setNotation{I}}\xspace}
-\newcommand{\dhfParamMatchThreshold}{\ensuremath{t_{dhf}}\xspace}
-\newcommand{\dhfParamRandThreshold}{\ensuremath{s_{dhf}}\xspace}
+\newcommand{\dhfParamMatchThreshold}{\ensuremath{t_{\mathit{dhf}}}\xspace}
+\newcommand{\dhfParamRandThreshold}{\ensuremath{s_{\mathit{dhf}}}\xspace}
 \newcommand{\dhfFail}{\ensuremath{\mathsf{Fail}}\xspace}
 \newcommand{\dhfOutput}[1]{\ensuremath{d_{#1}}\xspace}
 
@@ -904,7 +904,7 @@ o}{\ensuremath{c\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
 	o}{\ensuremath{C'\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
 \newcommand{\cOutputVal}{\ensuremath{c''}\xspace}
 
- \newcommand{\secretShare}[1]{\ensuremath{ss_{#1}}\xspace}
+ \newcommand{\secretShare}[1]{\ensuremath{\mathit{ss}_{#1}}\xspace}
 \newcommand{\secretSharingScheme}{\ensuremath{\mathsf{sshare}}\xspace}
 \newcommand{\detectableSecretSharingScheme}{\ensuremath{\mathsf{dsshare}}\xspace}
 \newcommand{\secretShareOutputSpace}{\ensuremath{F}\xspace}
@@ -1038,7 +1038,7 @@ o}{\ensuremath{c\IfValueT{#1}{_{#1\IfValueT{#2}{,{#2}}}}}\xspace}
 \newcommand{\primeNum}{\ensuremath{p}\xspace}
 \newcommand{\vectorFP}[1]{\ensuremath{m_{#1}}\xspace}
 
-\NewDocumentCommand{\secretShareVec}{g}{\ensuremath{\vec{ss}\IfValueT{#1}{_#1}}\xspace}
+\NewDocumentCommand{\secretShareVec}{g}{\ensuremath{\vec{\mathit{ss}}\IfValueT{#1}{_#1}}\xspace}
 \newcommand{\hadamardProd}{\ensuremath{\times}\xspace}
 
 \newcommand{\evaFunc}{\ensuremath{\mathcal{F}_{\mathsf{eva}}}\xspace}

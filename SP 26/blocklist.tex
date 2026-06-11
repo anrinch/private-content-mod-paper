@@ -768,10 +768,10 @@ Similar to standard $(\secretShareLength, \secretShareThreshold)$-secret-sharing
 
 \itemListStart
 \item $\{ \secretShare{1},\dots, \secretShare{\secretShareLength} \} \gets \DSShare(\genericSymmKey)$ takes as input a secret $\genericSymmKey$ and produces a set of secret-shares $\{ \secretShare{1},\dots, \secretShare{\secretShareLength} \}$
-\item $\genericSymmKey/\bot \gets \dssProtocol.\DSCombine(\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \})$ Given a set of $\secretShareLength$ elements, if at least \secretShareThreshold of them are valid secret shares of the same secret, and the rest are random elements, output the secret $\genericSymmKey$. Otherwise, output $\bot$. 
+\item $\genericSymmKey/\bot \gets \dssProtocol.\DSCombine(\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \})$ Given a set of $\secretShareLength$ elements, if at least \secretShareThreshold of them are valid secret shares of the same secret, and the rest are random elements \mkr{Delete? Random isn't necessary to return the secret, right?}, output the secret $\genericSymmKey$. Otherwise, output $\bot$. 
 \itemListEnd
 
-For security, a DSS scheme ensures that when there are less that \secretShareThreshold valid shares of \genericSymmKey in $\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \}$ then nothing is revealed to an adversary \emph{including which of the shares are correct} in the set $\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \}$
+For security, a DSS scheme ensures that when there are less that \secretShareThreshold valid shares of \genericSymmKey in $\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \}$ then nothing is revealed to an adversary \emph{including which of the shares are correct} in the set $\{\genericSetElmt[1], \dots, \genericSetElmt[\secretShareLength] \}$.
 
 
 
