@@ -387,6 +387,7 @@ The security of the ACB is due to the following.
 \itemListEnd
 
 \subsection{Homomorphic Signature Based Blocklist}
+\label{sec:sig_acb}
 %
 There are two drawbacks of the Bloom filter based ACB: i) the storage overhead for \blklistToken is $\bigO(\blocklistSize)$, and ii) the search can produce false positives. In this section, we will design an ACB that mitigates both of these problems, but with higher computational costs for the server during search. The construction leverages a new cryptographic primitive called a \emph{randomizable set homomorphic signature}. Intuitively, the ACB is a signature on the accumulated set of blocklisted items~\cite{johnson2002homomorphic} under the auditors' private keys. The signature scheme has homomorphic properties that allows us to compute signatures of subsets of a signed set, as well as the union of two signed sets without the private key. We leverage these properties to directly compute on the signature, and implement an oblivious match. Importantly, the signature (and the ACB) is constant-sized making it storage efficient.
 
@@ -644,8 +645,10 @@ Here, $\euclideanConst[1], \euclideanConst[2]$ are integers such that $\euclidea
 
 \itemListEnd
 
-The security of the scheme (UF-CMA and IND-SR) reduces to the 
-strong QR-RSA assumption~\cite{cramer2000signature} in the random oracle model. Confidentiality under blinding is ensured by the fact that for $\blindingFactor \sample [1, \rsaMod^2]$, $\randomizeFn(\genericSigPair[1], \blindingFactor) = \genericSigPair[1]^{\blindingFactor} \bmod \rsaMod$ is uniformly distributed in \qrGroup~\cite{micciancio2005rsa}. The proofs are available in the full version of the paper~\cite{code}. 
+We show in \appref{sec:proof:sig_scheme} that the security of the scheme (UF-CMA and IND-SR) reduces to the 
+strong QR-RSA assumption~\cite{cramer2000signature} in the random oracle model. Confidentiality under blinding is ensured by the fact that for $\blindingFactor \sample [1, \rsaMod^2]$, $\randomizeFn(\genericSigPair[1], \blindingFactor) = \genericSigPair[1]^{\blindingFactor} \bmod \rsaMod$ is uniformly distributed in \qrGroup~\cite{micciancio2005rsa}. 
+
+%The proofs are available in the full version of the paper~\cite{code}. 
 
 %We show in \appref{sec:proof:sig_scheme} that the security of the scheme . 
 

@@ -1,9 +1,40 @@
 
 
-\section{Proofs for Signature Scheme in \secref{sec:sig_scheme}}
+\section{Proofs for Signature Scheme in \secref{sec:sig_acb}}
 \label{sec:proof:sig_scheme}
-\subsection{Proof of Unforgeability}
-\label{app:proof_unforge}
+
+\begin{definition}[Strong QR-RSA problem]
+	Assume that $\rsaMod = \safePrime[1] \safePrime[2]$ where
+        $\safePrime[1]$ and $\safePrime[2]$ are random, safe prime
+        numbers, and \qrGroup is the quadratic residue subgroup of
+        \integersModNInv. Then, for $\genericFnOutput \getsr
+        \qrGroup$,
+	
+	\begin{align*}
+	  & \Advantage{\rsaLabel}{\rsaMod}(\rsaAdversary) = \\
+          & \cprob{\bigg}{\begin{array}{@{}r@{}}
+              \genericFnInput \in \qrGroup \land
+              \rsaExponent \ge 2~\land \\
+              \genericFnInput^{\rsaExponent} \equiv \genericFnOutput 
+	      \bmod \rsaMod
+          \end{array}}{\begin{array}[m]{@{}l@{}}
+              (\genericFnInput, \rsaExponent)
+              \gets \rsaAdversary(\rsaMod, \genericFnOutput)
+          \end{array}} \\
+	  & \rsaAdv = \max_{\rsaAdversary} 
+	 \Advantage{\rsaLabel}{\rsaMod}(\rsaAdversary) 
+	\end{align*}
+	\noindent
+	where the probability is over the choice of $\rsaMod$ and
+        $\genericFnOutput$ and random choices by \rsaAdversary, and
+        the maximum is taken over all adversary algorithms
+        $\rsaAdversary$ that run in total time $\timeBound$.
+\end{definition}
+
+
+
+%\subsection{Proof of Unforgeability}
+%\label{app:proof_unforge}
  
 \begin{theorem}
 	\label{thm:unforge}
@@ -134,8 +165,8 @@ strong QR-RSA problem also with probability at least $\rsaAdv/\oracleQueries$.
 \end{proof}
 
 
-\subsection{Proof of Indistinguishable Signature under Randomization (IND-SR)}
-\label{app:proof_indsr}
+%\subsection{Proof of Indistinguishable Signature under Randomization (IND-SR)}
+%\label{app:proof_indsr}
 
 %{\color{violet}[Arpad: made similar corrections to the ones in the uf proof]}
 \begin{theorem}
